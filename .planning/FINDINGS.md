@@ -208,3 +208,26 @@ The full delegation chain works:
 
 This means REPL inner handlers are ~5 lines each: find tool, format args, call, extract
 result, catch errors. No reimplementation of any CC functionality needed.
+
+---
+
+## F12: "Using Your Tools" Is Runtime-Generated (2026-04-13)
+
+**Phase:** 2b implementation | **Impact:** Replace-mode prompt override limitation
+
+The "Using your tools" system prompt section is NOT stored in prompt data files. It's
+assembled at runtime by `getUsingYourToolsSection()` in the binary JS. The pieces
+matching pipeline (which works against prompt data) cannot target it.
+
+This means a replace-mode prompt override (replacing "Using your tools" with minimal
+REPL-only guidance, as Ant does) would require a binary-level patch of that function,
+not a data-level prompt override.
+
+**Current workaround:** In replace mode, primitives are filtered from the tool registry.
+CC's "Using your tools" section still references them, but the model ignores irrelevant
+guidance when those tools don't exist. The REPL tool's own `prompt()` provides
+comprehensive guidance. Testing confirms the model uses REPL correctly without the
+prompt override.
+
+**Future option:** Binary patch `getUsingYourToolsSection()` to detect REPL-only mode
+and return minimal text. Low priority — current approach works.

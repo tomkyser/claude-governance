@@ -579,6 +579,22 @@ const TOOL_ZOD_SHIM_CODE = [
   `}`,
 ].join('');
 
+// Replace mode: filter REPL_ONLY_TOOLS from _b when repl.mode is "replace".
+// Same tools Ant filters (tools.ts:314-321): Read, Write, Edit, Bash,
+// NotebookEdit, Agent. Glob/Grep already excluded by embedded tools gate.
+const TOOL_REPLACE_FILTER_CODE = [
+  `try{`,
+  `var _cfgPath=require("node:path").join(`,
+  `require("node:os").homedir(),".claude-governance","config.json"`,
+  `);`,
+  `var _cfg=JSON.parse(require("node:fs").readFileSync(_cfgPath,"utf8"));`,
+  `if(_cfg.repl&&_cfg.repl.mode==="replace"){`,
+  `var _replOnly={"Read":1,"Write":1,"Edit":1,"Bash":1,"NotebookEdit":1,"Agent":1};`,
+  `_b=_b.filter(function(t){return!_replOnly[t.name]})`,
+  `}`,
+  `}catch(_re){}`,
+].join('');
+
 // G9: Multiple detection strategies for getAllBaseTools, ordered by confidence.
 // The minifier can change function names, syntax style, and body size across
 // CC versions. Each strategy extracts: fnName, arrayStartIdx, arrayContent.
@@ -743,6 +759,7 @@ export const writeToolInjection = (
         TOOL_LOADER_CODE,
         `var _b=[${arrayContent}];`,
         TOOL_ZOD_SHIM_CODE,
+        TOOL_REPLACE_FILTER_CODE,
         `return _b.concat(${TOOL_LOADER_SIGNATURE})`,
         `}`,
       ].join('')
@@ -751,6 +768,7 @@ export const writeToolInjection = (
         TOOL_LOADER_CODE,
         `var _b=[${arrayContent}];`,
         TOOL_ZOD_SHIM_CODE,
+        TOOL_REPLACE_FILTER_CODE,
         `return _b.concat(${TOOL_LOADER_SIGNATURE})`,
         `}`,
       ].join('');

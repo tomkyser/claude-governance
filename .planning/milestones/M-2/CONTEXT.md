@@ -16,8 +16,8 @@ Clean-room implementations of ant-only tools (REPL, Tungsten), injected into CC'
 |-------|--------|
 | 2a: Tool Injection Mechanism | COMPLETE |
 | 2a-gaps: Tool Injection Hardening | COMPLETE — 12/12 gaps, 15/15 SOVEREIGN |
-| 2b: Clean-Room REPL | NEXT — unblocked, spec at specs/repl-clean-room.md |
-| 2c: Clean-Room Tungsten | Planned |
+| 2b: Clean-Room REPL | COMPLETE — auto-discovery loader, 9 handlers, coexist/replace modes |
+| 2c: Clean-Room Tungsten | NEXT |
 | 2d: Context Snipping Tool | Planned |
 
 ## Binary Vault (baked into codebase — G1+G2)

@@ -264,6 +264,53 @@ const applyPatchImplementations = (
 
 import { SYSTEM_PROMPTS_DIR } from '../config';
 
+// =============================================================================
+// Tool Deployment
+// =============================================================================
+
+const TOOLS_DIR = path.join(CONFIG_DIR, 'tools');
+
+const deployTools = async (): Promise<number> => {
+  const srcDir = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '..', 'data', 'tools'
+  );
+
+  if (!fsSync.existsSync(srcDir)) {
+    debug(`deployTools: source dir not found at ${srcDir}`);
+    return 0;
+  }
+
+  await fs.mkdir(TOOLS_DIR, { recursive: true });
+
+  const files = fsSync.readdirSync(srcDir).filter(f => f.endsWith('.js'));
+  let deployed = 0;
+
+  for (const file of files) {
+    const srcPath = path.join(srcDir, file);
+    const dstPath = path.join(TOOLS_DIR, file);
+    const srcContent = fsSync.readFileSync(srcPath, 'utf8');
+
+    let needsCopy = true;
+    if (fsSync.existsSync(dstPath)) {
+      const dstContent = fsSync.readFileSync(dstPath, 'utf8');
+      if (srcContent === dstContent) needsCopy = false;
+    }
+
+    if (needsCopy) {
+      await fs.writeFile(dstPath, srcContent, 'utf8');
+      deployed++;
+      debug(`deployTools: deployed ${file}`);
+    }
+  }
+
+  return deployed;
+};
+
+// =============================================================================
+// Prompt Override Deployment (G5)
+// =============================================================================
+
 const deployPromptOverrides = async (): Promise<number> => {
   const overridesDir = path.resolve(
     path.dirname(new URL(import.meta.url).pathname),
@@ -372,6 +419,14 @@ export const applyCustomization = async (
   }
 
   const allResults: PatchResult[] = [];
+
+  // ==========================================================================
+  // Deploy governance tools to config dir before applying
+  // ==========================================================================
+  const toolsDeployed = await deployTools();
+  if (toolsDeployed > 0) {
+    debug(`Deployed ${toolsDeployed} tool file(s) to ${TOOLS_DIR}`);
+  }
 
   // ==========================================================================
   // Deploy governance prompt overrides to config dir before applying

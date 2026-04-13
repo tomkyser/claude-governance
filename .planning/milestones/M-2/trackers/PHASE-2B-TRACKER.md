@@ -1,50 +1,51 @@
 # Phase 2b Tracker — Clean-Room REPL
 
-Status: PENDING
-Started: —
-
-## Scope
-
-Implement a clean-room REPL tool (Node.js VM with persistent context) that plugs into the Phase 2a tool injection mechanism. Users get batch JS execution with inner tool handlers for file I/O, shell, and grep/glob.
-
-## Design Spec
-
-`/Users/tom.kyser/dev/claude-code-patches/specs/repl-clean-room.md`
+**Status:** COMPLETE
+**Started:** 2026-04-13
+**Completed:** 2026-04-13
 
 ## Tasks
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Implement REPL tool definition (matches injection contract) | Pending |
-| 2 | Node VM sandbox — persistent context, timeout, result serialization | Pending |
-| 3 | Inner tool handlers — read, write, edit, bash, grep, glob, fetch | Pending |
-| 4 | Operation tracking via Proxy | Pending |
-| 5 | Safety — blocked paths, traversal prevention, size limits | Pending |
-| 6 | Deploy to ~/.claude-governance/tools/, test in live CC session | Pending |
-| 7 | Phase docs | Pending |
+| 1 | Auto-Discovery Loader + Tool Deployment | COMPLETE |
+| 2 | REPL Core — VM Engine + Tool Handlers | COMPLETE |
+| 3 | Configuration — Modes + Loader Filtering | COMPLETE |
+| 4 | Prompt — Tool Prompt + Replace Override | COMPLETE |
+| 5 | Verification + Testing + Housekeeping | COMPLETE |
 
-## Tool Contract (from 2a)
+## Decisions
 
-```javascript
-{
-  name: 'REPL',
-  inputJSONSchema: {
-    type: 'object',
-    properties: {
-      script: { type: 'string', description: 'JavaScript code to execute' },
-      description: { type: 'string', description: 'Brief description of the script' },
-    },
-    required: ['script'],
-  },
-  async prompt() { return '...' },
-  async description() { return '...' },
-  async call(args, context) { return { data: { success, result, operations, stdout, stderr, duration } } },
-}
-```
+- **Option B (tool delegation) confirmed:** All 9 inner handlers delegate to CC's native tools via `context.options.tools`. No reimplementation of file I/O.
+- **Auto-discovery loader:** Generic `index.js` scans tools dir for `.js` files. Future tools (Tungsten, etc.) just drop a file in.
+- **Replace mode prompt override not possible via pieces pipeline:** "Using your tools" section is runtime-generated, not in prompt data files. Model naturally follows REPL prompt when primitives are filtered.
+- **Grep/Glob route through Bash:** Not in tool registry when embedded tools active (F7). REPL constructs shell commands that auto-dispatch to embedded ugrep/bfs.
 
-## Key Decisions (from spec)
+## Test Results
 
-- **Phase 1 handlers:** Direct fs/child_process (Option A), not CC internal tool handlers
-- **Persistence:** VM context survives across REPL calls within a session
-- **Coexistence:** REPL supplements primitive tools (Bash/Read/Edit stay available)
-- **Safety:** Blocked paths (.env, .ssh, .git), execFile not exec, per-script timeout
+| Test | Result |
+|------|--------|
+| Basic execution (return 1+1) | PASS |
+| File read (delegation to Read.call) | PASS |
+| Multi-op batch (read + bash) | PASS |
+| Write + read round-trip | PASS |
+| Edit + read verification | PASS |
+| Grep through Bash | PASS |
+| Console capture (stdout + stderr) | PASS |
+| Error handling (thrown errors) | PASS |
+| Timeout safety (120s, clean kill) | PASS |
+| Coexist mode (REPL + primitives visible) | PASS |
+| Replace mode (primitives filtered) | PASS |
+| Tool deployment checks in `check` | PASS |
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `data/tools/index.js` | NEW: auto-discovery loader |
+| `data/tools/ping.js` | NEW: Ping extracted from inline |
+| `data/tools/repl.js` | NEW: REPL implementation (18KB) |
+| `src/patches/index.ts` | ADD: `deployTools()`, wired into apply flow |
+| `src/patches/governance.ts` | ADD: `TOOL_REPLACE_FILTER_CODE`, wired into `writeToolInjection` |
+| `src/index.tsx` | ADD: Tool Deployment section in `handleCheck` |
+| `package.json` | ADD: `data/tools/*.js` to files array |

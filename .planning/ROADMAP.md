@@ -219,15 +219,15 @@ binary patching of the tool registry.
 - [x] **G11: Glob/Grep registry exclusion** — verification entry confirms exclusion pattern in binary
 - [x] **G12: EMB statusline** — fixed state path, registry exclusion check, EMB:LEAK indicator
 
-### Phase 2b: Clean-Room REPL
+### Phase 2b: Clean-Room REPL [COMPLETE]
 Full spec: `.planning/specs/repl-clean-room.md` v1.0
-- [ ] **Auto-discovery tool loader** — generic index.js scans tools dir, deployTools() mirrors deployPromptOverrides pattern
-- [ ] **REPL core** — Node VM with persistent context, 9 inner handlers (read/write/edit/bash/grep/glob/notebook_edit/fetch/agent) delegating to CC tools via context.options.tools (Option B — Finding F1)
-- [ ] **Console capture** — captured stdout/stderr, operation tracking with per-call logging, structured result formatting
-- [ ] **Configuration** — coexist (default) vs replace mode in config.json; replace mode filters primitives from loader + deploys REPL-focused prompt override
-- [ ] **Prompt strategy** — comprehensive prompt() teaching batch patterns; "Using your tools" override for replace mode (mirrors Ant behavior per Finding F2)
-- [ ] **Verification** — file-existence checks for tools dir, index.js, repl.js in check command
-- [ ] **Safety** — CC permission delegation via Option B, VM timeout, AbortController, safe require allowlist, result size limits
+- [x] **Auto-discovery tool loader** — generic index.js scans tools dir, deployTools() mirrors deployPromptOverrides pattern
+- [x] **REPL core** — Node VM with persistent context, 9 inner handlers delegating to CC tools via context.options.tools (Option B — F1)
+- [x] **Console capture** — captured stdout/stderr, operation tracking with per-call logging, structured result formatting
+- [x] **Configuration** — coexist (default) vs replace mode in config.json; replace mode filters primitives from binary-patched loader
+- [x] **Prompt strategy** — comprehensive prompt() teaching batch patterns; replace-mode prompt override not possible (runtime-generated, not data-stored)
+- [x] **Verification** — file-existence checks for tools dir, index.js, repl.js in check command
+- [x] **Safety** — CC permission delegation via Option B, VM timeout, AbortController, safe require allowlist, result size limits
 
 ### Phase 2c: Clean-Room Tungsten
 - [ ] Implement per spec: `specs/tungsten-clean-room.md`

@@ -811,6 +811,29 @@ async function handleCheck(binaryPath?: string): Promise<void> {
     }
   }
 
+  // --- Tool deployment checks (file-existence, not binary signature) ---
+  const toolsDir = path.join(CONFIG_DIR, 'tools');
+  const toolFiles = [
+    { name: 'Tools directory', file: toolsDir, isDir: true },
+    { name: 'Auto-discovery loader', file: path.join(toolsDir, 'index.js'), isDir: false },
+    { name: 'REPL tool', file: path.join(toolsDir, 'repl.js'), isDir: false },
+  ];
+  let toolChecksPassing = 0;
+  const toolChecksTotal = toolFiles.length;
+  const toolCheckResults: Array<{ name: string; pass: boolean }> = [];
+  for (const tc of toolFiles) {
+    const exists = fsSync.existsSync(tc.file);
+    if (exists) toolChecksPassing++;
+    toolCheckResults.push({ name: tc.name, pass: exists });
+  }
+  const toolsAllPass = toolChecksPassing === toolChecksTotal;
+  console.log(`  ${toolsAllPass ? chalk.green('✓') : chalk.yellow('!')} ${chalk.bold('Tool Deployment')}`);
+  for (const tc of toolCheckResults) {
+    const icon = tc.pass ? chalk.green('✓') : chalk.yellow('!');
+    console.log(`    ${icon} ${tc.name}`);
+    if (!tc.pass) console.log(`      ${chalk.gray('run: claude-governance --apply')}`);
+  }
+
   console.log('');
 
   if (status === 'SOVEREIGN') {
