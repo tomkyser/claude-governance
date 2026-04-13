@@ -104,21 +104,92 @@ These checks prevent the kind of compounding errors that waste entire sessions.
   - Development (testing channel): `dev—{major}.{minor}.{patch}` — tag: `D.{major}.{minor}.{patch}`
   - Feature/Task branches: `{feature/task}-{milestone}-{phase}-{patch}`
 
+## Project Management — Rigid Process (No Exceptions)
+
+This process is mandatory. Every phase, every session, every agent. No shortcuts.
+
+### Directory Structure
+
+```
+.planning/
+  ROADMAP.md                          # Global roadmap — always current
+  STATE.md                            # Global state — folds in from phase trackers
+  journals/                           # Session journals — named session-YYYY-MM-DD[-suffix].md
+  reports/                            # Research reports, analysis docs
+  research/                           # Dated research findings
+  specs/                              # Design specs
+  milestones/
+    M-{n}/                            # One directory per milestone
+      CONTEXT.md                      # Shared notepad — MUST be read by every agent
+      BOOTSTRAP.md                    # Bootstrap prompt — scoped to milestone, updated in-place
+      handoffs/                       # Per-phase handoff docs (generated at phase end)
+        HANDOFF-PHASE-{id}.md
+      trackers/                       # Per-phase state trackers
+        PHASE-{id}-TRACKER.md
+      retrospectives/                 # End-of-milestone retrospective
+        RETRO-M-{n}.md
+```
+
+### Per-Phase Checklist (Mandatory — No Exceptions)
+
+**On phase start:**
+1. Create phase tracker in `trackers/PHASE-{id}-TRACKER.md`
+2. Create tasks via TaskCreate tool for each work item
+3. Read `CONTEXT.md` — update if stale
+4. Read `ROADMAP.md` — confirm phase scope
+
+**During phase:**
+5. Update task status (in_progress → completed) as work progresses
+6. Atomic git commits at each completed task
+7. Update phase tracker with decisions, issues found, and step completions
+
+**On phase end:**
+8. Mark all tasks completed or delete stale ones
+9. Update phase tracker status to COMPLETE
+10. Generate handoff doc in `handoffs/HANDOFF-PHASE-{id}.md`
+11. Update `ROADMAP.md` — mark phase complete in both active and completed sections
+12. Update `STATE.md` — fold phase tracker into global state
+13. Update `CONTEXT.md` — refresh current state for next phase/agent
+14. Update `BOOTSTRAP.md` — point to next phase
+15. Commit all doc updates atomically
+
+### On Milestone End (After All Phases in M-{n})
+
+16. Generate retrospective in `retrospectives/RETRO-M-{n}.md`
+17. Evaluate pinned retro items from roadmap
+18. Create next milestone directory `M-{n+1}/` with empty CONTEXT.md
+
+### Agent Context Protocol
+
+**CONTEXT.md is mandatory for all agents.** When spawning subagents:
+- Always include the path to CONTEXT.md in the agent prompt
+- Instruct the agent to read it before doing any work
+- Any findings the agent produces that affect shared state must be noted in CONTEXT.md
+
+### Tracking Hierarchy
+
+| Tool | Scope | Persistence |
+|------|-------|-------------|
+| TaskCreate/TaskUpdate | Current phase, current session | Ephemeral (session only) |
+| Phase Tracker | Single phase, across sessions | `.planning/milestones/M-{n}/trackers/` |
+| STATE.md | Global project state | `.planning/STATE.md` |
+| ROADMAP.md | All phases, all milestones | `.planning/ROADMAP.md` |
+
+Phase trackers fold UP into STATE.md. ROADMAP.md is the source of truth for what's done and what's next.
+
+### Journals
+
+- Named `session-YYYY-MM-DD[-suffix].md` with real dates
+- Stored in `.planning/journals/`
+- Record decisions, findings, and gotchas that the tracker doesn't capture
+- Suffix with `-a`, `-b`, etc. for multiple sessions on the same day
+
 ## Execution Rules
 
 - Read files before editing. Context decays after 10+ messages.
 - <=5 files per phase. Verify each phase before proceeding.
 - "Make a plan" = output the plan only. No code until greenlit.
-- Keep specs, roadmaps, and state docs current — they are the project's memory.
-- All research findings go into docs/ with dates. Findings have a half-life.
 - Verify foundational assumptions against git state and file state before building.
-
-## State Tracking
-
-- `docs/STATE.md` — current project state, what's working, what's broken, what's next
-- `docs/ROADMAP.md` — prioritized work items with status
-- `docs/research/` — dated research findings
-- Session journals — per-session records of decisions and findings
 
 ## Testing
 
