@@ -38,9 +38,14 @@ import {
 } from './installationBackup';
 import { clearAllAppliedHashes } from './systemPromptHashIndex';
 import { extractClaudeJsFromNativeInstallation } from './nativeInstallationLoader';
+import { VERIFICATION_REGISTRY } from './patches/governance';
 import {
-  VERIFICATION_REGISTRY,
-} from './patches/governance';
+  CheckResult,
+  runVerification,
+  readVerificationState,
+  writeVerificationState,
+  deriveStatus,
+} from './verification';
 
 // =============================================================================
 // Invocation Command Detection
@@ -397,15 +402,9 @@ async function handleApplyMode(
         if (verifyBuffer) {
           const verifyJs = verifyBuffer.toString('utf8');
           const verifyResults = runVerification(verifyJs);
-          const passing = verifyResults.filter(r => r.pass).length;
-          const failing = verifyResults.filter(r => !r.pass);
-          const criticalFail = failing.filter(r => r.critical);
-          const status = failing.length === 0
-            ? 'SOVEREIGN'
-            : criticalFail.length > 0
-              ? 'DEGRADED'
-              : 'PARTIAL';
+          const status = deriveStatus(verifyResults);
           await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version);
+          const passing = verifyResults.filter(r => r.pass).length;
           console.log(chalk.dim(`  Verified: ${status} (${passing}/${verifyResults.length})`));
         }
       } catch {
@@ -655,125 +654,6 @@ async function handleListSystemPrompts(
 // Check (Governance Verification)
 // =============================================================================
 
-interface CheckResult {
-  id: string;
-  name: string;
-  pass: boolean;
-  critical: boolean;
-  details?: string;
-}
-
-function matchEntry(
-  js: string,
-  pattern: string | RegExp | undefined,
-): boolean {
-  if (!pattern) return false;
-  return typeof pattern === 'string' ? js.includes(pattern) : pattern.test(js);
-}
-
-function runVerification(js: string): CheckResult[] {
-  const results: CheckResult[] = [];
-
-  for (const entry of VERIFICATION_REGISTRY) {
-    const hasSig = entry.signature ? matchEntry(js, entry.signature) : true;
-    const hasAntiSig = entry.antiSignature
-      ? matchEntry(js, entry.antiSignature)
-      : false;
-
-    const pass = hasSig && !hasAntiSig;
-
-    let details: string;
-    if (pass) {
-      details = entry.passDetail ?? 'active';
-    } else if (!hasSig && entry.signature) {
-      details = 'replacement text not found';
-    } else if (hasAntiSig && hasSig) {
-      details = 'replacement present but original also found';
-    } else if (hasAntiSig && entry.category === 'gate') {
-      const count = typeof entry.antiSignature === 'string'
-        ? (js.match(new RegExp(entry.antiSignature.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length
-        : 0;
-      details = `${count} unresolved ${entry.antiSignature} references`;
-    } else if (hasAntiSig) {
-      details = 'original text still present';
-    } else {
-      details = 'not found';
-    }
-
-    results.push({
-      id: entry.id,
-      name: entry.name,
-      pass,
-      critical: entry.critical,
-      details,
-    });
-  }
-
-  return results;
-}
-
-interface VerificationState {
-  timestamp: string;
-  governanceVersion: string;
-  ccVersion?: string;
-  binaryPath: string;
-  status: string;
-  checks: Array<{
-    id: string;
-    name: string;
-    pass: boolean;
-    critical: boolean;
-    details?: string;
-  }>;
-  passCount: number;
-  totalCount: number;
-}
-
-async function readVerificationState(): Promise<VerificationState | null> {
-  const fsP = await import('node:fs/promises');
-  const pathM = await import('node:path');
-  const statePath = pathM.join(CONFIG_DIR, 'state.json');
-  try {
-    const raw = await fsP.readFile(statePath, 'utf8');
-    return JSON.parse(raw) as VerificationState;
-  } catch {
-    return null;
-  }
-}
-
-async function writeVerificationState(
-  results: CheckResult[],
-  status: string,
-  binaryPath: string,
-  ccVersion?: string,
-): Promise<void> {
-  const fsP = await import('node:fs/promises');
-  const pathM = await import('node:path');
-
-  const stateDir = CONFIG_DIR;
-  await fsP.mkdir(stateDir, { recursive: true });
-
-  const state: VerificationState = {
-    timestamp: new Date().toISOString(),
-    governanceVersion: '0.1.0',
-    ccVersion,
-    binaryPath,
-    status,
-    checks: results.map(r => ({
-      id: r.id,
-      name: r.name,
-      pass: r.pass,
-      critical: r.critical,
-      details: r.details,
-    })),
-    passCount: results.filter(r => r.pass).length,
-    totalCount: results.length,
-  };
-
-  const statePath = pathM.join(stateDir, 'state.json');
-  await fsP.writeFile(statePath, JSON.stringify(state, null, 2) + '\n', 'utf8');
-}
-
 async function handleCheck(binaryPath?: string): Promise<void> {
   console.log('Verifying governance patches...\n');
 
@@ -826,6 +706,7 @@ async function handleCheck(binaryPath?: string): Promise<void> {
   }
 
   const results: CheckResult[] = runVerification(js);
+  const status = deriveStatus(results);
 
   // --- Display results ---
 
@@ -859,12 +740,6 @@ async function handleCheck(binaryPath?: string): Promise<void> {
   }
 
   console.log('');
-
-  const status = failing.length === 0
-    ? 'SOVEREIGN'
-    : criticalFail.length > 0
-      ? 'DEGRADED'
-      : 'PARTIAL';
 
   if (status === 'SOVEREIGN') {
     console.log(chalk.green.bold(`  SOVEREIGN — ${passing.length}/${results.length} checks passed`));
@@ -1017,15 +892,10 @@ async function handleApplyForLaunch(
       if (verifyBuffer) {
         const verifyJs = verifyBuffer.toString('utf8');
         const verifyResults = runVerification(verifyJs);
-        const failing = verifyResults.filter(r => !r.pass);
-        const criticalFail = failing.filter(r => r.critical);
-        const status = failing.length === 0
-          ? 'SOVEREIGN'
-          : criticalFail.length > 0
-            ? 'DEGRADED'
-            : 'PARTIAL';
+        const status = deriveStatus(verifyResults);
         await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version);
-        console.log(chalk.green(`  Governance: ${status} (${verifyResults.filter(r => r.pass).length}/${verifyResults.length})`));
+        const passing = verifyResults.filter(r => r.pass).length;
+        console.log(chalk.green(`  Governance: ${status} (${passing}/${verifyResults.length})`));
       }
     } catch {
       // Verification is best-effort
