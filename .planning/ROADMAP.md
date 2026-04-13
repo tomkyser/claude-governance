@@ -53,6 +53,12 @@ Distributed as modular NPM packages — users choose what they want.
 - [x] Environment variable injection from config.json
 - [x] Options: --no-verify, --force-apply
 
+### Phase 1c: Verification Engine
+- [x] Verification API extracted into `src/verification.ts` (CheckResult, VerificationState, runVerification, read/writeState, deriveStatus)
+- [x] SessionStart hook rewritten — correct config paths, new state.json format, version-change detection, live fallback
+- [x] Status line hooks fixed — config dir resolution, new field names, ISO timestamps
+- [x] Survives resumes, compacts, logins, subagent spawning via SessionStart + status line
+
 ### Embedded Search Tools
 - [x] Activation: `EMBEDDED_SEARCH_TOOLS=1` — bfs 4.1, ugrep 7.5.0, rg 14.1.1
 - [x] Verification hook: 8-point halt-and-catch-fire check
@@ -123,14 +129,14 @@ Standalone verification improvements — no dependency on 1b wrapper.
 - [x] Version-change detection: state.json ccVersion vs detected binary version
 - [x] Options: `--no-verify` (skip pre-flight), `--force-apply` (reapply even if current)
 
-### 1c: Verification Engine
-1b-informed verification — depends on wrapper design decisions.
+### 1c: Verification Engine [COMPLETE]
+1b-informed verification — extracted API, fixed hooks, restored status line.
 
-- [ ] **Pre-flight verification API:** Expose `check` logic as programmatic API (not just CLI) for wrapper to call before spawning CC. Interface TBD by 1b wrapper process model.
-- [ ] **Version change detection logic:** Compare state.json version vs detected binary version. Mismatch → auto-reapply or block. Trigger mechanism lives in 1b, verification logic here.
-- [ ] **Hooks-based verification (SessionStart):** Port `check` into a SessionStart hook for every CC launch. Replace stale `governance-verify.cjs`. May be superseded by 1b wrapper pre-flight — evaluate after 1b.
-- [ ] **Status line integration:** Currently broken. Delivery mechanism depends on whether wrapper or hooks own the status line.
-- [ ] **Survives resumes, compacts, logins, subagent spawning:** Depends on 1b process model — single-verify-at-launch vs continuous.
+- [x] **Pre-flight verification API:** Extracted into `src/verification.ts` — CheckResult, VerificationState, runVerification, readVerificationState, writeVerificationState, deriveStatus. Importable by wrapper and CLI.
+- [x] **Version change detection logic:** SessionStart hook compares state.json ccVersion vs installed binary. Mismatch triggers live re-check via `claude-governance check`.
+- [x] **Hooks-based verification (SessionStart):** Rewrote `governance-verify.cjs` — correct config paths, new state.json format, version-change detection, live fallback on stale/missing state.
+- [x] **Status line integration:** Fixed `statusline-combined.cjs` and `governance-statusline.cjs` — correct config dir resolution, new field names, ISO timestamp parsing.
+- [x] **Survives resumes, compacts, logins, subagent spawning:** SessionStart hook fires on every session start (including resumes). Status line reads state.json on every render. Wrapper pre-flight covers initial launches.
 
 ### Phase 1 Milestone Retro — Pinned for Re-evaluation
 *Evaluate at end of Phase 1 (after 1e) whether these belong in Phase 1 or later.*

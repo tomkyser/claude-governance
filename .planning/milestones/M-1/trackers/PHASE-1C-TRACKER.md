@@ -1,6 +1,6 @@
 # Phase 1c Tracker — Verification Engine (1b-informed)
 
-Status: IN PROGRESS
+Status: COMPLETE
 Started: 2026-04-12
 
 ## Scope
@@ -11,11 +11,11 @@ Extract verification API into importable module, fix broken hooks to use new sta
 
 | # | Task | Status |
 |---|------|--------|
-| 1 | Extract `src/verification.ts` module (CheckResult, VerificationState, runVerification, read/writeState) | Pending |
-| 2 | Rewrite `governance-verify.cjs` — correct paths, new state.json format, version-change detection | Pending |
-| 3 | Fix `statusline-combined.cjs` GOV segment — correct paths, new state.json format | Pending |
-| 4 | Build, verify end-to-end (check → state.json → hook reads → statusline reads) | Pending |
-| 5 | Phase docs (handoff, roadmap, state, context, bootstrap updates) | Pending |
+| 1 | Extract `src/verification.ts` module (CheckResult, VerificationState, runVerification, read/writeState) | Complete |
+| 2 | Rewrite `governance-verify.cjs` — correct paths, new state.json format, version-change detection | Complete |
+| 3 | Fix `statusline-combined.cjs` GOV segment — correct paths, new state.json format | Complete |
+| 4 | Build, verify end-to-end (check → state.json → hook reads → statusline reads) | Complete |
+| 5 | Phase docs (handoff, roadmap, state, context, bootstrap updates) | Complete |
 
 ## Key Findings
 

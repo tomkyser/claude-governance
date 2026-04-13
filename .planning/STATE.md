@@ -16,7 +16,7 @@ and governance-specific `check` command added.
 - **Fork location:** `/Users/tom.kyser/dev/claude-code-patches/claude-governance/`
 - **Based on:** tweakcc 4.0.11 (full fork, fresh git)
 - **Config dir:** `~/.claude-governance/` (falls back to `~/.tweakcc/` for migration)
-- **Build:** `pnpm build` → 127KB (down from 231KB after Ink removal)
+- **Build:** `pnpm build` → 131KB (down from 231KB after Ink removal)
 - **Apply:** `node dist/index.mjs --apply` (or just `node dist/index.mjs`)
 - **Verify:** `node dist/index.mjs check`
 - **Restore:** `node dist/index.mjs --restore`
@@ -52,9 +52,9 @@ and governance-specific `check` command added.
 ### Hooks (in ~/.claude/settings.json)
 | Hook | Type | Purpose |
 |------|------|---------|
-| governance-verify.cjs | SessionStart | SOVEREIGN banner + degradation warning |
+| governance-verify.cjs | SessionStart | SOVEREIGN banner + degradation warning (reads state.json, version-change detection, live fallback) |
 | embedded-tools-verify.cjs | SessionStart | 8-point embedded tools verification |
-| statusline-combined.cjs | StatusLine | GOV + EMB + GSD segments |
+| statusline-combined.cjs | StatusLine | GOV + EMB + GSD segments (config dir resolution, new state.json format) |
 
 ### Environment Variables (in settings.json env)
 | Var | Value | Purpose |
@@ -73,6 +73,7 @@ and governance-specific `check` command added.
 - **1a-gaps:** COMPLETE — contamination detection, already-applied, dead file cleanup, warning suppression
 - **1a-verification-foundation:** COMPLETE — 13-entry registry, per-override verification, state.json
 - **1b:** COMPLETE — launch subcommand, pre-flight verification, process control
-- **1c:** NEXT — 1b-informed verification
+- **1c:** COMPLETE — verification API extraction, hook rewrite, status line fix
+- **1d:** NEXT — modular architecture
 
 See `.planning/ROADMAP.md` for full details.
