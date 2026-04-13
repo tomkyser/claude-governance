@@ -24,7 +24,7 @@ docs/                    # Roadmap, state tracking, research findings
 ```
 
 **Current patching:** `claude-governance` applies all governance patches + prompt overrides.
-**Status:** Phase 1a + 1a-gaps complete. 6/6 SOVEREIGN on 2.1.101.
+**Status:** Phase 2a + 2a-gaps complete. 15/15 SOVEREIGN on 2.1.101.
 
 ## Key Principles
 
@@ -52,33 +52,60 @@ docs/                    # Roadmap, state tracking, research findings
 These checks prevent the kind of compounding errors that waste entire sessions.
 
 ### On Session Start (Before Any Work)
+0. **Understand and embrace the project vision** `.planning/VISION.md` is what we are working toward and why, this is the critical and load bearing context for what it is that we are building and what it must do.
 1. **Check git state.** Run `git status`, `git log --oneline -5`, and `ls` in the
    working directory. Do not trust compaction summaries about what exists or what's done.
-2. **Read the roadmap.** `.planning/ROADMAP.md` is the source of truth for what's complete
+2. **Read the project state.** `.planning/STATE.md` is the source of truth for where we are at overall.
+3. **Read the roadmap.** `.planning/ROADMAP.md` is the source of truth for what's complete
    and what's next. If the compaction summary disagrees, the roadmap wins.
-3. **Read CONTEXT.md.** `.planning/milestones/M-{n}/CONTEXT.md` has shared state.
-4. **Read the latest handoff.** The handoff for the most recently completed phase
+4. **Read CONTEXT.md.** `.planning/milestones/M-{n}/CONTEXT.md` has shared state.
+5. **Read the latest handoff.** The handoff for the most recently completed phase
    (listed in `BOOTSTRAP.md`) has what was built, key decisions, and gotchas.
-5. **Read the latest session journal.** It has decisions, findings, and gotchas that
-   the compaction summary may have flattened or misrepresented.
 6. **Verify before building.** If the roadmap says something is "COMPLETE," verify it
    actually exists and works before building on top of it. Check git history, run the
    tool, inspect the output. Claims of completion are hypotheses until verified.
 
 ### On Every Decision
-1. **Cross-reference the roadmap.** Does this decision align with the phased plan?
+1. **Align with the vision.** Does this decision serve the project intent described in
+   `.planning/VISION.md`? If you can't articulate how, stop and re-read it.
+2. **Cross-reference the roadmap.** Does this decision align with the phased plan?
    Does it create dependencies that conflict with later phases?
-2. **Check for existing solutions.** Before writing new code, check if the capability
+3. **Cross-reference STATE and CONTEXT.** Is this consistent with current project state?
+   Does it account for what's already built and what's planned?
+4. **Check for existing solutions.** Before writing new code, check if the capability
    already exists in a tool we're forking or a reference project listed below.
-3. **Take terms literally.** "Fork" means git fork. "Bundle" means include in the
+5. **Take terms literally.** "Fork" means git fork. "Bundle" means include in the
    package. "Extract" means pull from the binary. Do not reinterpret standard SWE
    vocabulary into something easier to implement.
+6. **Never choose the path of least resistance.** The simplest option is only acceptable
+   when it compromises nothing — quality, durability, cross-platform support, future
+   extensibility. If it's easy, ask why. If the answer is "because it cuts corners," redo.
+7. **Adversarial self-deliberation.** Before committing to a decision, try to defeat the
+   strongest version of it. What breaks this on Linux? On a newer CC version? When the
+   minifier changes? If you can't defeat it, it's strong enough. If you can, strengthen it.
+
+### Before Completing Work
+1. **Does this actually achieve the desired result?** Not "does the code compile" — does
+   it solve the problem end to end, verified against reality?
+2. **Does this satisfy the project vision?** Understand *why* this matters before
+   answering honestly. The vision is the load-bearing context.
+3. **Are you taking shortcuts?** The simplest path is never the right answer unless it
+   compromises nothing. If you chose the easy route, redo.
+4. **Are you rushing or spiraling?** If either, stop and brainstorm with the user.
+5. **Are you hiding gaps or debt?** Report every known gap, limitation, and deferred
+   item. The user would rather hear "this has a weakness" than discover it later.
+6. **Is this hardcoded or point-in-time?** If it only works on this machine, this CC
+   version, or this platform — it's not a valid solution. Build for the long term.
+7. **Are you deferring or skirting work?** Never acceptable outside of explicit user
+   direction in this immediate conversation.
+8. **Are you making assumptions?** Never assume the user's intent. If unclear, ask.
+
 
 ### When Corrected
 1. **Question the foundation, not the surface.** When Tom pushes back, the first
    response should be: "Is my underlying assumption wrong?" not "Let me tweak the
    approach." Lateral moves on a broken foundation waste tokens.
-2. **Re-read the journals and roadmap.** The answer to "why is this wrong" is almost
+2. **Re-read the VISION, STATE, and roadmap.** The answer to "why is this wrong" is almost
    always already documented. Search before speculating.
 3. **Log the pattern.** If a correction reveals a systematic failure mode (not just a
    point mistake), document it so it doesn't recur.
@@ -123,7 +150,7 @@ This process is mandatory. Every phase, every session, every agent. No shortcuts
   specs/                              # Design specs
   milestones/
     M-{n}/                            # One directory per milestone
-      CONTEXT.md                      # Shared notepad — MUST be read by every agent
+      CONTEXT.md                      # Shared state — read by every agent, updated continuously (the live bridge between agents and the main session)
       BOOTSTRAP.md                    # Bootstrap prompt — scoped to milestone, updated in-place
       handoffs/                       # Per-phase handoff docs (generated at phase end)
         HANDOFF-PHASE-{id}.md
@@ -136,32 +163,37 @@ This process is mandatory. Every phase, every session, every agent. No shortcuts
 ### Per-Phase Checklist (Mandatory — No Exceptions)
 
 **On phase start:**
-1. Create phase tracker in `trackers/PHASE-{id}-TRACKER.md`
-2. Create tasks via TaskCreate tool for each work item
-3. Read `CONTEXT.md` — update if stale
-4. Read `ROADMAP.md` — confirm phase scope
-5. Read latest handoff in `handoffs/` — understand what the previous phase delivered
+1. Read `VISION.md` — ground yourself in the project intent
+2. Create phase tracker in `trackers/PHASE-{id}-TRACKER.md`
+3. Create tasks via TaskCreate tool for each work item
+4. Read `CONTEXT.md` — update if stale
+5. Read `STATE.md` — verify global state is current
+6. Read `ROADMAP.md` — confirm phase scope
+7. Read latest handoff in `handoffs/` — understand what the previous phase delivered
 
 **During phase:**
-6. Update task status (in_progress → completed) as work progresses
-7. Atomic git commits at each completed task
-8. Update phase tracker with decisions, issues found, and step completions
+8. Update task status (in_progress → completed) as work progresses
+9. Atomic git commits at each completed task
+10. Update phase tracker with decisions, issues found, and step completions
+11. Keep `CONTEXT.md` current — update after every significant decision or finding
 
 **On phase end:**
-9. Mark all tasks completed or delete stale ones
-10. Update phase tracker status to COMPLETE
-11. Generate handoff doc in `handoffs/HANDOFF-PHASE-{id}.md`
-12. Update `ROADMAP.md` — mark phase complete in both active and completed sections
-13. Update `STATE.md` — fold phase tracker into global state
-14. Update `CONTEXT.md` — refresh current state for next phase/agent
-15. Update `BOOTSTRAP.md` — point to next phase AND include path to latest handoff
-16. Commit all doc updates atomically
+12. Mark all tasks completed or delete stale ones
+13. Update phase tracker status to COMPLETE
+14. Generate handoff doc in `handoffs/HANDOFF-PHASE-{id}.md`
+15. Update `ROADMAP.md` — mark phase complete in both active and completed sections
+16. Update `STATE.md` — fold phase tracker into global state
+17. Update `CONTEXT.md` — refresh current state for next phase/agent
+18. Update `BOOTSTRAP.md` — point to next phase AND include path to latest handoff
+19. Commit all doc updates atomically
 
 ### On Milestone End (After All Phases in M-{n})
 
-17. Generate retrospective in `retrospectives/RETRO-M-{n}.md`
-18. Evaluate pinned retro items from roadmap
-19. Create next milestone directory `M-{n+1}/` with empty CONTEXT.md
+20. Re-read `VISION.md` — verify milestone outcome aligns with project intent
+21. Generate retrospective in `retrospectives/RETRO-M-{n}.md`
+22. Evaluate pinned retro items from roadmap
+23. Update `STATE.md` — milestone-level state summary
+24. Create next milestone directory `M-{n+1}/` with empty CONTEXT.md
 
 ### Agent Context Protocol
 
