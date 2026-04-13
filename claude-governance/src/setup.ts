@@ -8,7 +8,7 @@ import { CONFIG_DIR, CONFIG_FILE, ensureConfigDir, readConfigFile } from './conf
 import { startupCheck } from './startup';
 import { formatNotFoundError } from './installationDetection';
 import { preloadStringsFile } from './systemPromptSync';
-import { applyCustomization } from './patches/index';
+import { applyCustomization, runFunctionalProbe } from './patches/index';
 import { extractClaudeJsFromNativeInstallation } from './nativeInstallationLoader';
 import {
   runVerification,
@@ -246,6 +246,24 @@ export async function handleSetup(): Promise<void> {
       }
     } catch {
       console.log(chalk.yellow('  ⚠ Verification failed'));
+    }
+  }
+
+  // G5: Functional probe — halt and catch fire on tool failure
+  if (binaryPath) {
+    console.log(chalk.dim('\nRunning functional probe...'));
+    const probe = await runFunctionalProbe(binaryPath);
+    if (probe.success) {
+      console.log(chalk.green('  ✓ Tools functional — Ping verified via claude -p'));
+    } else if (probe.inconclusive) {
+      console.log(chalk.yellow(`  ⚠ Probe inconclusive: ${probe.error}`));
+      console.log(chalk.yellow('    Tools may still work — verify manually'));
+    } else {
+      console.log(chalk.red.bold('\n  ✗ TOOL FUNCTIONAL PROBE FAILED'));
+      console.log(chalk.red(`    ${probe.error}`));
+      console.log(chalk.red('    Patches applied but tools are NOT working.'));
+      console.log(chalk.red('    Run: claude-governance check'));
+      process.exit(1);
     }
   }
 

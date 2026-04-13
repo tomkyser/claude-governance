@@ -34,6 +34,8 @@ export interface VerificationState {
     validated: boolean;
     names: string[];
     count: number;
+    probed?: boolean;
+    probeSuccess?: boolean;
   };
 }
 
@@ -115,7 +117,7 @@ export async function writeVerificationState(
   binaryPath: string,
   ccVersion?: string,
   binaryFingerprint?: { size: number; mtimeMs: number } | null,
-  tools?: { validated: boolean; names: string[]; count: number } | null,
+  tools?: { validated: boolean; names: string[]; count: number; probed?: boolean; probeSuccess?: boolean } | null,
 ): Promise<void> {
   const fsP = await import('node:fs/promises');
   const pathM = await import('node:path');

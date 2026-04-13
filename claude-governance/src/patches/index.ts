@@ -405,6 +405,77 @@ export const validateToolDeployment = (): ToolDeploymentValidation => {
 };
 
 // =============================================================================
+// Functional Probe (G1+G5)
+// =============================================================================
+
+export interface FunctionalProbeResult {
+  success: boolean;
+  inconclusive: boolean;
+  error?: string;
+}
+
+export const runFunctionalProbe = async (
+  binaryPath: string,
+): Promise<FunctionalProbeResult> => {
+  const { execFileSync } = await import('node:child_process');
+  const marker = 'governance-verify';
+
+  try {
+    const output = execFileSync(
+      binaryPath,
+      ['-p', `Use the Ping tool with message '${marker}'`],
+      {
+        encoding: 'utf-8',
+        timeout: 45000,
+        cwd: fsSync.existsSync('/tmp') ? '/tmp' : undefined,
+        env: { ...process.env, DISABLE_AUTOUPDATER: '1' },
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
+
+    if (output.includes(marker)) {
+      return { success: true, inconclusive: false };
+    }
+
+    return {
+      success: false,
+      inconclusive: false,
+      error: 'Ping marker not in response — tool not functional',
+    };
+  } catch (err: unknown) {
+    const e = err as {
+      stdout?: string;
+      stderr?: string;
+      message?: string;
+    };
+    if (e.stdout && e.stdout.includes(marker)) {
+      return { success: true, inconclusive: false };
+    }
+    const msg = e.message || String(err);
+    if (
+      msg.includes('ETIMEDOUT') ||
+      msg.includes('timed out') ||
+      msg.includes('SIGTERM')
+    ) {
+      return {
+        success: false,
+        inconclusive: true,
+        error: 'probe timed out',
+      };
+    }
+    return {
+      success: false,
+      inconclusive:
+        msg.includes('auth') ||
+        msg.includes('401') ||
+        msg.includes('403') ||
+        msg.includes('ECONNREFUSED'),
+      error: msg.length > 200 ? msg.substring(0, 200) + '...' : msg,
+    };
+  }
+};
+
+// =============================================================================
 // Prompt Override Deployment (G5)
 // =============================================================================
 

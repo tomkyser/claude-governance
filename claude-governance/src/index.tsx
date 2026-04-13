@@ -23,6 +23,7 @@ import {
   PatchGroup,
   getAllPatchDefinitions,
   validateToolDeployment,
+  runFunctionalProbe,
 } from './patches/index';
 import {
   preloadStringsFile,
@@ -463,17 +464,40 @@ async function handleApplyMode(
           const status = deriveStatus(verifyResults);
           const fingerprint = getBinaryFingerprint(binaryForVerify);
           const applyToolVal = validateToolDeployment();
-          const applyToolState = {
-            validated: applyToolVal.loaderValid && applyToolVal.tools.every(t => t.valid),
-            names: applyToolVal.toolNames,
-            count: applyToolVal.toolNames.length,
-          };
-          await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint, applyToolState);
+          const toolsValid = applyToolVal.loaderValid && applyToolVal.tools.every(t => t.valid);
+
           const passing = verifyResults.filter(r => r.pass).length;
           console.log(chalk.dim(`  Verified: ${status} (${passing}/${verifyResults.length})`));
-          if (applyToolState.validated && applyToolState.count > 0) {
-            console.log(chalk.dim(`  Tools: ${applyToolState.names.join(', ')}`));
+          if (toolsValid && applyToolVal.toolNames.length > 0) {
+            console.log(chalk.dim(`  Tools: ${applyToolVal.toolNames.join(', ')}`));
           }
+
+          // G1: Runtime functional probe — proves end-to-end tool injection
+          let probed = false;
+          let probeSuccess = false;
+          if (toolsValid) {
+            console.log(chalk.dim('  Running functional probe...'));
+            const probe = await runFunctionalProbe(binaryForVerify);
+            probed = true;
+            probeSuccess = probe.success;
+            if (probe.success) {
+              console.log(chalk.green('  ✓ Probe: tools functional'));
+            } else if (probe.inconclusive) {
+              console.log(chalk.yellow(`  ⚠ Probe inconclusive: ${probe.error}`));
+              probed = false;
+            } else {
+              console.log(chalk.red.bold('  ✗ PROBE FAILED — tools NOT functional'));
+              console.log(chalk.red(`    ${probe.error}`));
+            }
+          }
+
+          const applyToolState = {
+            validated: toolsValid,
+            names: applyToolVal.toolNames,
+            count: applyToolVal.toolNames.length,
+            ...(probed ? { probed, probeSuccess } : {}),
+          };
+          await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint, applyToolState);
         }
       } catch {
         // Verification is best-effort after apply
