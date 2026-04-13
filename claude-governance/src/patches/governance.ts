@@ -570,62 +570,181 @@ const TOOL_ZOD_SHIM_CODE = [
   `}`,
 ].join('');
 
+// G9: Multiple detection strategies for getAllBaseTools, ordered by confidence.
+// The minifier can change function names, syntax style, and body size across
+// CC versions. Each strategy extracts: fnName, arrayStartIdx, arrayContent.
+
+interface ToolArrayDetection {
+  fnName: string;
+  fnDeclStart: string;
+  arrayContent: string;
+  fullMatch: string;
+  strategy: string;
+  spreads: number;
+}
+
+function findArrayEnd(content: string, startIdx: number): number {
+  let depth = 1;
+  for (let i = startIdx; i < content.length && i < startIdx + 8000; i++) {
+    if (content[i] === '[') depth++;
+    else if (content[i] === ']') { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+
+function detectToolArray(content: string): ToolArrayDetection | null {
+  const strategies: Array<{
+    name: string;
+    fn: () => ToolArrayDetection | null;
+  }> = [
+    {
+      name: 'function-declaration',
+      fn: () => {
+        const m = content.match(
+          /function ([$\w]+)\(\)\{return\[([$\w]+),([$\w]+),([$\w]+),/
+        );
+        if (!m || m.index === undefined) return null;
+        const fnName = m[1];
+        const prefix = `function ${fnName}(){return[`;
+        const prefixIdx = content.indexOf(prefix);
+        if (prefixIdx === -1) return null;
+        const arrayStart = prefixIdx + prefix.length;
+        const arrayEnd = findArrayEnd(content, arrayStart);
+        if (arrayEnd === -1) return null;
+        const arrayContent = content.substring(arrayStart, arrayEnd);
+        const spreads = (arrayContent.match(/\.\.\./g) || []).length;
+        if (spreads < 10) return null;
+        return {
+          fnName,
+          fnDeclStart: prefix,
+          arrayContent,
+          fullMatch: prefix + arrayContent + ']}',
+          strategy: 'function-declaration',
+          spreads,
+        };
+      },
+    },
+    {
+      name: 'arrow-function',
+      fn: () => {
+        const m = content.match(
+          /(?:var |let |const )([$\w]+)=\(\)=>\[([$\w]+),([$\w]+),([$\w]+),/
+        );
+        if (!m || m.index === undefined) return null;
+        const fnName = m[1];
+        const prefix = `${fnName}=()=>[`;
+        const prefixIdx = content.indexOf(prefix);
+        if (prefixIdx === -1) return null;
+        const declStart = content.lastIndexOf(content[prefixIdx - 1] === '=' ? 'var ' : 'const ', prefixIdx);
+        const arrayStart = prefixIdx + prefix.length;
+        const arrayEnd = findArrayEnd(content, arrayStart);
+        if (arrayEnd === -1) return null;
+        const arrayContent = content.substring(arrayStart, arrayEnd);
+        const spreads = (arrayContent.match(/\.\.\./g) || []).length;
+        if (spreads < 10) return null;
+        const fullDeclPrefix = content.substring(
+          declStart === -1 ? prefixIdx : declStart,
+          prefixIdx
+        ) + prefix;
+        return {
+          fnName,
+          fnDeclStart: fullDeclPrefix,
+          arrayContent,
+          fullMatch: fullDeclPrefix + arrayContent + ']',
+          strategy: 'arrow-function',
+          spreads,
+        };
+      },
+    },
+    {
+      name: 'content-based',
+      fn: () => {
+        const toolSig = /name:"(?:Bash|Read|Edit|Write|Agent)"/;
+        const sigMatch = content.match(toolSig);
+        if (!sigMatch || sigMatch.index === undefined) return null;
+        const nearby = content.substring(
+          Math.max(0, sigMatch.index - 3000),
+          sigMatch.index
+        );
+        const fnMatch = nearby.match(
+          /function ([$\w]+)\(\)\{return\[/
+        );
+        const arrowMatch = nearby.match(
+          /(?:var |let |const )([$\w]+)=\(\)=>\[/
+        );
+        const match = fnMatch || arrowMatch;
+        if (!match) return null;
+        const fnName = match[1];
+        const isArrow = !fnMatch;
+        const prefix = isArrow ? `${fnName}=()=>[` : `function ${fnName}(){return[`;
+        const prefixIdx = content.indexOf(prefix);
+        if (prefixIdx === -1) return null;
+        const arrayStart = prefixIdx + prefix.length;
+        const arrayEnd = findArrayEnd(content, arrayStart);
+        if (arrayEnd === -1) return null;
+        const arrayContent = content.substring(arrayStart, arrayEnd);
+        const spreads = (arrayContent.match(/\.\.\./g) || []).length;
+        if (spreads < 8) return null;
+        const fullMatch = isArrow
+          ? prefix + arrayContent + ']'
+          : prefix + arrayContent + ']}';
+        return {
+          fnName,
+          fnDeclStart: prefix,
+          arrayContent,
+          fullMatch,
+          strategy: 'content-based',
+          spreads,
+        };
+      },
+    },
+  ];
+
+  for (const { name, fn } of strategies) {
+    try {
+      const result = fn();
+      if (result) {
+        debug(`  tool injection: strategy "${name}" matched — ${result.fnName}() with ${result.spreads} spreads`);
+        return result;
+      }
+    } catch (err) {
+      debug(`  tool injection: strategy "${name}" threw: ${err}`);
+    }
+  }
+
+  return null;
+}
+
 export const writeToolInjection = (
   content: string
 ): string | null => {
-  // Find getAllBaseTools (minified as Ut in 2.1.101)
-  // Strategy: find `function XX(){return[` where XX is followed by a known
-  // tool array pattern. We anchor on the function containing tool variable names.
-  const fnStart = content.match(
-    /function ([$\w]+)\(\)\{return\[([$\w]+),([$\w]+),([$\w]+),/
-  );
+  const detection = detectToolArray(content);
 
-  if (!fnStart) {
-    debug('  tool injection: could not find getAllBaseTools function');
+  if (!detection) {
+    debug('  tool injection: all detection strategies failed');
     return null;
   }
 
-  const fnName = fnStart[1];
-  const fnPrefix = `function ${fnName}(){return[`;
+  const { fnName, arrayContent, fullMatch, strategy } = detection;
+  const isArrow = strategy === 'arrow-function';
 
-  // Verify this is likely getAllBaseTools by checking the function contains
-  // many conditional spreads (the tool gating pattern)
-  const fnStartIdx = content.indexOf(fnPrefix);
-  if (fnStartIdx === -1) return null;
-
-  // Find the function end — look for `]}function` or `]}var` after the start
-  const searchFrom = fnStartIdx + fnPrefix.length;
-  const fnBody = content.substring(searchFrom, searchFrom + 2000);
-  const fnEndMatch = fnBody.match(/\]\}(?=function |var |let |const |[$\w]+=)/);
-
-  if (!fnEndMatch || fnEndMatch.index === undefined) {
-    debug('  tool injection: could not find end of getAllBaseTools');
-    return null;
-  }
-
-  // Count conditional spreads to verify this is the tool registry
-  const condSpreads = (fnBody.substring(0, fnEndMatch.index).match(/\.\.\./g) || []).length;
-  if (condSpreads < 10) {
-    debug(`  tool injection: function has only ${condSpreads} spreads, expected 10+`);
-    return null;
-  }
-
-  debug(`  tool injection: found ${fnName}() at offset ${fnStartIdx} with ${condSpreads} spreads`);
-
-  // Build the replacement:
-  // Before: function Ut(){return[...tools...]}
-  // After:  function Ut(){var _b=[...tools...];LOADER;return _b.concat(__claude_governance_tools__)}
-  const fullMatch = fnPrefix + fnBody.substring(0, fnEndMatch.index + 2);
-  const arrayContent = fnBody.substring(0, fnEndMatch.index);
-
-  const replacement = [
-    `function ${fnName}(){`,
-    TOOL_LOADER_CODE,
-    `var _b=[${arrayContent}];`,
-    TOOL_ZOD_SHIM_CODE,
-    `return _b.concat(${TOOL_LOADER_SIGNATURE})`,
-    `}`,
-  ].join('');
+  const replacement = isArrow
+    ? [
+        `${fnName}=()=>{`,
+        TOOL_LOADER_CODE,
+        `var _b=[${arrayContent}];`,
+        TOOL_ZOD_SHIM_CODE,
+        `return _b.concat(${TOOL_LOADER_SIGNATURE})`,
+        `}`,
+      ].join('')
+    : [
+        `function ${fnName}(){`,
+        TOOL_LOADER_CODE,
+        `var _b=[${arrayContent}];`,
+        TOOL_ZOD_SHIM_CODE,
+        `return _b.concat(${TOOL_LOADER_SIGNATURE})`,
+        `}`,
+      ].join('');
 
   const result = content.replace(fullMatch, replacement);
   if (result === content) {
@@ -633,6 +752,6 @@ export const writeToolInjection = (
     return null;
   }
 
-  debug(`  tool injection: patched ${fnName}() to load external tools`);
+  debug(`  tool injection: patched ${fnName}() via ${strategy}`);
   return result;
 };
