@@ -21,6 +21,6 @@ node dist/index.mjs check
 **Then:** 2b (Clean-Room REPL — blocked on 2a-gaps)
 
 **CRITICAL — read before doing anything:**
-- `.planning/milestones/M-2/trackers/PHASE-2A-GAPS-TRACKER.md` — 12 gaps, 4 done, 8 pending
-- `.planning/journals/session-2026-04-13-a.md` — this session: vault, shim failsafe, observability, installer script analysis
-- `.planning/journals/session-2026-04-12-c.md` — prior session: binary corruption discovery, Zod crash details
+- `.planning/milestones/M-2/trackers/PHASE-2A-GAPS-TRACKER.md` — 12 gaps, 12 done (COMPLETE)
+- `.planning/journals/session-2026-04-13-b.md` — latest: closed all 8 remaining gaps, VISION.md, CLAUDE.md refinement
+- `.planning/journals/session-2026-04-13-a.md` — prior: vault, shim failsafe, observability, installer script analysis
