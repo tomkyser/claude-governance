@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 
 import {
+  CONFIG_DIR,
   CONFIG_FILE,
   readConfigFile,
   updateConfigFile,
@@ -37,7 +38,9 @@ import {
 } from './installationBackup';
 import { clearAllAppliedHashes } from './systemPromptHashIndex';
 import { extractClaudeJsFromNativeInstallation } from './nativeInstallationLoader';
-import { GOVERNANCE_DEFAULTS } from './patches/governance';
+import {
+  VERIFICATION_REGISTRY,
+} from './patches/governance';
 
 // =============================================================================
 // Invocation Command Detection
@@ -370,6 +373,31 @@ async function handleApplyMode(
     } else {
       console.log(chalk.green('All governance patches applied successfully.'));
     }
+
+    // Post-apply verification — run check against the patched binary and write state.json
+    const binaryForVerify = ccInstInfo.nativeInstallationPath ?? ccInstInfo.cliPath;
+    if (binaryForVerify) {
+      try {
+        const verifyBuffer = await extractClaudeJsFromNativeInstallation(binaryForVerify);
+        if (verifyBuffer) {
+          const verifyJs = verifyBuffer.toString('utf8');
+          const verifyResults = runVerification(verifyJs);
+          const passing = verifyResults.filter(r => r.pass).length;
+          const failing = verifyResults.filter(r => !r.pass);
+          const criticalFail = failing.filter(r => r.critical);
+          const status = failing.length === 0
+            ? 'SOVEREIGN'
+            : criticalFail.length > 0
+              ? 'DEGRADED'
+              : 'PARTIAL';
+          await writeVerificationState(verifyResults, status, binaryForVerify);
+          console.log(chalk.dim(`  Verified: ${status} (${passing}/${verifyResults.length})`));
+        }
+      } catch {
+        // Verification is best-effort after apply
+      }
+    }
+
     console.log(
       chalk.dim(
         `Run ${getInvocationCommand()} --restore to revert to original.`
@@ -620,6 +648,86 @@ interface CheckResult {
   details?: string;
 }
 
+function matchEntry(
+  js: string,
+  pattern: string | RegExp | undefined,
+): boolean {
+  if (!pattern) return false;
+  return typeof pattern === 'string' ? js.includes(pattern) : pattern.test(js);
+}
+
+function runVerification(js: string): CheckResult[] {
+  const results: CheckResult[] = [];
+
+  for (const entry of VERIFICATION_REGISTRY) {
+    const hasSig = entry.signature ? matchEntry(js, entry.signature) : true;
+    const hasAntiSig = entry.antiSignature
+      ? matchEntry(js, entry.antiSignature)
+      : false;
+
+    const pass = hasSig && !hasAntiSig;
+
+    let details: string;
+    if (pass) {
+      details = entry.passDetail ?? 'active';
+    } else if (!hasSig && entry.signature) {
+      details = 'replacement text not found';
+    } else if (hasAntiSig && hasSig) {
+      details = 'replacement present but original also found';
+    } else if (hasAntiSig && entry.category === 'gate') {
+      const count = typeof entry.antiSignature === 'string'
+        ? (js.match(new RegExp(entry.antiSignature.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length
+        : 0;
+      details = `${count} unresolved ${entry.antiSignature} references`;
+    } else if (hasAntiSig) {
+      details = 'original text still present';
+    } else {
+      details = 'not found';
+    }
+
+    results.push({
+      id: entry.id,
+      name: entry.name,
+      pass,
+      critical: entry.critical,
+      details,
+    });
+  }
+
+  return results;
+}
+
+async function writeVerificationState(
+  results: CheckResult[],
+  status: string,
+  binaryPath: string,
+): Promise<void> {
+  const fsP = await import('node:fs/promises');
+  const pathM = await import('node:path');
+
+  const stateDir = CONFIG_DIR;
+  await fsP.mkdir(stateDir, { recursive: true });
+
+  const state = {
+    timestamp: new Date().toISOString(),
+    governanceVersion: '0.1.0',
+    binaryPath,
+    status,
+    checks: results.map(r => ({
+      id: r.id,
+      name: r.name,
+      pass: r.pass,
+      critical: r.critical,
+      details: r.details,
+    })),
+    passCount: results.filter(r => r.pass).length,
+    totalCount: results.length,
+  };
+
+  const statePath = pathM.join(stateDir, 'state.json');
+  await fsP.writeFile(statePath, JSON.stringify(state, null, 2) + '\n', 'utf8');
+}
+
 async function handleCheck(binaryPath?: string): Promise<void> {
   console.log('Verifying governance patches...\n');
 
@@ -669,90 +777,7 @@ async function handleCheck(binaryPath?: string): Promise<void> {
     }
   }
 
-  const results: CheckResult[] = [];
-
-  // --- Governance patch signatures ---
-
-  // 1. Disclaimer neutralization
-  const hasDisclaimerFix = js.includes(GOVERNANCE_DEFAULTS.disclaimerReplacement);
-  const hasOriginalDisclaimer = js.includes('may or may not be relevant');
-  results.push({
-    id: 'disclaimer',
-    name: 'Disclaimer Neutralization',
-    pass: hasDisclaimerFix && !hasOriginalDisclaimer,
-    critical: true,
-    details: hasDisclaimerFix
-      ? hasOriginalDisclaimer ? 'replacement present but original also found' : 'active'
-      : 'replacement text not found',
-  });
-
-  // 2. Context header reframing
-  const hasHeaderFix = js.includes(GOVERNANCE_DEFAULTS.headerReplacement);
-  const hasOriginalHeader = js.includes('As you answer the user\'s questions, you can use the following context:');
-  results.push({
-    id: 'header',
-    name: 'Context Header Reframing',
-    pass: hasHeaderFix && !hasOriginalHeader,
-    critical: true,
-    details: hasHeaderFix
-      ? hasOriginalHeader ? 'replacement present but original also found' : 'active'
-      : 'replacement text not found',
-  });
-
-  // 3. System-reminder authority fix
-  const hasReminderFix = js.includes(GOVERNANCE_DEFAULTS.reminderFramingReplacement);
-  const hasOriginalReminder = js.includes('bear no direct relation');
-  results.push({
-    id: 'reminder',
-    name: 'System-Reminder Authority Fix',
-    pass: hasReminderFix && !hasOriginalReminder,
-    critical: true,
-    details: hasReminderFix
-      ? hasOriginalReminder ? 'replacement present but original also found' : 'active'
-      : 'replacement text not found',
-  });
-
-  // 4. Subagent CLAUDE.md restoration
-  const hasSubagentFix = /tengu_slim_subagent_claudemd"[^)]*,\s*!1\)/.test(js) ||
-    /tengu_slim_subagent_claudemd"[^)]*,\s*false\)/.test(js);
-  const hasSubagentOriginal = /tengu_slim_subagent_claudemd"[^)]*,\s*!0\)/.test(js) ||
-    /tengu_slim_subagent_claudemd"[^)]*,\s*true\)/.test(js);
-  results.push({
-    id: 'subagent',
-    name: 'Subagent CLAUDE.md Restoration',
-    pass: hasSubagentFix && !hasSubagentOriginal,
-    critical: true,
-    details: hasSubagentFix
-      ? hasSubagentOriginal ? 'flag flipped but original also found' : 'active (flag=false)'
-      : 'flag not found or not flipped',
-  });
-
-  // 5. USE_EMBEDDED_TOOLS_FN gate resolution
-  const unresolvedGates = (js.match(/USE_EMBEDDED_TOOLS_FN/g) || []).length;
-  results.push({
-    id: 'gates',
-    name: 'Embedded Tools Gate Resolution',
-    pass: unresolvedGates === 0,
-    critical: false,
-    details: unresolvedGates === 0
-      ? 'all gates resolved'
-      : `${unresolvedGates} unresolved USE_EMBEDDED_TOOLS_FN references`,
-  });
-
-  // --- Prompt override signatures (spot-check) ---
-
-  const hasAuthoritative = js.includes('authoritative project directives');
-  const hasUsefulContext = js.includes('when they provide useful context');
-  results.push({
-    id: 'prompt-overrides',
-    name: 'Prompt Override Signatures',
-    pass: hasAuthoritative && hasUsefulContext,
-    critical: false,
-    details: [
-      hasAuthoritative ? null : 'missing "authoritative project directives"',
-      hasUsefulContext ? null : 'missing "when they provide useful context"',
-    ].filter(Boolean).join(', ') || 'spot-check phrases present',
-  });
+  const results: CheckResult[] = runVerification(js);
 
   // --- Display results ---
 
@@ -760,25 +785,50 @@ async function handleCheck(binaryPath?: string): Promise<void> {
   const failing = results.filter(r => !r.pass);
   const criticalFail = failing.filter(r => r.critical);
 
-  for (const r of results) {
-    const icon = r.pass ? chalk.green('✓') : chalk.red('✗');
-    const sev = r.critical ? '' : chalk.dim(' (optional)');
-    console.log(`  ${icon} ${r.name}${sev}`);
-    if (r.details) {
-      console.log(`    ${chalk.gray(r.details)}`);
+  const categories: Array<{ key: string; label: string }> = [
+    { key: 'governance', label: 'Governance Patches' },
+    { key: 'gate', label: 'Gate Resolution' },
+    { key: 'prompt-override', label: 'Prompt Overrides' },
+  ];
+
+  for (const cat of categories) {
+    const catResults = results.filter(
+      r => VERIFICATION_REGISTRY.find(e => e.id === r.id)?.category === cat.key
+    );
+    if (catResults.length === 0) continue;
+
+    const catPass = catResults.every(r => r.pass);
+    const catIcon = catPass ? chalk.green('✓') : chalk.red('✗');
+    console.log(`  ${catIcon} ${chalk.bold(cat.label)}`);
+
+    for (const r of catResults) {
+      const icon = r.pass ? chalk.green('✓') : chalk.red('✗');
+      console.log(`    ${icon} ${r.name}`);
+      if (r.details) {
+        console.log(`      ${chalk.gray(r.details)}`);
+      }
     }
   }
 
   console.log('');
 
-  if (failing.length === 0) {
+  const status = failing.length === 0
+    ? 'SOVEREIGN'
+    : criticalFail.length > 0
+      ? 'DEGRADED'
+      : 'PARTIAL';
+
+  if (status === 'SOVEREIGN') {
     console.log(chalk.green.bold(`  SOVEREIGN — ${passing.length}/${results.length} checks passed`));
-  } else if (criticalFail.length > 0) {
+  } else if (status === 'DEGRADED') {
     console.log(chalk.red.bold(`  DEGRADED — ${criticalFail.length} critical check(s) failed`));
     console.log(chalk.gray(`  Run: ${getInvocationCommand()} --apply`));
   } else {
     console.log(chalk.yellow.bold(`  PARTIAL — ${failing.length} non-critical check(s) failed`));
   }
+
+  // Write verification state
+  await writeVerificationState(results, status, targetPath);
 
   process.exit(criticalFail.length > 0 ? 1 : 0);
 }

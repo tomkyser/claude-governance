@@ -14,5 +14,5 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 node dist/index.mjs check
 ```
 
-**Completed:** 1a, 1a-gaps
-**Next:** 1a-verification-foundation (signature registry, full override verification, apply state output)
+**Completed:** 1a, 1a-gaps, 1a-verification-foundation
+**Next:** 1b (wrapper layer — ClawGod-style entry point, pre-flight verification, process control)

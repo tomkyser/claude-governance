@@ -39,6 +39,8 @@ import {
   writeEmbeddedToolsGateResolution,
   GOVERNANCE_DEFAULTS,
   isContentPatched,
+  VERIFICATION_REGISTRY,
+  VerificationEntry,
 } from './governance';
 import {
   restoreNativeBinaryFromBackup,

@@ -15,6 +15,124 @@ export const GOVERNANCE_DEFAULTS = {
 };
 
 // =============================================================================
+// Verification Registry
+// =============================================================================
+
+export interface VerificationEntry {
+  id: string;
+  name: string;
+  signature?: string | RegExp;
+  antiSignature?: string | RegExp;
+  critical: boolean;
+  category: 'governance' | 'gate' | 'prompt-override';
+  passDetail?: string;
+}
+
+export const VERIFICATION_REGISTRY: VerificationEntry[] = [
+  // --- Governance patches (direct replacement — anti-signatures reliable) ---
+  {
+    id: 'disclaimer',
+    name: 'Disclaimer Neutralization',
+    signature: GOVERNANCE_DEFAULTS.disclaimerReplacement,
+    antiSignature: 'may or may not be relevant',
+    critical: true,
+    category: 'governance',
+  },
+  {
+    id: 'header',
+    name: 'Context Header Reframing',
+    signature: GOVERNANCE_DEFAULTS.headerReplacement,
+    antiSignature: "As you answer the user's questions, you can use the following context:",
+    critical: true,
+    category: 'governance',
+  },
+  {
+    id: 'reminder',
+    name: 'System-Reminder Authority Fix',
+    signature: GOVERNANCE_DEFAULTS.reminderFramingReplacement,
+    antiSignature: 'bear no direct relation',
+    critical: true,
+    category: 'governance',
+  },
+  {
+    id: 'subagent',
+    name: 'Subagent CLAUDE.md Restoration',
+    signature: /tengu_slim_subagent_claudemd"[^)]*,\s*(?:!1|false)\)/,
+    antiSignature: /tengu_slim_subagent_claudemd"[^)]*,\s*(?:!0|true)\)/,
+    critical: true,
+    category: 'governance',
+    passDetail: 'active (flag=false)',
+  },
+  // --- Gate resolution (anti-signature only — no specific replacement text) ---
+  {
+    id: 'gates',
+    name: 'Embedded Tools Gate Resolution',
+    antiSignature: 'USE_EMBEDDED_TOOLS_FN',
+    critical: false,
+    category: 'gate',
+    passDetail: 'all gates resolved',
+  },
+  // --- Prompt overrides (signature only — anti-signatures unreliable due to
+  //     dead-code constants persisting in binary after pieces replacement) ---
+  {
+    id: 'prompt-explore',
+    name: 'Prompt Override: Explore',
+    signature: 'do not sacrifice completeness for speed',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-general-purpose',
+    name: 'Prompt Override: General Purpose',
+    signature: 'careful senior developer would do',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-agent-thread-notes',
+    name: 'Prompt Override: Agent Thread Notes',
+    signature: 'when they provide useful context',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-doing-tasks-no-additions',
+    name: 'Prompt Override: No Unnecessary Additions',
+    signature: 'adjacent code is broken, fragile, or directly contributes',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-doing-tasks-no-premature-abstractions',
+    name: 'Prompt Override: No Premature Abstractions',
+    signature: 'duplication causes real maintenance risk',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-doing-tasks-no-error-handling',
+    name: 'Prompt Override: Proportional Error Handling',
+    signature: 'at real boundaries where failures can realistically occur',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-executing-actions',
+    name: 'Prompt Override: Executing Actions',
+    signature: 'clearly the right thing to do',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'prompt-tone-style',
+    name: 'Prompt Override: Tone & Style',
+    signature: 'appropriately detailed for the complexity',
+    critical: false,
+    category: 'prompt-override',
+  },
+];
+
+// =============================================================================
 // Contamination Detection
 // =============================================================================
 

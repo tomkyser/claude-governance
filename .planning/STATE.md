@@ -21,7 +21,7 @@ and governance-specific `check` command added.
 - **Verify:** `node dist/index.mjs check`
 - **Restore:** `node dist/index.mjs --restore`
 
-### What's Applied (Verified 6/6 via `check`)
+### What's Applied (Verified 13/13 via `check`)
 **Governance Patches (4 active):**
 - Disclaimer neutralization — replaces "may or may not be relevant" with directive framing
 - Context header reframing — replaces ambient "use the following context" with mandatory framing
@@ -70,8 +70,8 @@ and governance-specific `check` command added.
 
 - **1a:** COMPLETE — fork, strip, governance patches, check command
 - **1a-gaps:** COMPLETE — contamination detection, already-applied, dead file cleanup, warning suppression
-- **1a-verification-foundation:** NEXT — signature registry, full override verification, apply state output
-- **1b:** Planned — wrapper layer
+- **1a-verification-foundation:** COMPLETE — 13-entry registry, per-override verification, state.json
+- **1b:** NEXT — wrapper layer
 - **1c:** Planned — 1b-informed verification
 
 See `.planning/ROADMAP.md` for full details.

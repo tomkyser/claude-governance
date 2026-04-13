@@ -39,6 +39,13 @@ Distributed as modular NPM packages — users choose what they want.
 - [x] Prompt sync warning suppression (debug-level only)
 - [x] communication-style evaluation (no override needed — aligned with governance)
 
+### Phase 1a-verification-foundation: Verification Foundation
+- [x] VERIFICATION_REGISTRY: 13 entries (4 governance + 1 gate + 8 prompt overrides)
+- [x] handleCheck refactored to iterate registry with category-grouped display
+- [x] Per-override prompt verification (all 8, not spot-check)
+- [x] state.json output from both check and apply flows
+- [x] 13/13 SOVEREIGN verified on 2.1.101
+
 ### Embedded Search Tools
 - [x] Activation: `EMBEDDED_SEARCH_TOOLS=1` — bfs 4.1, ugrep 7.5.0, rg 14.1.1
 - [x] Verification hook: 8-point halt-and-catch-fire check
@@ -87,13 +94,13 @@ The spine. Everything else builds on this.
 - [x] **Prompt sync warning suppression:** "Could not find" and "WARNING: Conflicts" downgraded to debug-level. Clean CLI output.
 - [x] **communication-style override:** Evaluated — prompt is Opus 4.6-only, gated behind `quiet_salted_ember` flag. Promotes concise updates, aligned with governance goals. No override needed.
 
-### 1a-verification-foundation: Verification Foundation
+### 1a-verification-foundation: Verification Foundation [COMPLETE]
 Standalone verification improvements — no dependency on 1b wrapper.
 
-- [ ] **Per-patch signature + anti-signature registry:** Each governance patch declares `signature` (replacement text that MUST be present) and `antiSignature` (original text that MUST be absent). `check` iterates this registry instead of hardcoded checks.
-- [ ] **Full prompt override verification:** Expand `check` from 2-phrase spot-check to per-override signatures for all 8 active overrides. Each override .md can declare its own verification phrase.
-- [ ] **Apply state output:** After successful apply, write `~/.claude-governance/state.json` with timestamp, CC version, per-check results. SessionStart hook reads this for fast verification path.
-- [ ] Must verify against EXTRACTED JS, not `strings` on binary — `strings` finds fragments from all Mach-O sections, gives false positives for both presence and absence.
+- [x] **Per-patch signature + anti-signature registry:** `VERIFICATION_REGISTRY` in governance.ts — 13 entries (4 governance, 1 gate, 8 prompt overrides) with signature, antiSignature, critical flag, category. Governance patches use both sig+antiSig; prompt overrides use sig-only (dead-code constants make antiSig unreliable).
+- [x] **Full prompt override verification:** Per-override unique signature phrases for all 8 active overrides, verified against extracted JS. Category-grouped display in `check` output.
+- [x] **Apply state output:** `state.json` written to config dir by both `check` and `apply` flows. Contains timestamp, version, per-check results, overall status.
+- [x] Verifies against EXTRACTED JS via `extractClaudeJsFromNativeInstallation`, never `strings`.
 
 ### 1b: Wrapper Layer
 
