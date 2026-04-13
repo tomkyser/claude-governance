@@ -74,4 +74,4 @@ and governance-specific `check` command added.
 - **1b:** Planned — wrapper layer
 - **1c:** Planned — 1b-informed verification
 
-See `docs/ROADMAP.md` for full details.
+See `.planning/ROADMAP.md` for full details.

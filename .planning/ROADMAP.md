@@ -129,6 +129,15 @@ Standalone verification improvements — no dependency on 1b wrapper.
 - [ ] Each feature is a separate installable module
 - [ ] Pluggable verification registry: modules declare their own verification contracts
 - [ ] Central config: what's enabled, what's not, user's choice
+- [ ] Include optional install of Clawback: https://github.com/LZong-tw/clawback
+- [ ] Include optional essential claude code env flags: 
+  - [ ] "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": 1,
+  - [ ] "MAX_THINKING_TOKENS": "128000",    
+  - [ ] "CLAUDE_CODE_EFFORT_LEVEL": "max",
+  - [ ] "DISABLE_AUTOUPDATER": "1",
+  - [ ] "ENABLE_LSP_TOOL": "1",
+  - [ ] "EMBEDDED_SEARCH_TOOLS": "1"
+      
 
 ### 1e: CLI & Distribution
 - [ ] NPX-runnable: `npx claude-governance apply`
@@ -203,7 +212,7 @@ Full extraction, editing, version control, and targeted degradation fixes.
 - CC env vars docs: https://code.claude.com/docs/en/env-vars
 - Settings best practices: https://github.com/shanraisshan/claude-code-best-practice/blob/main/best-practice/claude-settings.md#environment-variables-via-env
 - CC internals (GrowthBook, tengu flags): `/Users/tom.kyser/dev/cc-source/`
-- Compile-time flag audit: `docs/research/2026-04-11-compile-flags-v2.1.101.md`
+- Compile-time flag audit: `.planning/research/2026-04-11-compile-flags-v2.1.101.md`
 
 - [ ] Flag inventory scanner (extract all flag names + defaults from binary)
 - [ ] Disk cache override for `~/.claude.json` cachedGrowthBookFeatures

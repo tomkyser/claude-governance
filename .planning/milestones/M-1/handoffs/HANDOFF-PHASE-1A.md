@@ -1,52 +1,37 @@
-# Phase 1a Handoff — Fork & Strip
+# Phase 1a + 1a-gaps Handoff
 
-Written: 2026-04-12 (final update — Phase 1a COMPLETE)
+Written: 2026-04-12 (final — both phases COMPLETE)
 
 ## STATUS: COMPLETE — 6/6 SOVEREIGN
 
 ## What Was Done
 
-### Session 1 (2026-04-12)
-1. Identified previous `claude-governance/` was a rebuild, not a fork — scrapped it
-2. Reset all project docs (ROADMAP, STATE, CLAUDE.md) to reflect reality
-3. Created actual fork: copied `tweakcc/` → `claude-governance/`, fresh git
-4. Stripped ALL cosmetic patches from registry (40+ removed)
-5. Added 5 governance patches in `src/patches/governance.ts`
-6. Added USE_EMBEDDED_TOOLS_FN gate resolution patch
-7. Debugged prompt matching failures (backup contamination, pieces data)
-8. Final: ALL 8 prompt overrides + 4 governance patches applied on fresh binary
+### Phase 1a: Fork & Strip
+1. Forked tweakcc → `claude-governance/`, fresh git
+2. Stripped 40+ cosmetic patches from registry
+3. Stripped Ink/React UI (126KB from 320KB)
+4. Added 5 governance patches in `src/patches/governance.ts`
+5. Added USE_EMBEDDED_TOOLS_FN gate resolution
+6. Added `check` subcommand (6-point signature verification)
+7. Updated package identity (claude-governance@0.1.0)
+8. Config dir: `~/.claude-governance/` with `~/.tweakcc/` fallback
+9. 8 prompt overrides via pieces matching (output-efficiency removed by Anthropic)
 
-### Session 2 (2026-04-12, post-compaction)
-1. Updated package identity: name→claude-governance, version→0.1.0, bin entry
-2. Config dir rename: `~/.tweakcc` → `~/.claude-governance` (with legacy fallback)
-3. Env vars renamed: CLAUDE_GOVERNANCE_CONFIG_DIR, CLAUDE_GOVERNANCE_CC_PATH
-4. Stripped Ink/React UI entirely — deleted src/ui/, removed deps (127KB from 231KB)
-5. Rewrote index.tsx — plain CLI, default action is apply
-6. Updated lib/detection.ts — removed Ink picker, replaced with error listing
-7. Added `check` subcommand — extracts JS, verifies 6 governance signatures
-8. Updated all project docs (STATE, ROADMAP, TRACKER)
+### Phase 1a-gaps: Gap Resolutions
+1. Backup contamination detection — scans for governance signatures, auto-removes stale
+2. "Already applied" detection — signature field on patches, reports ✓ not ✗
+3. Dead file cleanup — 50 patch files + 3 tests removed, dead import fixed
+4. Prompt sync warning suppression — downgraded to debug-level
+5. communication-style evaluation — no override needed (aligned with governance)
 
-## Current State of claude-governance/
+### Housekeeping
+- Repo published to GitHub as `sovereign` (https://github.com/tomkyser/sovereign)
+- Reference dirs (cc-source, tweakcc, clawback) moved out of repo to `/Users/tom.kyser/dev/`
+- Project restructured into `.planning/` hierarchy
+- Rigid process codified in CLAUDE.md (15-step per-phase checklist)
+- Journal filenames corrected to real dates
 
-**Location:** `/Users/tom.kyser/dev/claude-code-patches/claude-governance/`
-**Based on:** tweakcc 4.0.11 (full fork, fresh git)
-**Build:** `pnpm build` → 127KB, clean
-
-### Files Modified in the Fork
-| File | Change |
-|------|--------|
-| `package.json` | name, version, bin, keywords, author, repo, deps (removed ink/react) |
-| `src/index.tsx` | Complete rewrite — removed Ink, plain CLI, added `check` command |
-| `src/config.ts` | Config dir → ~/.claude-governance, env var rename, User-Agent |
-| `src/patches/index.ts` | Stripped cosmetic patches, governance-only registry |
-| `src/patches/governance.ts` | NEW — 5 governance patches + gate resolution |
-| `src/installationDetection.ts` | TWEAKCC_CC_INSTALLATION_PATH → CLAUDE_GOVERNANCE_CC_PATH |
-| `src/types.ts` | Updated env-var comment |
-| `src/lib/detection.ts` | Removed Ink/React, picker → error listing |
-| `src/ui/` | DELETED |
-| `data/prompts/prompts-2.1.101.json` | Restored to original unpatched version |
-
-### Verification Results (6/6 SOVEREIGN)
+## Verification Results (6/6 SOVEREIGN)
 - ✓ Disclaimer Neutralization — active
 - ✓ Context Header Reframing — active
 - ✓ System-Reminder Authority Fix — active
@@ -54,51 +39,26 @@ Written: 2026-04-12 (final update — Phase 1a COMPLETE)
 - ✓ Embedded Tools Gate Resolution — all gates resolved
 - ✓ Prompt Override Signatures — spot-check phrases present
 
-### CLI Commands
-```bash
-node dist/index.mjs              # Apply governance patches (default)
-node dist/index.mjs --apply      # Same as above (explicit)
-node dist/index.mjs check        # Verify governance state
-node dist/index.mjs --restore    # Restore original binary
-node dist/index.mjs --list-patches
-node dist/index.mjs --list-system-prompts
-node dist/index.mjs unpack /tmp/out.js
-```
+## Key Files
+| File | Purpose |
+|------|---------|
+| `claude-governance/src/index.tsx` | CLI entry point |
+| `claude-governance/src/patches/index.ts` | Patch orchestrator |
+| `claude-governance/src/patches/governance.ts` | 5 governance patches + contamination detection |
+| `claude-governance/src/config.ts` | Config dir resolution |
+| `.planning/ROADMAP.md` | Phase status |
+| `.planning/milestones/M-1/CONTEXT.md` | Shared agent context |
 
-## CRITICAL: Backup Issue (1c item)
+## What's Next
+**1a-verification-foundation** — standalone verification improvements:
+- Per-patch signature + anti-signature registry
+- Full prompt override verification (all 8, not spot-check)
+- Apply state output (~/.claude-governance/state.json)
 
-tweakcc's `restoreNativeBinaryFromBackup` restores from `~/.tweakcc/native-binary.backup`.
-If this backup was from a patched binary, restore feeds patched content back and regex fails.
-
-**Workaround:** Before apply on fresh binary:
-```bash
-rm -f ~/.tweakcc/native-binary.backup
-cp ~/.local/share/claude/versions/X.Y.Z ~/.tweakcc/native-binary.backup
-```
-
-**For 1c:** Detect clean vs patched backup automatically.
-
-## Items for Phase 1c (Verification Engine)
-
-1. **Backup contamination detection** — clean vs patched backup
-2. **"Already applied" distinction** — apply on patched binary shows ✗, should show "already active"
-3. **Per-patch signature + anti-signature registry** — both directions
-4. **Canary prompts** — runtime verification via injected test phrases
-5. **SessionStart hook** — replace stale governance-verify.cjs
-6. **Full prompt override verification** — per-override signatures (current: 2-phrase spot-check)
-7. **Status line integration** — currently broken
-8. **Version change detection** — CC update → warn/block
-9. **`strings` false positives** — always extract JS, never trust `strings` on Mach-O
-
-## Next Phases
-
-- **1b: Wrapper Layer** — ClawGod-style wrapper, pre-flight verification, env injection
-- **1c: Verification Engine** — infallible verification (items above)
-- **1d: Modular Architecture** — plugin/module system
-- **1e: CLI & Distribution** — npx-runnable, npm installable
+Then: 1b (wrapper), 1c (1b-informed verification), 1d (modular), 1e (distribution)
 
 ## What NOT To Do
-- Do NOT use the Session 2 patched pieces data — it has ant-branch text
-- Do NOT trust `~/.tweakcc/native-binary.backup` without verifying it's clean
-- Do NOT verify with `strings` — use extracted JS
-- Do NOT reference ~/.tweakcc/ as a runtime dependency for shipped product
+- Do NOT use patched pieces data — must be original unpatched text
+- Do NOT verify with `strings` — use extracted JS via `unpack`
+- Do NOT reference `~/.tweakcc/` as runtime dependency
+- Do NOT skip CONTEXT.md when spawning agents

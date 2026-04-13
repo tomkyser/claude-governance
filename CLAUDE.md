@@ -54,9 +54,10 @@ These checks prevent the kind of compounding errors that waste entire sessions.
 ### On Session Start (Before Any Work)
 1. **Check git state.** Run `git status`, `git log --oneline -5`, and `ls` in the
    working directory. Do not trust compaction summaries about what exists or what's done.
-2. **Read the roadmap.** `docs/ROADMAP.md` is the source of truth for what's complete
+2. **Read the roadmap.** `.planning/ROADMAP.md` is the source of truth for what's complete
    and what's next. If the compaction summary disagrees, the roadmap wins.
-3. **Read the latest session journal.** It has decisions, findings, and gotchas that
+3. **Read CONTEXT.md.** `.planning/milestones/M-{n}/CONTEXT.md` has shared state.
+4. **Read the latest session journal.** It has decisions, findings, and gotchas that
    the compaction summary may have flattened or misrepresented.
 4. **Verify before building.** If the roadmap says something is "COMPLETE," verify it
    actually exists and works before building on top of it. Check git history, run the
