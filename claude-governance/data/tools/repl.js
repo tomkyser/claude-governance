@@ -248,13 +248,26 @@ async function glob(pattern, opts) {
 
 async function notebook_edit(notebookPath, editOps) {
   checkAbort();
-  const args = { notebook_path: notebookPath, ...editOps };
+  if (!editOps || typeof editOps !== 'object') {
+    throw new Error('notebook_edit requires editOps: { new_source, cell_id?, cell_type?, edit_mode? }');
+  }
+  // G7: Normalize common arg variants to match CC's NotebookEdit schema
+  const ops = { ...editOps };
+  if (ops.source !== undefined && ops.new_source === undefined) {
+    ops.new_source = ops.source;
+    delete ops.source;
+  }
+  if (!ops.new_source && ops.edit_mode !== 'delete') {
+    throw new Error('notebook_edit requires new_source (the cell content to write)');
+  }
+  const args = { notebook_path: notebookPath, ...ops };
 
   return tracked('notebook_edit', args, async () => {
     const tool = findTool('NotebookEdit');
     if (!tool) throw new Error('NotebookEdit tool not found in registry');
     const result = await tool.call(args, currentContext);
     try {
+      if (result.data && result.data.error) return 'Error: ' + result.data.error;
       return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
     } catch (e) {
       return String(result);
@@ -281,9 +294,18 @@ async function fetch_url(url, opts) {
 
 async function agent(prompt, opts) {
   checkAbort();
+  if (!prompt) throw new Error('agent() requires a prompt string');
   const args = { prompt: prompt };
-  if (opts && opts.description !== undefined) args.description = opts.description;
-  if (opts && opts.subagent_type !== undefined) args.subagent_type = opts.subagent_type;
+  if (opts) {
+    // G8: Pass through all Agent tool options
+    for (const key of ['description', 'subagent_type', 'model', 'name',
+      'run_in_background', 'team_name', 'mode', 'isolation']) {
+      if (opts[key] !== undefined) args[key] = opts[key];
+    }
+    if (!args.description) args.description = prompt.substring(0, 50);
+  } else {
+    args.description = prompt.substring(0, 50);
+  }
 
   return tracked('agent', args, async () => {
     const tool = findTool('Agent');
@@ -500,11 +522,21 @@ For simple single-file reads or one-off commands, use the individual tools direc
 - \`glob(pattern, opts?)\` → newline-separated file paths
   - opts: \`{ cwd, maxDepth }\`
 
-### Other
-- \`notebook_edit(path, editOps)\` → confirmation
-- \`fetch(url, opts?)\` → response body string
+### Notebook
+- \`notebook_edit(path, { new_source, cell_id?, cell_type?, edit_mode? })\` → confirmation
+  - \`new_source\`: the cell content to write (required unless deleting)
+  - \`cell_id\`: cell ID to edit (required for replace/delete)
+  - \`cell_type\`: 'code' or 'markdown' (required for insert)
+  - \`edit_mode\`: 'replace' (default), 'insert', or 'delete'
+
+### Web & Agents
+- \`fetch(url, opts?)\` → AI-summarized response (NOT raw HTTP)
+  - Returns CC's WebFetch output: a markdown summary of the page, not the raw response body
+  - For raw HTTP/JSON, use \`bash('curl -s ...')\` instead
+  - opts: \`{ prompt }\` — guide the summarization
 - \`agent(prompt, opts?)\` → agent result string
-  - opts: \`{ description, subagent_type }\`
+  - opts: \`{ description, subagent_type, model, name, run_in_background, mode, isolation }\`
+  - \`description\` auto-generated from prompt if omitted
 
 ## Patterns
 
