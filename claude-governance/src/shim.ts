@@ -78,7 +78,11 @@ if [ "$GOV_EXIT" -ne ${GOVERNANCE_FAIL_EXIT} ] && [ "$GOV_EXIT" -ne 127 ]; then
   exit $GOV_EXIT
 fi
 
-# Governance failed — fall through to direct CC launch
+# Governance failed — write marker so session-start hook can alert, then fall through
+GOV_CONFIG_DIR="\${CLAUDE_GOVERNANCE_CONFIG_DIR:-$HOME/.claude-governance}"
+mkdir -p "$GOV_CONFIG_DIR"
+echo "{\\"timestamp\\":\\"\$(date -u +%Y-%m-%dT%H:%M:%SZ)\\",\\"exitCode\\":$GOV_EXIT,\\"reason\\":\\"shim-fallback\\"}" > "$GOV_CONFIG_DIR/shim-fallback.json"
+
 REAL_CLAUDE=$(find_real_claude)
 if [ -n "$REAL_CLAUDE" ] && [ -x "$REAL_CLAUDE" ]; then
   echo "claude-governance: governance unavailable, launching claude directly" >&2

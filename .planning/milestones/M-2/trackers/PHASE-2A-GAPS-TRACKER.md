@@ -20,7 +20,7 @@ Fix every issue discovered during first live runtime test of tool injection. Bin
 | G7 | Installer UTF-8 corruption — `claude.ai/install.sh` produces 304MB corrupted binary on macOS | Low | Pending |
 | G8 | Shim reliability — governance wrapper shim breaks CC launch when system is unhealthy | High | Done |
 | G9 | Ensure that tool injection is dynamic** — this feature must survive Claude Code updates - detection must be more robust than just current binary extracted var and fn names. | Medium | Pending |
-| G10 | System Observability — IF governance wrapper or system breaks CC launch needs visual indication | High | Pending |
+| G10 | System Observability — IF governance wrapper or system breaks CC launch needs visual indication | High | Done |
 
 ## Gap Details
 
@@ -61,6 +61,10 @@ Fix every issue discovered during first live runtime test of tool injection. Bin
 ### G8: Shim Reliability — DONE
 **Problem:** Shim used hard `exec` — if governance failed, CC couldn't launch at all.
 **Fix:** Sentinel exit code architecture. `handleLaunch` uses exit code 111 (`GOVERNANCE_FAIL_EXIT`) for governance-specific failures (can't find CC, can't spawn). The shim script runs governance without `exec`, checks the exit code — if 111 or 127, falls through to find and launch the real claude binary directly. Finds real binary by: (1) searching PATH excluding the shim dir, (2) scanning XDG versions directory for highest version. User always gets CC, even if governance is broken.
+
+### G10: System Observability — DONE
+**Problem:** When governance fails and the shim falls through, the user and Claude have no indication that the session is running unprotected.
+**Fix:** Two-part signal chain. (1) Shim writes `shim-fallback.json` marker to config dir before fallback launch, containing timestamp, exit code, and reason. (2) Session-start hook (`governance-verify.cjs`) checks for marker on every session start — if found, renders red `UNPROTECTED` banner to stderr (user sees) and emits `[GOVERNANCE CRITICAL]` to stdout (Claude sees in system-reminder). Marker is consumed (deleted) after reading so it doesn't persist across sessions.
 
 ## Current Binary State
 
