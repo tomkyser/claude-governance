@@ -30,6 +30,11 @@ export interface VerificationState {
   }>;
   passCount: number;
   totalCount: number;
+  tools?: {
+    validated: boolean;
+    names: string[];
+    count: number;
+  };
 }
 
 // =============================================================================
@@ -110,6 +115,7 @@ export async function writeVerificationState(
   binaryPath: string,
   ccVersion?: string,
   binaryFingerprint?: { size: number; mtimeMs: number } | null,
+  tools?: { validated: boolean; names: string[]; count: number } | null,
 ): Promise<void> {
   const fsP = await import('node:fs/promises');
   const pathM = await import('node:path');
@@ -133,6 +139,7 @@ export async function writeVerificationState(
     })),
     passCount: results.filter(r => r.pass).length,
     totalCount: results.length,
+    ...(tools ? { tools } : {}),
   };
 
   const statePath = pathM.join(stateDir, 'state.json');

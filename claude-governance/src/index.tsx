@@ -22,6 +22,7 @@ import {
   PatchResult,
   PatchGroup,
   getAllPatchDefinitions,
+  validateToolDeployment,
 } from './patches/index';
 import {
   preloadStringsFile,
@@ -461,9 +462,18 @@ async function handleApplyMode(
           const verifyResults = runVerification(verifyJs, registry);
           const status = deriveStatus(verifyResults);
           const fingerprint = getBinaryFingerprint(binaryForVerify);
-          await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint);
+          const applyToolVal = validateToolDeployment();
+          const applyToolState = {
+            validated: applyToolVal.loaderValid && applyToolVal.tools.every(t => t.valid),
+            names: applyToolVal.toolNames,
+            count: applyToolVal.toolNames.length,
+          };
+          await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint, applyToolState);
           const passing = verifyResults.filter(r => r.pass).length;
           console.log(chalk.dim(`  Verified: ${status} (${passing}/${verifyResults.length})`));
+          if (applyToolState.validated && applyToolState.count > 0) {
+            console.log(chalk.dim(`  Tools: ${applyToolState.names.join(', ')}`));
+          }
         }
       } catch {
         // Verification is best-effort after apply
@@ -811,27 +821,26 @@ async function handleCheck(binaryPath?: string): Promise<void> {
     }
   }
 
-  // --- Tool deployment checks (file-existence, not binary signature) ---
-  const toolsDir = path.join(CONFIG_DIR, 'tools');
-  const toolFiles = [
-    { name: 'Tools directory', file: toolsDir, isDir: true },
-    { name: 'Auto-discovery loader', file: path.join(toolsDir, 'index.js'), isDir: false },
-    { name: 'REPL tool', file: path.join(toolsDir, 'repl.js'), isDir: false },
-  ];
-  let toolChecksPassing = 0;
-  const toolChecksTotal = toolFiles.length;
-  const toolCheckResults: Array<{ name: string; pass: boolean }> = [];
-  for (const tc of toolFiles) {
-    const exists = fsSync.existsSync(tc.file);
-    if (exists) toolChecksPassing++;
-    toolCheckResults.push({ name: tc.name, pass: exists });
-  }
-  const toolsAllPass = toolChecksPassing === toolChecksTotal;
-  console.log(`  ${toolsAllPass ? chalk.green('✓') : chalk.yellow('!')} ${chalk.bold('Tool Deployment')}`);
-  for (const tc of toolCheckResults) {
-    const icon = tc.pass ? chalk.green('✓') : chalk.yellow('!');
-    console.log(`    ${icon} ${tc.name}`);
-    if (!tc.pass) console.log(`      ${chalk.gray('run: claude-governance --apply')}`);
+  // --- Tool deployment validation (G2: require + shape check) ---
+  const toolValidation = validateToolDeployment();
+  const toolsAllPass = toolValidation.loaderValid &&
+    toolValidation.tools.length > 0 &&
+    toolValidation.tools.every(t => t.valid);
+  console.log(`  ${toolsAllPass ? chalk.green('✓') : chalk.red('✗')} ${chalk.bold('Tool Deployment')}`);
+  if (!toolValidation.loaderValid) {
+    console.log(`    ${chalk.red('✗')} Auto-discovery loader`);
+    console.log(`      ${chalk.gray(toolValidation.loaderError ?? 'load failed')}`);
+  } else {
+    console.log(`    ${chalk.green('✓')} Auto-discovery loader`);
+    console.log(`      ${chalk.gray(`${toolValidation.tools.length} tool(s) discovered`)}`);
+    for (const t of toolValidation.tools) {
+      const icon = t.valid ? chalk.green('✓') : chalk.red('✗');
+      const detail = t.valid
+        ? chalk.gray('shape valid')
+        : chalk.gray(`missing: ${t.missing.join(', ')}`);
+      console.log(`    ${icon} ${t.name}`);
+      console.log(`      ${detail}`);
+    }
   }
 
   console.log('');
@@ -845,9 +854,14 @@ async function handleCheck(binaryPath?: string): Promise<void> {
     console.log(chalk.yellow.bold(`  PARTIAL — ${failing.length} non-critical check(s) failed`));
   }
 
-  // Write verification state (G6: include fingerprint for overwrite detection)
+  // Write verification state (G6: fingerprint, G2: tool validation)
   const checkFingerprint = getBinaryFingerprint(targetPath);
-  await writeVerificationState(results, status, targetPath, detectedVersion, checkFingerprint);
+  const toolState = {
+    validated: toolsAllPass,
+    names: toolValidation.toolNames,
+    count: toolValidation.toolNames.length,
+  };
+  await writeVerificationState(results, status, targetPath, detectedVersion, checkFingerprint, toolState);
 
   process.exit(criticalFail.length > 0 ? 1 : 0);
 }
@@ -934,6 +948,21 @@ async function handleLaunch(
         console.log(chalk.yellow('  Launching without governance patches.'));
       }
     }
+  }
+
+  // Tool deployment validation (G3)
+  const launchToolCheck = validateToolDeployment();
+  if (!launchToolCheck.loaderValid || launchToolCheck.tools.some(t => !t.valid)) {
+    console.log(chalk.yellow('  Tools: validation failed'));
+    if (!launchToolCheck.loaderValid) {
+      console.log(chalk.yellow(`    ${launchToolCheck.loaderError}`));
+    }
+    for (const t of launchToolCheck.tools.filter(t => !t.valid)) {
+      console.log(chalk.yellow(`    ${t.name}: missing ${t.missing.join(', ')}`));
+    }
+    console.log(chalk.dim('    Run: claude-governance --apply'));
+  } else if (launchToolCheck.toolNames.length > 0) {
+    console.log(chalk.green(`  Tools: ${launchToolCheck.toolNames.join(', ')}`));
   }
 
   // Build environment — merge config env overrides
@@ -1024,7 +1053,13 @@ async function handleApplyForLaunch(
         const verifyResults = runVerification(verifyJs, registry);
         const status = deriveStatus(verifyResults);
         const fingerprint = getBinaryFingerprint(binaryForVerify);
-        await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint);
+        const fLaunchToolVal = validateToolDeployment();
+        const fLaunchToolState = {
+          validated: fLaunchToolVal.loaderValid && fLaunchToolVal.tools.every(t => t.valid),
+          names: fLaunchToolVal.toolNames,
+          count: fLaunchToolVal.toolNames.length,
+        };
+        await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint, fLaunchToolState);
         const passing = verifyResults.filter(r => r.pass).length;
         console.log(chalk.green(`  Governance: ${status} (${passing}/${verifyResults.length})`));
       }

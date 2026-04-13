@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import * as path from 'node:path';
+import { createRequire } from 'node:module';
 import chalk from 'chalk';
 
 import {
@@ -305,6 +306,102 @@ const deployTools = async (): Promise<number> => {
   }
 
   return deployed;
+};
+
+// =============================================================================
+// Tool Deployment Validation (G2+G3)
+// =============================================================================
+
+export interface ToolValidationResult {
+  name: string;
+  valid: boolean;
+  missing: string[];
+}
+
+export interface ToolDeploymentValidation {
+  loaderValid: boolean;
+  loaderError?: string;
+  tools: ToolValidationResult[];
+  toolNames: string[];
+}
+
+export const validateToolDeployment = (): ToolDeploymentValidation => {
+  const loaderPath = path.join(TOOLS_DIR, 'index.js');
+
+  if (!fsSync.existsSync(TOOLS_DIR)) {
+    return {
+      loaderValid: false,
+      loaderError: 'tools directory missing',
+      tools: [],
+      toolNames: [],
+    };
+  }
+
+  if (!fsSync.existsSync(loaderPath)) {
+    return {
+      loaderValid: false,
+      loaderError: 'index.js missing',
+      tools: [],
+      toolNames: [],
+    };
+  }
+
+  let tools: unknown[];
+  try {
+    const req = createRequire(import.meta.url);
+    delete req.cache[loaderPath];
+    for (const key of Object.keys(req.cache)) {
+      if (key.startsWith(TOOLS_DIR)) delete req.cache[key];
+    }
+    const loaded = req(loaderPath);
+    if (!Array.isArray(loaded)) {
+      return {
+        loaderValid: false,
+        loaderError: 'loader did not return an array',
+        tools: [],
+        toolNames: [],
+      };
+    }
+    tools = loaded;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      loaderValid: false,
+      loaderError: msg,
+      tools: [],
+      toolNames: [],
+    };
+  }
+
+  const results: ToolValidationResult[] = [];
+  const toolNames: string[] = [];
+
+  for (const tool of tools) {
+    if (!tool || typeof tool !== 'object') {
+      results.push({
+        name: '(invalid)',
+        valid: false,
+        missing: ['not an object'],
+      });
+      continue;
+    }
+
+    const t = tool as Record<string, unknown>;
+    const name = typeof t.name === 'string' ? t.name : '(unnamed)';
+    const missing: string[] = [];
+
+    if (typeof t.name !== 'string') missing.push('name');
+    if (typeof t.call !== 'function') missing.push('call');
+    if (typeof t.prompt !== 'function') missing.push('prompt');
+    if (typeof t.description !== 'function') missing.push('description');
+    if (!t.inputJSONSchema || typeof t.inputJSONSchema !== 'object')
+      missing.push('schema');
+
+    results.push({ name, valid: missing.length === 0, missing });
+    if (missing.length === 0) toolNames.push(name);
+  }
+
+  return { loaderValid: true, tools: results, toolNames };
 };
 
 // =============================================================================
