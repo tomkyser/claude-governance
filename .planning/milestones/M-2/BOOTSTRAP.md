@@ -16,9 +16,9 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Completed:** 2a (tool injection), 2a-gaps (12/12), 2b (clean-room REPL), 2b-gaps (14/14)
-**Next:** 2c (Clean-Room Tungsten)
-**Then:** 2d (Context Snipping Tool)
+**Completed:** 2a (tool injection), 2a-gaps (12/12), 2b (clean-room REPL), 2b-gaps (14/14 + 2 post-testing fixes)
+**Next:** 2b-gaps-2 (G15 embedded search, G9/G11 prompt effectiveness)
+**Then:** 2c (Clean-Room Tungsten), 2d (Context Snipping Tool)
 
 **CRITICAL — read before doing anything:**
 - `.planning/specs/tungsten-clean-room.md` — Tungsten design spec v0.2

@@ -44,6 +44,19 @@
 | `~/.claude/hooks/governance-verify.cjs` | MOD: tool names + probe status in SOVEREIGN banner |
 | `~/.claude/hooks/statusline-combined.cjs` | ADD: TOOLS segment |
 
+## Post-Testing Fixes (User Testing)
+
+| Fix | Commit | Issue |
+|-----|--------|-------|
+| parentMessage.message.id | `612c0fd` | Write/Edit/Read crash — FilePersistence requires parentMessage with message.id field (F17) |
+| IIFE script-source check | `8b521e9` | for-await gave "Unexpected reserved word" — error-message matching missed it, switched to script-source check |
+
+## Remaining → Phase 2b-gaps-2
+
+- **G15:** Embedded search dispatch — grep/glob use system binaries, not embedded ugrep/bfs
+- **G9-test:** Fetch prompt effectiveness — interactive observation
+- **G11-test:** Persistence prompt effectiveness — interactive observation
+
 ## Commits
 
 - `2f72a34` G2+G3: Module validation in check and launch
@@ -51,3 +64,6 @@
 - `59597fc` G7+G8+G9: Handler correctness
 - `0903339` G10+G11: Execution semantics
 - `c45d75a` G12+G13+G14: Resilience
+- `8b521e9` G10 fix: Script-source IIFE check
+- `612c0fd` CRITICAL: parentMessage fix for Write/Edit/Read
+- `ac8158d` F17 finding documented

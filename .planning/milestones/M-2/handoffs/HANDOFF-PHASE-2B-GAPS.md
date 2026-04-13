@@ -44,6 +44,19 @@ Every future tool phase (2c Tungsten, 2d Context Snip) must include:
 3. Tool name in SOVEREIGN banner and statusline
 4. Tool state in state.json
 
+## Post-Testing Fixes
+
+User benchmark testing (Tom) revealed **write(), edit(), and read() were all crashing** — `TypeError: undefined is not an object (evaluating '$?.message.id')`. Root cause: CC's `FilePersistence` feature accesses `parentMessage.message.id` via optional chaining. Our mock parentMessage had `uuid` but not `message`. When parentMessage is `undefined` (not passed), the chain short-circuits safely. When it's a non-null object missing `.message`, it crashes. Fix: `{ uuid, message: { id, role, content } }`. See F17.
+
+Also fixed: G10 IIFE targeting — `for await` produced "Unexpected reserved word" which the error-message regex missed. Switched to script-source checking (`/\bawait\b/` in script text) which is robust to V8 message wording changes.
+
+## Remaining → Phase 2b-gaps-2
+
+- **G15:** grep/glob use system `/usr/bin/grep` and `/usr/bin/find`, not embedded ugrep/bfs
+- **G9-test / G11-test:** Prompt effectiveness testing (interactive observation required)
+
 ## What's Next
 
-**Phase 2c: Clean-Room Tungsten** — tmux session management tool. Spec at `.planning/specs/tungsten-clean-room.md` (v0.2). Uses same auto-discovery loader and tool injection mechanism. Must follow the verification pattern established here.
+**Phase 2b-gaps-2** — close remaining gaps before moving to 2c.
+
+**Then: Phase 2c: Clean-Room Tungsten** — tmux session management tool. Spec at `.planning/specs/tungsten-clean-room.md` (v0.2). Uses same auto-discovery loader and tool injection mechanism. Must follow the verification pattern established here.
