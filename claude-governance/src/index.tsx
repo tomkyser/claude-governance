@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import chalk from 'chalk';
+import fsSync from 'node:fs';
+import path from 'node:path';
 
 import {
   CONFIG_DIR,
@@ -55,6 +57,7 @@ import {
   type ModuleContext,
 } from './modules';
 import { handleSetup } from './setup';
+import { VERSION } from './version';
 
 // =============================================================================
 // Invocation Command Detection
@@ -147,7 +150,7 @@ const main = async () => {
     .description(
       'Restore user authority over Claude Code. Governance patches, prompt overrides, and verification.'
     )
-    .version('0.1.0')
+    .version(VERSION)
     .option('-d, --debug', 'enable debug mode')
     .option('-v, --verbose', 'enable verbose debug mode (includes diffs)')
     .option('--show-unchanged', 'show unchanged diffs (requires --verbose)')
@@ -619,7 +622,7 @@ async function handleListSystemPrompts(
             'Could not detect Claude Code version. Specify one:'
           )
         );
-        console.error(chalk.gray(`  ${getInvocationCommand()} --list-system-prompts 2.1.101`));
+        console.error(chalk.gray(`  ${getInvocationCommand()} --list-system-prompts <VERSION>`));
         process.exit(1);
       }
       version = result.startupCheckInfo.ccInstInfo.version;
@@ -629,7 +632,7 @@ async function handleListSystemPrompts(
           'Could not detect Claude Code. Specify a version:'
         )
       );
-      console.error(chalk.gray(`  ${getInvocationCommand()} --list-system-prompts 2.1.101`));
+      console.error(chalk.gray(`  ${getInvocationCommand()} --list-system-prompts <VERSION>`));
       process.exit(1);
     }
   }
@@ -874,9 +877,9 @@ async function handleLaunch(
   const launchEnv = { ...process.env };
   try {
     const config = await readConfigFile();
-    const govConfig = (config.settings as unknown as Record<string, unknown>)
-      .governance as Record<string, unknown> | undefined;
-    const envOverrides = govConfig?.env as Record<string, string> | undefined;
+    const govConfig = (config.settings as unknown as { governance?: { env?: Record<string, string> } })
+      .governance;
+    const envOverrides = govConfig?.env;
     if (envOverrides) {
       for (const [key, value] of Object.entries(envOverrides)) {
         launchEnv[key] = String(value);
@@ -972,10 +975,8 @@ async function handleApplyForLaunch(
 // =============================================================================
 
 function readModulesConfig(): ModulesConfig | undefined {
-  const fsSync = require('node:fs') as typeof import('node:fs');
-  const pathM = require('node:path') as typeof import('node:path');
   try {
-    const configPath = pathM.join(CONFIG_DIR, 'config.json');
+    const configPath = path.join(CONFIG_DIR, 'config.json');
     const raw = fsSync.readFileSync(configPath, 'utf8');
     const config = JSON.parse(raw);
     return config.modules as ModulesConfig | undefined;

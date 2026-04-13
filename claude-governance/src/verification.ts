@@ -1,4 +1,5 @@
 import { CONFIG_DIR } from './config';
+import { VERSION } from './version';
 import type { VerificationEntry } from './patches/governance';
 
 // =============================================================================
@@ -116,7 +117,7 @@ export async function writeVerificationState(
 
   const state: VerificationState = {
     timestamp: new Date().toISOString(),
-    governanceVersion: '0.1.0',
+    governanceVersion: VERSION,
     ccVersion,
     binaryPath,
     status,
