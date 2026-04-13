@@ -37,6 +37,7 @@ import {
   writeReminderAuthorityFix,
   writeIsMetaFlagRemoval,
   writeEmbeddedToolsGateResolution,
+  writeToolInjection,
   GOVERNANCE_DEFAULTS,
   isContentPatched,
   VERIFICATION_REGISTRY,
@@ -142,6 +143,13 @@ const PATCH_DEFINITIONS = [
     group: PatchGroup.GOVERNANCE,
     description:
       'Changes isMeta:!0 to isMeta:!1 on CLAUDE.md messages (optional — affects compaction)',
+  },
+  {
+    id: 'tool-injection',
+    name: 'Tool Registry Injection',
+    group: PatchGroup.GOVERNANCE,
+    description:
+      'Patches getAllBaseTools() to load external tools from ~/.claude-governance/tools/',
   },
 ] as const;
 
@@ -408,6 +416,10 @@ export const applyCustomization = async (
     'ismeta-flag-removal': {
       fn: c => writeIsMetaFlagRemoval(c),
       condition: enableIsMetaRemoval,
+    },
+    'tool-injection': {
+      fn: c => writeToolInjection(c),
+      signature: '__claude_governance_tools__',
     },
   };
 

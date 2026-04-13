@@ -24,7 +24,7 @@ export interface VerificationEntry {
   signature?: string | RegExp;
   antiSignature?: string | RegExp;
   critical: boolean;
-  category: 'governance' | 'gate' | 'prompt-override';
+  category: 'governance' | 'gate' | 'prompt-override' | 'tool-injection';
   passDetail?: string;
 }
 
@@ -71,6 +71,15 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     critical: false,
     category: 'gate',
     passDetail: 'all gates resolved',
+  },
+  // --- Tool injection ---
+  {
+    id: 'tool-injection',
+    name: 'Tool Injection',
+    signature: '__claude_governance_tools__',
+    critical: false,
+    category: 'tool-injection',
+    passDetail: 'external tool loader active',
   },
   // --- Prompt overrides (signature only — anti-signatures unreliable due to
   //     dead-code constants persisting in binary after pieces replacement) ---
@@ -507,4 +516,103 @@ export const writeIsMetaFlagRemoval = (
   const replacement = original.replace(/isMeta:\s*!0/, 'isMeta:!1');
   const result = content.replace(original, replacement);
   return result !== content ? result : content;
+};
+
+// =============================================================================
+// PATCH 7: Tool Injection (CRITICAL for M-2)
+// =============================================================================
+
+const TOOL_LOADER_SIGNATURE = '__claude_governance_tools__';
+
+const TOOL_LOADER_CODE = [
+  `var ${TOOL_LOADER_SIGNATURE}=[];`,
+  `try{`,
+  `var _tpath=require("node:path").join(`,
+  `require("node:os").homedir(),".claude-governance","tools","index.js"`,
+  `);`,
+  `if(require("node:fs").existsSync(_tpath)){`,
+  `var _tm=require(_tpath);`,
+  `var _ta=Array.isArray(_tm)?_tm:_tm.default||_tm.tools||[];`,
+  `for(var _ti=0;_ti<_ta.length;_ti++){`,
+  `var _t=_ta[_ti];`,
+  `if(_t&&_t.name){`,
+  `if(!_t.isEnabled)_t.isEnabled=function(){return!0};`,
+  `if(!_t.isConcurrencySafe)_t.isConcurrencySafe=function(){return!1};`,
+  `if(!_t.isReadOnly)_t.isReadOnly=function(){return!1};`,
+  `if(!_t.isDestructive)_t.isDestructive=function(){return!1};`,
+  `if(!_t.checkPermissions)_t.checkPermissions=function(a){return Promise.resolve({behavior:"allow",updatedInput:a})};`,
+  `if(!_t.toAutoClassifierInput)_t.toAutoClassifierInput=function(){return""};`,
+  `if(!_t.userFacingName)_t.userFacingName=function(){return _t.name};`,
+  `if(!_t.renderToolUseMessage)_t.renderToolUseMessage=function(){return null};`,
+  `if(!_t.mapToolResultToToolResultBlockParam)_t.mapToolResultToToolResultBlockParam=function(c,id){return{tool_use_id:id,type:"tool_result",content:typeof c==="string"?c:JSON.stringify(c)}};`,
+  `if(!_t.maxResultSizeChars)_t.maxResultSizeChars=1e5;`,
+  `${TOOL_LOADER_SIGNATURE}.push(_t)`,
+  `}}}`,
+  `}catch(_e){}`,
+].join('');
+
+export const writeToolInjection = (
+  content: string
+): string | null => {
+  // Find getAllBaseTools (minified as Ut in 2.1.101)
+  // Strategy: find `function XX(){return[` where XX is followed by a known
+  // tool array pattern. We anchor on the function containing tool variable names.
+  const fnStart = content.match(
+    /function ([$\w]+)\(\)\{return\[([$\w]+),([$\w]+),([$\w]+),/
+  );
+
+  if (!fnStart) {
+    debug('  tool injection: could not find getAllBaseTools function');
+    return null;
+  }
+
+  const fnName = fnStart[1];
+  const fnPrefix = `function ${fnName}(){return[`;
+
+  // Verify this is likely getAllBaseTools by checking the function contains
+  // many conditional spreads (the tool gating pattern)
+  const fnStartIdx = content.indexOf(fnPrefix);
+  if (fnStartIdx === -1) return null;
+
+  // Find the function end — look for `]}function` or `]}var` after the start
+  const searchFrom = fnStartIdx + fnPrefix.length;
+  const fnBody = content.substring(searchFrom, searchFrom + 2000);
+  const fnEndMatch = fnBody.match(/\]\}(?=function |var |let |const |[$\w]+=)/);
+
+  if (!fnEndMatch || fnEndMatch.index === undefined) {
+    debug('  tool injection: could not find end of getAllBaseTools');
+    return null;
+  }
+
+  // Count conditional spreads to verify this is the tool registry
+  const condSpreads = (fnBody.substring(0, fnEndMatch.index).match(/\.\.\./g) || []).length;
+  if (condSpreads < 10) {
+    debug(`  tool injection: function has only ${condSpreads} spreads, expected 10+`);
+    return null;
+  }
+
+  debug(`  tool injection: found ${fnName}() at offset ${fnStartIdx} with ${condSpreads} spreads`);
+
+  // Build the replacement:
+  // Before: function Ut(){return[...tools...]}
+  // After:  function Ut(){var _b=[...tools...];LOADER;return _b.concat(__claude_governance_tools__)}
+  const fullMatch = fnPrefix + fnBody.substring(0, fnEndMatch.index + 2);
+  const arrayContent = fnBody.substring(0, fnEndMatch.index);
+
+  const replacement = [
+    `function ${fnName}(){`,
+    TOOL_LOADER_CODE,
+    `var _b=[${arrayContent}];`,
+    `return _b.concat(${TOOL_LOADER_SIGNATURE})`,
+    `}`,
+  ].join('');
+
+  const result = content.replace(fullMatch, replacement);
+  if (result === content) {
+    debug('  tool injection: replacement produced no change');
+    return null;
+  }
+
+  debug(`  tool injection: patched ${fnName}() to load external tools`);
+  return result;
 };

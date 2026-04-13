@@ -770,6 +770,7 @@ async function handleCheck(binaryPath?: string): Promise<void> {
     { key: 'governance', label: 'Governance Patches' },
     { key: 'gate', label: 'Gate Resolution' },
     { key: 'prompt-override', label: 'Prompt Overrides' },
+    { key: 'tool-injection', label: 'Tool Injection' },
   ];
 
   for (const cat of categories) {
