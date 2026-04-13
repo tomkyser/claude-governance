@@ -148,6 +148,21 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     critical: false,
     category: 'prompt-override',
   },
+  {
+    id: 'prompt-doing-tasks-ambitious',
+    name: 'Prompt Override: Ambitious Tasks + REPL',
+    signature: 'prefer REPL over individual tool calls',
+    critical: false,
+    category: 'prompt-override',
+  },
+  {
+    id: 'repl-tool-guidance',
+    name: 'REPL Tool Guidance Injection',
+    signature: 'use REPL in a single call instead of issuing individual',
+    critical: false,
+    category: 'governance',
+    passDetail: 'active in Using your tools',
+  },
 ];
 
 // =============================================================================
@@ -793,4 +808,59 @@ export const writeToolInjection = (
 
   debug(`  tool injection: patched ${fnName}() via ${strategy}`);
   return result;
+};
+
+// =============================================================================
+// PATCH 8: REPL Tool Guidance Injection
+// =============================================================================
+// Injects REPL guidance into the "Using your tools" section (mk5/getUsingYourToolsSection).
+// The model's tool selection is dominated by this section — "Use Read instead of cat" etc.
+// Without REPL guidance here, the model reasons about REPL but still reaches for individual
+// tools. This patch adds REPL as a peer-level recommendation.
+
+const REPL_GUIDANCE =
+  'For batch operations across 3+ files (scan-filter-act, bulk reads/edits, ' +
+  'data processing, cross-file refactoring), use REPL in a single call instead ' +
+  'of issuing individual Read/Write/Edit calls. REPL executes the entire pipeline ' +
+  'as one tool call, reducing context consumption from O(2N+2) to O(1). Use ' +
+  'individual tools for single-file operations and safety-critical edits where ' +
+  'diff visibility matters.';
+
+export const writeReplToolGuidance = (content: string): string | null => {
+  // Target: the T array closing in mk5's full-mode path (path 3).
+  // The array ends with: ...sequentially instead."].filter(($)=>$!==null)
+  // Strategy: inject a new array element before the "].filter" closing.
+  // This is unique (1 match) because of the full return pattern after it.
+
+  // Already patched check
+  if (content.includes('use REPL in a single call instead of issuing individual')) {
+    debug('  REPL tool guidance: already applied');
+    return content;
+  }
+
+  const detection = runDetectors(content, [
+    {
+      name: 'using-your-tools-array-close',
+      fn: (js) => {
+        const m = js.match(
+          /sequentially instead\."\]\.filter\(\([$\w]+\)=>[$\w]+!==null\);return\["# Using your tools"/
+        );
+        return m
+          ? { match: m, detector: 'using-your-tools-array-close', confidence: 'high' }
+          : null;
+      },
+    },
+  ]);
+
+  if (!detection) return null;
+
+  const original = detection.match[0];
+  const escapedGuidance = REPL_GUIDANCE.replace(/"/g, '\\"');
+  const replacement = original.replace(
+    'sequentially instead."]',
+    `sequentially instead.","${escapedGuidance}"]`
+  );
+
+  const result = content.replace(original, replacement);
+  return result !== content ? result : null;
 };

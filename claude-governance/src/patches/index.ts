@@ -39,6 +39,7 @@ import {
   writeIsMetaFlagRemoval,
   writeEmbeddedToolsGateResolution,
   writeToolInjection,
+  writeReplToolGuidance,
   GOVERNANCE_DEFAULTS,
   isContentPatched,
   VERIFICATION_REGISTRY,
@@ -151,6 +152,13 @@ const PATCH_DEFINITIONS = [
     group: PatchGroup.GOVERNANCE,
     description:
       'Patches getAllBaseTools() to load external tools from ~/.claude-governance/tools/',
+  },
+  {
+    id: 'repl-tool-guidance',
+    name: 'REPL Tool Guidance',
+    group: PatchGroup.GOVERNANCE,
+    description:
+      'Injects REPL batch-operation guidance into the Using your tools section',
   },
 ] as const;
 
@@ -694,6 +702,10 @@ export const applyCustomization = async (
     'tool-injection': {
       fn: c => writeToolInjection(c),
       signature: '__claude_governance_tools__',
+    },
+    'repl-tool-guidance': {
+      fn: c => writeReplToolGuidance(c),
+      signature: 'use REPL in a single call instead of issuing individual',
     },
   };
 
