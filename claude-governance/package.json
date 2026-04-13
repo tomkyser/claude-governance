@@ -79,6 +79,7 @@
     "dist/",
     "data/prompts/prompts-2.1.9*.json",
     "data/prompts/prompts-2.1.10*.json",
+    "data/overrides/*.md",
     "scripts/"
   ]
 }

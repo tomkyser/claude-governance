@@ -259,6 +259,49 @@ const applyPatchImplementations = (
 };
 
 // =============================================================================
+// Prompt Override Deployment (G5)
+// =============================================================================
+
+import { SYSTEM_PROMPTS_DIR } from '../config';
+
+const deployPromptOverrides = async (): Promise<number> => {
+  const overridesDir = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '..', 'data', 'overrides'
+  );
+
+  if (!fsSync.existsSync(overridesDir)) {
+    debug(`deployPromptOverrides: overrides dir not found at ${overridesDir}`);
+    return 0;
+  }
+
+  await fs.mkdir(SYSTEM_PROMPTS_DIR, { recursive: true });
+
+  const files = fsSync.readdirSync(overridesDir).filter(f => f.endsWith('.md'));
+  let deployed = 0;
+
+  for (const file of files) {
+    const srcPath = path.join(overridesDir, file);
+    const dstPath = path.join(SYSTEM_PROMPTS_DIR, file);
+    const srcContent = fsSync.readFileSync(srcPath, 'utf8');
+
+    let needsCopy = true;
+    if (fsSync.existsSync(dstPath)) {
+      const dstContent = fsSync.readFileSync(dstPath, 'utf8');
+      if (srcContent === dstContent) needsCopy = false;
+    }
+
+    if (needsCopy) {
+      await fs.writeFile(dstPath, srcContent, 'utf8');
+      deployed++;
+      debug(`deployPromptOverrides: deployed ${file}`);
+    }
+  }
+
+  return deployed;
+};
+
+// =============================================================================
 // Main Apply Function
 // =============================================================================
 
@@ -329,6 +372,14 @@ export const applyCustomization = async (
   }
 
   const allResults: PatchResult[] = [];
+
+  // ==========================================================================
+  // Deploy governance prompt overrides to config dir before applying
+  // ==========================================================================
+  const overridesDeployed = await deployPromptOverrides();
+  if (overridesDeployed > 0) {
+    debug(`Deployed ${overridesDeployed} prompt override(s) to ${SYSTEM_PROMPTS_DIR}`);
+  }
 
   // ==========================================================================
   // Apply system prompt customizations (prompt overrides)
