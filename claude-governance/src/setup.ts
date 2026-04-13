@@ -92,14 +92,18 @@ export async function handleSetup(): Promise<void> {
     console.log('');
   }
 
-  // Detect CC installation
+  // Detect CC installation (suppress prompt sync output)
   let ccInstInfo;
+  const origLog = console.log;
   try {
+    console.log = () => {};
     const config = await readConfigFile();
     const result = await startupCheck({ interactive: false }, config);
     ccInstInfo = result.startupCheckInfo?.ccInstInfo;
   } catch {
     // Fall through
+  } finally {
+    console.log = origLog;
   }
 
   if (!ccInstInfo) {

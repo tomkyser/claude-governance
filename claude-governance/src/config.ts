@@ -123,6 +123,12 @@ export const ensureConfigDir = async (): Promise<void> => {
   await fs.mkdir(CONFIG_DIR, { recursive: true });
   await fs.mkdir(SYSTEM_PROMPTS_DIR, { recursive: true });
 
+  // Ensure the preferred config dir exists so next session migrates off legacy path
+  const preferredDir = path.join(os.homedir(), '.claude-governance');
+  if (CONFIG_DIR !== preferredDir) {
+    await fs.mkdir(preferredDir, { recursive: true });
+  }
+
   // Generate a .gitignore file in case the user wants to version control their config directory
   // with config.json and the system prompts.
   const gitignorePath = path.join(CONFIG_DIR, '.gitignore');
