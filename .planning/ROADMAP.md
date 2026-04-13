@@ -261,6 +261,13 @@ Each tool phase must include:
 3. Session-start hook awareness (tool name in SOVEREIGN banner)
 4. Statusline segment showing tool status
 
+### Phase 2b-gaps-2: REPL Production Readiness
+Gaps surfaced during testing of 2b-gaps. Phase 2b-gaps is not complete until these are resolved.
+
+- [ ] **G15: Embedded search tool dispatch** — REPL's grep/glob route through Bash → system `/usr/bin/grep` and `/usr/bin/find`, NOT the embedded ugrep 7.5 / bfs 4.1 / rg 14.1 that CC uses natively. Embedded tools dispatch via argv[0] rewriting on the claude binary (multi-call binary pattern). Fix: invoke claude binary as ugrep/bfs, or find a way to access the shadow Glob/Grep implementations from the tool context.
+- [ ] **G9-test: Fetch prompt effectiveness** — verify model correctly understands that `fetch()` returns AI-summarized content and recommends `bash('curl ...')` for raw HTTP. Interactive observation test.
+- [ ] **G11-test: Persistence prompt effectiveness** — verify model correctly understands persistence nuances: `return`/`await` trigger wrapping, `state` object for cross-call persistence, bare expressions. Interactive observation test.
+
 ### Phase 2c: Clean-Room Tungsten
 - [ ] Implement per spec: `specs/tungsten-clean-room.md`
 - [ ] Single tool with action enum (send, capture, create, list, kill, interrupt)
