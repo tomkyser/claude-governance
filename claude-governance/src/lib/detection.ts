@@ -75,8 +75,8 @@ export interface DetectInstallationOptions {
 /**
  * Attempts to detect the user's preferred Claude Code installation.  Detection procedure:
  * 0. options.path
- * 1. Uses $TWEAKCC_CC_INSTALLATION_PATH if set.
- * 2. Uses ccInstallationPath in tweakcc config.
+ * 1. Uses $CLAUDE_GOVERNANCE_CC_PATH if set.
+ * 2. Uses ccInstallationPath in config.
  * 3. Discovers installation from `claude` in PATH
  * 4. Looks in hard-coded search paths:
  *   a. If the search yields one installation, uses it

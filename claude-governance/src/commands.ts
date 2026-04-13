@@ -13,6 +13,7 @@ import chalk from 'chalk';
 import { formatAndDiff } from './formatAndDiff';
 
 import { tryDetectInstallation } from './lib/detection';
+import { debug } from './utils';
 import { readContent, writeContent } from './lib/content';
 import { Installation } from './lib/types';
 import {
@@ -263,7 +264,8 @@ function isBadOptionError(error: unknown): boolean {
 function getNodeVersion(): string {
   try {
     return execSync('node --version', { encoding: 'utf8' }).trim();
-  } catch {
+  } catch (err) {
+    debug('Failed to detect Node.js version:', err);
     return 'unknown';
   }
 }
@@ -402,6 +404,8 @@ export async function handleUnpack(
 
   const content = await readContent(installation);
 
+  const { dirname } = await import('node:path');
+  await fs.mkdir(dirname(outputJsPath), { recursive: true });
   await fs.writeFile(outputJsPath, content, 'utf8');
 
   console.log(
@@ -439,6 +443,13 @@ export async function handleRepack(
         `  Detected installation: ${installation.path} (npm-based, v${installation.version})`
       )
     );
+    process.exit(1);
+  }
+
+  try {
+    await fs.access(inputJsPath);
+  } catch {
+    console.error(chalk.red(`Error: Input file not found: ${inputJsPath}`));
     process.exit(1);
   }
 

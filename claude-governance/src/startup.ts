@@ -168,7 +168,7 @@ export const createExampleConfigIfMissing = async (
         await fs.writeFile(CONFIG_FILE, JSON.stringify(exampleConfig, null, 2));
       }
     }
-  } catch {
-    // Silently fail if we can't write the config file
+  } catch (err) {
+    debug('Failed to create example config:', err);
   }
 };

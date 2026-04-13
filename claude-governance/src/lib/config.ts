@@ -1,8 +1,7 @@
 /**
- * Tweakcc Config Utilities
+ * Config Utilities
  *
- * Access tweakcc's configuration paths and data.
- * These are tweakcc-specific (not generic patching utilities).
+ * Access claude-governance configuration paths and data.
  */
 
 import {
@@ -18,10 +17,10 @@ import { TweakccConfig } from './types';
 // ============================================================================
 
 /**
- * Get tweakcc's config directory path.
+ * Get the config directory path.
  *
- * Respects TWEAKCC_CONFIG_DIR environment variable.
- * Falls back to ~/.tweakcc, ~/.claude/tweakcc, or $XDG_CONFIG_HOME/tweakcc.
+ * Respects CLAUDE_GOVERNANCE_CONFIG_DIR environment variable.
+ * Falls back to ~/.claude-governance, ~/.tweakcc (legacy), or $XDG_CONFIG_HOME/claude-governance.
  *
  * @returns Absolute path to config directory
  */
@@ -30,23 +29,23 @@ export function getTweakccConfigDir(): string {
 }
 
 /**
- * Get tweakcc's config file path.
+ * Get the config file path.
  */
 export function getTweakccConfigPath(): string {
   return CONFIG_FILE;
 }
 
 /**
- * Get tweakcc's system prompts directory.
+ * Get the system prompts directory.
  *
- * This is where tweakcc stores editable markdown files for system prompts.
+ * Editable markdown files for system prompt overrides.
  */
 export function getTweakccSystemPromptsDir(): string {
   return SYSTEM_PROMPTS_DIR;
 }
 
 /**
- * Read tweakcc's config file.
+ * Read the config file.
  */
 export async function readTweakccConfig(): Promise<TweakccConfig> {
   return await readConfigFile();

@@ -1,8 +1,7 @@
 /**
- * tweakcc Library
+ * claude-governance Library
  *
- * Claude Code patching utilities - the building blocks that tweakcc uses,
- * exposed for others to build their own tools.
+ * Claude Code patching utilities exposed for building custom governance tools.
  *
  * @example
  * ```typescript
@@ -13,7 +12,7 @@
  *   writeContent,
  *   backupFile,
  *   helpers,
- * } from 'tweakcc';
+ * } from 'claude-governance';
  *
  * // Find Claude Code
  * const installation = await tryDetectInstallation({ interactive: true });
@@ -63,7 +62,7 @@ export { readContent, writeContent } from './content';
 export { backupFile, restoreBackup } from './backup';
 
 // ============================================================================
-// Tweakcc Config
+// Config
 // ============================================================================
 
 export {
