@@ -500,6 +500,106 @@ export function deployToInstallPath(
 }
 
 // ============================================================================
+// Binary Fingerprint (G6: Overwrite Detection)
+// ============================================================================
+
+export interface BinaryFingerprint {
+  size: number;
+  mtimeMs: number;
+}
+
+export function getBinaryFingerprint(filePath: string): BinaryFingerprint | null {
+  try {
+    const stat = fsSync.statSync(filePath);
+    return { size: stat.size, mtimeMs: stat.mtimeMs };
+  } catch {
+    return null;
+  }
+}
+
+export function fingerprintChanged(
+  current: BinaryFingerprint | null,
+  stored: BinaryFingerprint | null | undefined,
+): boolean {
+  if (!current || !stored) return true;
+  return current.size !== stored.size || current.mtimeMs !== stored.mtimeMs;
+}
+
+// ============================================================================
+// Corruption Detection (G7: UTF-8 Corruption from install.sh)
+// ============================================================================
+
+export interface CorruptionCheck {
+  corrupted: boolean;
+  reason?: string;
+  sizeRatio?: number;
+}
+
+export function detectCorruption(
+  filePath: string,
+  expectedSize?: number,
+): CorruptionCheck {
+  const platform = detectPlatform();
+  const magic = MAGIC_BYTES[platform.os];
+  if (!magic) return { corrupted: false };
+
+  let stat: ReturnType<typeof fsSync.statSync>;
+  try {
+    stat = fsSync.statSync(filePath);
+  } catch {
+    return { corrupted: false };
+  }
+
+  // Size heuristic: UTF-8 corruption inflates Mach-O by ~50% (201MB → 304MB)
+  if (expectedSize && stat.size > expectedSize * 1.3) {
+    return {
+      corrupted: true,
+      reason: `Binary is ${(stat.size / 1_000_000).toFixed(0)}MB — expected ~${(expectedSize / 1_000_000).toFixed(0)}MB. Likely UTF-8 corruption from install.sh.`,
+      sizeRatio: stat.size / expectedSize,
+    };
+  }
+
+  // Scan first 4KB for U+FFFD replacement characters (ef bf bd)
+  const fd = fsSync.openSync(filePath, 'r');
+  try {
+    const scanSize = 4096;
+    const buf = Buffer.allocUnsafe(scanSize);
+    const bytesRead = fsSync.readSync(fd, buf, 0, scanSize, 0);
+
+    // Check magic bytes first
+    if (bytesRead >= magic.length && !buf.subarray(0, magic.length).equals(magic.bytes)) {
+      // If magic bytes are wrong, check if it's the U+FFFD pattern
+      if (bytesRead >= 3 && buf[0] === 0xef && buf[1] === 0xbf && buf[2] === 0xbd) {
+        return {
+          corrupted: true,
+          reason: 'Binary starts with U+FFFD (ef bf bd) — UTF-8 replacement character corruption.',
+        };
+      }
+    }
+
+    // Count U+FFFD sequences in the header
+    let fffdCount = 0;
+    for (let i = 0; i < bytesRead - 2; i++) {
+      if (buf[i] === 0xef && buf[i + 1] === 0xbf && buf[i + 2] === 0xbd) {
+        fffdCount++;
+      }
+    }
+
+    // More than 10 U+FFFD in 4KB header = almost certainly corrupted
+    if (fffdCount > 10) {
+      return {
+        corrupted: true,
+        reason: `Binary header contains ${fffdCount} U+FFFD sequences — UTF-8 corruption detected.`,
+      };
+    }
+  } finally {
+    fsSync.closeSync(fd);
+  }
+
+  return { corrupted: false };
+}
+
+// ============================================================================
 // Vault Status
 // ============================================================================
 

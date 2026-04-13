@@ -19,6 +19,7 @@ export interface VerificationState {
   governanceVersion: string;
   ccVersion?: string;
   binaryPath: string;
+  binaryFingerprint?: { size: number; mtimeMs: number };
   status: string;
   checks: Array<{
     id: string;
@@ -108,6 +109,7 @@ export async function writeVerificationState(
   status: string,
   binaryPath: string,
   ccVersion?: string,
+  binaryFingerprint?: { size: number; mtimeMs: number } | null,
 ): Promise<void> {
   const fsP = await import('node:fs/promises');
   const pathM = await import('node:path');
@@ -120,6 +122,7 @@ export async function writeVerificationState(
     governanceVersion: VERSION,
     ccVersion,
     binaryPath,
+    ...(binaryFingerprint ? { binaryFingerprint } : {}),
     status,
     checks: results.map(r => ({
       id: r.id,

@@ -36,6 +36,11 @@ import {
 import { handleUnpack, handleRepack, handleAdhocPatch } from './commands';
 import { GOVERNANCE_FAIL_EXIT } from './shim';
 import {
+  getBinaryFingerprint,
+  fingerprintChanged,
+  detectCorruption,
+} from './binaryVault';
+import {
   restoreClijsFromBackup,
   restoreNativeBinaryFromBackup,
 } from './installationBackup';
@@ -455,7 +460,8 @@ async function handleApplyMode(
           const verifyJs = verifyBuffer.toString('utf8');
           const verifyResults = runVerification(verifyJs, registry);
           const status = deriveStatus(verifyResults);
-          await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version);
+          const fingerprint = getBinaryFingerprint(binaryForVerify);
+          await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint);
           const passing = verifyResults.filter(r => r.pass).length;
           console.log(chalk.dim(`  Verified: ${status} (${passing}/${verifyResults.length})`));
         }
@@ -735,6 +741,18 @@ async function handleCheck(binaryPath?: string): Promise<void> {
 
   console.log(`Binary: ${targetPath}`);
 
+  // G7: Check for UTF-8 corruption before extraction
+  const corruption = detectCorruption(targetPath);
+  if (corruption.corrupted) {
+    console.log(chalk.red.bold('\n  CORRUPTED BINARY DETECTED'));
+    console.log(chalk.red(`  ${corruption.reason}`));
+    console.log(chalk.yellow('\n  Fix: Re-download directly from GCS (not install.sh):'));
+    console.log(chalk.gray('    claude-governance setup'));
+    console.log(chalk.gray('    — or manually: curl -fsSL -o /tmp/claude \\'));
+    console.log(chalk.gray('      "https://storage.googleapis.com/claude-code-dist-.../claude-code-releases/{version}/{platform}/claude"'));
+    console.log('');
+  }
+
   // Extract JS from binary
   let js: string;
   try {
@@ -804,8 +822,9 @@ async function handleCheck(binaryPath?: string): Promise<void> {
     console.log(chalk.yellow.bold(`  PARTIAL — ${failing.length} non-critical check(s) failed`));
   }
 
-  // Write verification state
-  await writeVerificationState(results, status, targetPath, detectedVersion);
+  // Write verification state (G6: include fingerprint for overwrite detection)
+  const checkFingerprint = getBinaryFingerprint(targetPath);
+  await writeVerificationState(results, status, targetPath, detectedVersion, checkFingerprint);
 
   process.exit(criticalFail.length > 0 ? 1 : 0);
 }
@@ -841,6 +860,16 @@ async function handleLaunch(
     process.exit(GOVERNANCE_FAIL_EXIT);
   }
 
+  // G7: Check for binary corruption before anything else
+  const launchCorruption = detectCorruption(binaryPath);
+  if (launchCorruption.corrupted) {
+    console.log(chalk.red.bold('CORRUPTED BINARY DETECTED'));
+    console.log(chalk.red(`  ${launchCorruption.reason}`));
+    console.log(chalk.yellow('  Governance patches cannot be applied to a corrupted binary.'));
+    console.log(chalk.yellow('  Run: claude-governance setup'));
+    console.log('');
+  }
+
   // Pre-flight governance verification
   if (!options.skipVerify) {
     let needsApply = options.forceApply === true;
@@ -861,7 +890,14 @@ async function handleLaunch(
         console.log(chalk.yellow(`Governance ${state.status} — reapplying...`));
         needsApply = true;
       } else {
-        console.log(chalk.green(`Governance: SOVEREIGN (${state.passCount}/${state.totalCount})`));
+        // G6: Fingerprint check — detect auto-updater overwrite even when version unchanged
+        const currentFingerprint = getBinaryFingerprint(binaryPath);
+        if (fingerprintChanged(currentFingerprint, state.binaryFingerprint)) {
+          console.log(chalk.yellow('Binary changed since last apply (auto-updater?) — reapplying...'));
+          needsApply = true;
+        } else {
+          console.log(chalk.green(`Governance: SOVEREIGN (${state.passCount}/${state.totalCount})`));
+        }
       }
     }
 
@@ -955,7 +991,7 @@ async function handleApplyForLaunch(
     }
   }
 
-  // Post-apply verification + state.json
+  // Post-apply verification + state.json (G6: capture fingerprint after patching)
   if (binaryForVerify) {
     try {
       const registry = getVerificationRegistry(modulesConfig);
@@ -964,7 +1000,8 @@ async function handleApplyForLaunch(
         const verifyJs = verifyBuffer.toString('utf8');
         const verifyResults = runVerification(verifyJs, registry);
         const status = deriveStatus(verifyResults);
-        await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version);
+        const fingerprint = getBinaryFingerprint(binaryForVerify);
+        await writeVerificationState(verifyResults, status, binaryForVerify, ccInstInfo.version, fingerprint);
         const passing = verifyResults.filter(r => r.pass).length;
         console.log(chalk.green(`  Governance: ${status} (${passing}/${verifyResults.length})`));
       }
