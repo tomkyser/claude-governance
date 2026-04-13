@@ -81,6 +81,15 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     category: 'tool-injection',
     passDetail: 'external tool loader active',
   },
+  // --- Embedded tools Glob/Grep exclusion (G11) ---
+  {
+    id: 'embedded-tools-exclusion',
+    name: 'Embedded Tools: Glob/Grep Exclusion',
+    signature: /[$\w]+\(\)\?\[\]:\[[$\w]+,[$\w]+\]/,
+    critical: false,
+    category: 'gate',
+    passDetail: 'Glob/Grep excluded when embedded tools active',
+  },
   // --- Prompt overrides (signature only — anti-signatures unreliable due to
   //     dead-code constants persisting in binary after pieces replacement) ---
   {
