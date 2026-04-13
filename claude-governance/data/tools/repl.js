@@ -570,13 +570,14 @@ return { name: pkg.name, depCount: deps.length, deps };
 \`\`\`
 
 ## State Persistence
-- Scripts WITHOUT \`await\`: \`var\` declarations and bare assignments persist across calls
+- Scripts WITHOUT \`await\` or \`return\`: \`var\` declarations and bare assignments persist across calls
   - \`var x = 42\` in call 1 → \`x\` available in call 2
   - \`x = 42\` (no keyword) in call 1 → \`x\` available in call 2
   - \`const\`/\`let\` do NOT persist (block-scoped by V8 design)
-- Scripts WITH \`await\`: wrapped in async function — local variables don't persist
+- Scripts WITH \`await\` or \`return\`: wrapped in async function — local variables don't persist
   - Use \`state.x = 42\` for values that must survive across async REPL calls
-  - The \`state\` object always persists
+  - The \`state\` object always persists regardless of script type
+- Bare expressions always work: \`42 + 1\` returns the value without needing \`return\`
 
 ## Notes
 - \`console.log()\` output is captured and included in the result
@@ -626,10 +627,15 @@ return { name: pkg.name, depCount: deps.length, deps };
         returnValue = await returnValue;
       }
     } catch (syncErr) {
-      // If it's a SyntaxError, retry with async IIFE wrapper.
-      // Triggers on: `await` (outside async), `return` (outside function),
-      // or any other syntax only valid inside a function body.
-      if (syncErr.name === 'SyntaxError') {
+      // G10: Only retry with IIFE for patterns that need function wrapping
+      // (await outside async, return outside function). Genuine syntax errors
+      // (typos, missing braces) are reported directly — wrapping them in IIFE
+      // produces confusing secondary errors.
+      const needsWrapping = syncErr.name === 'SyntaxError' && (
+        /\bawait\b/i.test(syncErr.message) ||
+        /\bIllegal return\b/i.test(syncErr.message)
+      );
+      if (needsWrapping) {
         try {
           const wrappedScript = `(async () => { ${script} })()`;
           returnValue = await vm.runInContext(wrappedScript, ctx, {
