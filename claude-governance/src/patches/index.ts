@@ -50,7 +50,14 @@ import {
 import {
   restoreNativeBinaryFromBackup,
   restoreClijsFromBackup,
+  backupNativeBinary,
 } from '../installationBackup';
+import {
+  createWorkingCopy,
+  deployToInstallPath,
+  downloadVirginBinary,
+  getVirginPath,
+} from '../binaryVault';
 
 export { showDiff, showPositionalDiff, globalReplace } from './patchDiffing';
 export {
@@ -248,7 +255,17 @@ const applyPatchImplementations = (
       continue;
     }
 
-    // If a signature is defined and already present, the patch is already active
+    // DUAL DETECTION CONTRACT (G34):
+    // Layer 1 (here): Orchestrator checks signature presence in the full JS.
+    //   If found → patch is complete, skip. This is the fast path.
+    // Layer 2 (inside impl.fn): Individual patch functions run runDetectors()
+    //   to find the original unpatched pattern for replacement.
+    //   These are never called if layer 1 matches.
+    // Contract: signature presence ≡ patch complete. Signatures are chosen to
+    // be unique strings that only exist after successful full application.
+    // Risk: if a signature string appears without the full patch (e.g. partial
+    // application), layer 1 short-circuits and the incomplete patch persists.
+    // Mitigation: signatures use multi-token strings unlikely to appear naturally.
     if (impl.signature && content.includes(impl.signature)) {
       results.push({
         id: def.id,
@@ -476,42 +493,48 @@ export const validateToolDeployment = (): ToolDeploymentValidation => {
 };
 
 // =============================================================================
-// Functional Probe (G1+G5)
+// Functional Probe (G1+G5+G32)
 // =============================================================================
 
-export interface FunctionalProbeResult {
+export interface SingleProbeResult {
+  tool: string;
   success: boolean;
   inconclusive: boolean;
   error?: string;
 }
 
-export const runFunctionalProbe = async (
-  binaryPath: string
-): Promise<FunctionalProbeResult> => {
-  const { execFileSync } = await import('node:child_process');
-  const marker = 'governance-verify';
+export interface FunctionalProbeResult {
+  success: boolean;
+  inconclusive: boolean;
+  error?: string;
+  probes: SingleProbeResult[];
+}
 
+const runSingleProbe = (
+  binaryPath: string,
+  prompt: string,
+  marker: string,
+  toolName: string,
+  timeoutMs = 45000
+): SingleProbeResult => {
+  const { execFileSync } = require('node:child_process');
   try {
-    const output = execFileSync(
-      binaryPath,
-      ['-p', `Use the Ping tool with message '${marker}'`],
-      {
-        encoding: 'utf-8',
-        timeout: 45000,
-        cwd: fsSync.existsSync('/tmp') ? '/tmp' : undefined,
-        env: { ...process.env, DISABLE_AUTOUPDATER: '1' },
-        stdio: ['pipe', 'pipe', 'pipe'],
-      }
-    );
+    const output = execFileSync(binaryPath, ['-p', prompt], {
+      encoding: 'utf-8',
+      timeout: timeoutMs,
+      cwd: fsSync.existsSync('/tmp') ? '/tmp' : undefined,
+      env: { ...process.env, DISABLE_AUTOUPDATER: '1' },
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
 
     if (output.includes(marker)) {
-      return { success: true, inconclusive: false };
+      return { tool: toolName, success: true, inconclusive: false };
     }
-
     return {
+      tool: toolName,
       success: false,
       inconclusive: false,
-      error: 'Ping marker not in response — tool not functional',
+      error: `${marker} not in response`,
     };
   } catch (err: unknown) {
     const e = err as {
@@ -520,7 +543,7 @@ export const runFunctionalProbe = async (
       message?: string;
     };
     if (e.stdout && e.stdout.includes(marker)) {
-      return { success: true, inconclusive: false };
+      return { tool: toolName, success: true, inconclusive: false };
     }
     const msg = e.message || String(err);
     if (
@@ -529,21 +552,62 @@ export const runFunctionalProbe = async (
       msg.includes('SIGTERM')
     ) {
       return {
+        tool: toolName,
         success: false,
         inconclusive: true,
         error: 'probe timed out',
       };
     }
     return {
+      tool: toolName,
       success: false,
       inconclusive:
         msg.includes('auth') ||
         msg.includes('401') ||
         msg.includes('403') ||
         msg.includes('ECONNREFUSED'),
-      error: msg.length > 200 ? msg.substring(0, 200) + '...' : msg,
+      error:
+        msg.length > 200 ? msg.substring(0, 200) + '...' : msg,
     };
   }
+};
+
+export const runFunctionalProbe = async (
+  binaryPath: string
+): Promise<FunctionalProbeResult> => {
+  const pingMarker = 'governance-verify';
+  const pingResult = runSingleProbe(
+    binaryPath,
+    `Use the Ping tool with message '${pingMarker}'`,
+    pingMarker,
+    'Ping'
+  );
+
+  const probes: SingleProbeResult[] = [pingResult];
+
+  // REPL probe: ask model to evaluate a simple expression
+  if (pingResult.success) {
+    const replMarker = '1764';
+    const replResult = runSingleProbe(
+      binaryPath,
+      `Use the REPL tool to evaluate 42*42 and return the result`,
+      replMarker,
+      'REPL',
+      60000
+    );
+    probes.push(replResult);
+  }
+
+  const anySuccess = probes.some(p => p.success);
+  const allInconclusive = probes.every(p => p.inconclusive);
+  const firstError = probes.find(p => p.error)?.error;
+
+  return {
+    success: anySuccess,
+    inconclusive: allInconclusive,
+    error: firstError,
+    probes,
+  };
 };
 
 // =============================================================================
@@ -610,9 +674,6 @@ export const applyCustomization = async (
     }
 
     // Contamination check: if backup exists, verify it's from a clean binary.
-    // If contaminated, delete it — the normal no-backup flow will extract from
-    // the installed binary directly. If THAT is also patched, the "already applied"
-    // detection in the governance patch loop handles it.
     if (backupExists) {
       debug('Checking backup for governance contamination...');
       const probe = await extractClaudeJsFromNativeInstallation(
@@ -629,16 +690,56 @@ export const applyCustomization = async (
       }
     }
 
+    let pathToExtractFrom: string;
+
     if (backupExists) {
       await restoreNativeBinaryFromBackup(ccInstInfo);
+      pathToExtractFrom = NATIVE_BINARY_BACKUP_FILE;
+    } else {
+      // No clean backup — attempt virgin vault recovery before falling back
+      // to the installed binary (which may itself be patched).
+      const version = ccInstInfo.version;
+      const virginPath = getVirginPath(version);
+      let virginAvailable = fsSync.existsSync(virginPath);
+
+      if (!virginAvailable) {
+        debug(
+          `No virgin binary for ${version} in vault, attempting download`
+        );
+        try {
+          await downloadVirginBinary(version);
+          virginAvailable = true;
+        } catch (err) {
+          debug(
+            `Virgin download failed: ${err instanceof Error ? err.message : String(err)}`
+          );
+        }
+      }
+
+      if (virginAvailable) {
+        console.log(
+          chalk.blue('Recovering clean binary from virgin vault.')
+        );
+        createWorkingCopy(version);
+        deployToInstallPath(
+          version,
+          ccInstInfo.nativeInstallationPath
+        );
+        // Create a clean backup for future apply/restore cycles
+        await backupNativeBinary(ccInstInfo);
+        pathToExtractFrom = ccInstInfo.nativeInstallationPath;
+      } else {
+        // Last resort: installed binary. Signature detection will skip
+        // already-applied patches, but backup is gone.
+        debug(
+          'No vault available, extracting from installed binary'
+        );
+        pathToExtractFrom = ccInstInfo.nativeInstallationPath;
+      }
     }
 
-    const pathToExtractFrom = backupExists
-      ? NATIVE_BINARY_BACKUP_FILE
-      : ccInstInfo.nativeInstallationPath;
-
     debug(
-      `Extracting claude.js from ${backupExists ? 'backup' : 'native installation'}: ${pathToExtractFrom}`
+      `Extracting claude.js from: ${pathToExtractFrom}`
     );
 
     const claudeJsBuffer =

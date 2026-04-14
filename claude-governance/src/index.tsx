@@ -472,22 +472,27 @@ async function handleApplyMode(
             console.log(chalk.dim(`  Tools: ${applyToolVal.toolNames.join(', ')}`));
           }
 
-          // G1: Runtime functional probe — proves end-to-end tool injection
+          // G1+G32: Runtime functional probe — per-tool honesty
           let probed = false;
           let probeSuccess = false;
           if (toolsValid) {
-            console.log(chalk.dim('  Running functional probe...'));
+            console.log(chalk.dim('  Running functional probes...'));
             const probe = await runFunctionalProbe(binaryForVerify);
             probed = true;
             probeSuccess = probe.success;
-            if (probe.success) {
-              console.log(chalk.green('  ✓ Probe: tools functional'));
-            } else if (probe.inconclusive) {
-              console.log(chalk.yellow(`  ⚠ Probe inconclusive: ${probe.error}`));
+            for (const p of probe.probes) {
+              if (p.success) {
+                console.log(chalk.green(`  ✓ Probe: ${p.tool} functional`));
+              } else if (p.inconclusive) {
+                console.log(chalk.yellow(`  ⚠ Probe: ${p.tool} inconclusive — ${p.error}`));
+              } else {
+                console.log(chalk.red(`  ✗ Probe: ${p.tool} FAILED — ${p.error}`));
+              }
+            }
+            const untestedTools = ['Tungsten'];
+            console.log(chalk.gray(`  ℹ Untested: ${untestedTools.join(', ')} (requires live session)`));
+            if (probe.probes.every(p => p.inconclusive)) {
               probed = false;
-            } else {
-              console.log(chalk.red.bold('  ✗ PROBE FAILED — tools NOT functional'));
-              console.log(chalk.red(`    ${probe.error}`));
             }
           }
 
@@ -869,8 +874,11 @@ async function handleCheck(binaryPath?: string): Promise<void> {
 
   console.log('');
 
+  console.log(chalk.gray('  Signature checks verify presence. Functional probes verify behavior.'));
+  console.log('');
+
   if (status === 'SOVEREIGN') {
-    console.log(chalk.green.bold(`  SOVEREIGN — ${passing.length}/${results.length} checks passed`));
+    console.log(chalk.green.bold(`  SOVEREIGN — ${passing.length}/${results.length} signatures present`));
   } else if (status === 'DEGRADED') {
     console.log(chalk.red.bold(`  DEGRADED — ${criticalFail.length} critical check(s) failed`));
     console.log(chalk.gray(`  Run: ${getInvocationCommand()} --apply`));

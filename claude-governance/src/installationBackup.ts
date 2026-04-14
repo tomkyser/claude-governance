@@ -8,7 +8,15 @@ import {
 } from './config';
 import { clearAllAppliedHashes } from './systemPromptHashIndex';
 import { debug, replaceFileBreakingHardLinks, doesFileExist } from './utils';
-import { binarySafeCopy } from './binaryVault';
+import {
+  binarySafeCopy,
+  createWorkingCopy,
+  deployToInstallPath,
+  downloadVirginBinary,
+  getVirginPath,
+} from './binaryVault';
+import { extractClaudeJsFromNativeInstallation } from './nativeInstallation';
+import { isContentPatched } from './patches/governance';
 import { ClaudeCodeInstallationInfo } from './types';
 
 export const backupClijs = async (ccInstInfo: ClaudeCodeInstallationInfo) => {
@@ -104,21 +112,65 @@ export const restoreNativeBinaryFromBackup = async (
     return false;
   }
 
-  if (!(await doesFileExist(NATIVE_BINARY_BACKUP_FILE))) {
-    debug('restoreNativeBinaryFromBackup: No backup file exists, skipping');
-    return false;
+  const backupExists = await doesFileExist(NATIVE_BINARY_BACKUP_FILE);
+
+  if (backupExists) {
+    debug('Checking backup for governance contamination...');
+    const probe = extractClaudeJsFromNativeInstallation(
+      NATIVE_BINARY_BACKUP_FILE
+    );
+    if (probe && isContentPatched(probe.toString('utf8'))) {
+      console.log(
+        '⚠ Backup is contaminated (contains governance patches). ' +
+          'Falling back to virgin vault.'
+      );
+      debug(
+        'restoreNativeBinaryFromBackup: backup contaminated, trying vault'
+      );
+    } else {
+      debug(
+        `Restoring native binary from clean backup to ${ccInstInfo.nativeInstallationPath}`
+      );
+      binarySafeCopy(
+        NATIVE_BINARY_BACKUP_FILE,
+        ccInstInfo.nativeInstallationPath
+      );
+      return true;
+    }
+  }
+
+  const version = ccInstInfo.version;
+  const virginPath = getVirginPath(version);
+  const virginExists = await doesFileExist(virginPath);
+
+  if (!virginExists) {
+    debug(
+      `restoreNativeBinaryFromBackup: no virgin binary for ${version}, attempting download`
+    );
+    try {
+      await downloadVirginBinary(version);
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `No clean binary available for restore.\n` +
+          `Backup: ${backupExists ? 'contaminated' : 'missing'}\n` +
+          `Virgin vault: download failed — ${msg}\n` +
+          `Reinstall Claude Code to get a clean binary.`
+      );
+    }
   }
 
   debug(
-    `Restoring native binary from backup to ${ccInstInfo.nativeInstallationPath}`
+    `Restoring native binary from virgin vault (${version}) to ${ccInstInfo.nativeInstallationPath}`
   );
+  createWorkingCopy(version);
+  deployToInstallPath(version, ccInstInfo.nativeInstallationPath);
 
-  // CRITICAL: Use binary-safe copy, NOT Node.js fs.readFile()+writeFile().
-  // Node.js v24 corrupts Mach-O binaries during read/write operations.
-  binarySafeCopy(
-    NATIVE_BINARY_BACKUP_FILE,
-    ccInstInfo.nativeInstallationPath
-  );
+  if (backupExists) {
+    debug('Removing contaminated backup');
+    await fs.unlink(NATIVE_BINARY_BACKUP_FILE);
+  }
 
   return true;
 };

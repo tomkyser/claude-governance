@@ -180,7 +180,7 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     signature: '__tungsten_panel__',
     critical: false,
     category: 'tool-injection',
-    passDetail: 'panel component mounted in render tree',
+    passDetail: 'present (requires live session to verify rendering)',
   },
 ];
 

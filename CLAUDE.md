@@ -202,7 +202,7 @@ Every phase follows this sequence. Steps are not optional.
 - Copy phase outline from ROADMAP.md into TRACKER.md as starting point
 - Update ROADMAP.md with refined task list from planning
 
-**3. Act**
+**3. Act** (Nudge user to Compact first)
 - Update task status (in_progress → completed) as work progresses
 - Keep TASKS.md and TaskCreate in sync — same tasks, same status
 - Atomic git commits at each completed task
@@ -212,11 +212,11 @@ Every phase follows this sequence. Steps are not optional.
 - Record project-level findings to `.planning/FINDINGS.md`
 - Update milestone `IMPACT.md` when something impacts beyond this phase's scope
 
-**4. Verify**
+**4. Verify** (Nudge user to Compact first)
 - Confirm deliverables work end-to-end against reality, not just compilation
 - Run verification suite where applicable
 
-**5. Gap Analysis**
+**5. Gap Analysis** (Nudge user to Compact first)
 - Identify remaining gaps, untested paths, known limitations
 - Decide: plan a gap-closing phase or accept and document
 
@@ -347,4 +347,3 @@ enhancement opportunity to `.planning/research/REPL-IMPROVEMENTS.md`.
    this directive in their prompt. They must log to the same file.
 6. **Never skip this.** Even if the observation seems obvious or already logged,
    add it. Duplicates signal importance.
-

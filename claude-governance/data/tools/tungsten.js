@@ -72,7 +72,24 @@ function tmuxCmdSafe(args) {
 // Session Lifecycle
 // ======================================================================
 
+function validateSessionName(name) {
+  if (!name || !name.trim()) {
+    throw new Error('Session name cannot be empty.');
+  }
+  if (/[.:]/.test(name)) {
+    throw new Error(
+      `Invalid session name "${name}". Names cannot contain "." or ":" (tmux reserved characters).`
+    );
+  }
+  if (name !== name.trim()) {
+    throw new Error(
+      `Invalid session name "${name}". Names cannot have leading/trailing whitespace.`
+    );
+  }
+}
+
 function ensureSession(name) {
+  validateSessionName(name);
   if (!initialized) initSocket();
   const result = tmuxCmdSafe(['has-session', '-t', name]);
   if (!result.ok) createSession(name);
@@ -235,6 +252,15 @@ function sleep(ms) {
 
 async function handleCreate(args) {
   const session = args.session || 'main';
+  validateSessionName(session);
+  if (initialized) {
+    const exists = tmuxCmdSafe(['has-session', '-t', session]);
+    if (exists.ok) {
+      return {
+        data: `Session "${session}" already exists on socket ${SOCKET_NAME}.`,
+      };
+    }
+  }
   createSession(session);
   return {
     data: `Session "${session}" created on socket ${SOCKET_NAME}.\n` +
@@ -300,15 +326,14 @@ async function handleList() {
 
 async function handleKill(args) {
   const session = args.session || 'main';
+  validateSessionName(session);
   const result = tmuxCmdSafe(['kill-session', '-t', session]);
   if (!result.ok) {
     return { data: `Session "${session}" not found or already killed.` };
   }
 
-  // Check if any sessions remain
-  const listResult = tmuxCmdSafe(['list-sessions']);
-  if (!listResult.ok) {
-    // No sessions left — clean up
+  const listResult = tmuxCmdSafe(['list-sessions', '-F', '#{session_name}']);
+  if (!listResult.ok || !listResult.stdout.trim()) {
     delete process.env[TMUX_ENV_KEY];
     clearStateFile();
     if (currentContext && typeof currentContext.setAppState === 'function') {
@@ -319,9 +344,17 @@ async function handleKill(args) {
         });
       } catch (_) {}
     }
+    return { data: `Session "${session}" killed. No sessions remaining.` };
   }
 
-  return { data: `Session "${session}" killed.` };
+  const remaining = listResult.stdout.trim().split('\n').filter(Boolean);
+  const nextSession = remaining[0];
+  writeAppState(nextSession);
+  writeStateFile(nextSession);
+
+  return {
+    data: `Session "${session}" killed. Active session: "${nextSession}".`,
+  };
 }
 
 async function handleInterrupt(args) {
