@@ -324,6 +324,10 @@ Gaps surfaced during testing of 2b-gaps. All resolved.
 
 ### Phase 2c-gaps-2: Tungsten further gap discovery and analysis
 -> TBD
+--> one definite goal: Claude needs to be instructed to use and understand tungsten and we need to enforce it with hooks.
+----> What is the best way to generally leverage it by default?
+-----> ensure that it is used for proper persistence including within tools and other agents or subagents.
+------> Clear indication that it is in use in status line vs not in use.
 
 
 
@@ -470,6 +474,7 @@ Phase planning TODO
 
 - [ ] Durable Cron, File Persistence, WebBrowser, Computer Use
 - [ ] Coordinator Mode, Daemon Mode, Reactive Compact
+- [ ] https://github.com/harrymunro/nelson for coordinator mode?
 
 ---
 ### 6.5 Retro
