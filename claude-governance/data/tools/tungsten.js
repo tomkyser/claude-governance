@@ -157,13 +157,15 @@ function writeAppState(sessionName) {
   if (!currentContext) return;
   try {
     if (typeof currentContext.setAppState === 'function') {
-      currentContext.setAppState({
-        tungstenActiveSession: {
-          sessionName: sessionName,
-          socketName: SOCKET_NAME,
-          target: `${sessionName}:0.0`,
-        },
-        tungstenPanelVisible: true,
+      currentContext.setAppState(function(prev) {
+        return Object.assign({}, prev, {
+          tungstenActiveSession: {
+            sessionName: sessionName,
+            socketName: SOCKET_NAME,
+            target: `${sessionName}:0.0`,
+          },
+          tungstenPanelVisible: true,
+        });
       });
     }
   } catch (_) {
@@ -175,9 +177,11 @@ function writeLastCommand(command) {
   if (!currentContext) return;
   try {
     if (typeof currentContext.setAppState === 'function') {
-      currentContext.setAppState({
-        tungstenLastCommand: { command: command, timestamp: Date.now() },
-        tungstenLastCapturedTime: Date.now(),
+      currentContext.setAppState(function(prev) {
+        return Object.assign({}, prev, {
+          tungstenLastCommand: { command: command, timestamp: Date.now() },
+          tungstenLastCapturedTime: Date.now(),
+        });
       });
     }
   } catch (_) {}
@@ -301,7 +305,9 @@ async function handleCapture(args) {
 
   if (currentContext && typeof currentContext.setAppState === 'function') {
     try {
-      currentContext.setAppState({ tungstenLastCapturedTime: Date.now() });
+      currentContext.setAppState(function(prev) {
+        return Object.assign({}, prev, { tungstenLastCapturedTime: Date.now() });
+      });
     } catch (_) {}
   }
 
@@ -338,9 +344,11 @@ async function handleKill(args) {
     clearStateFile();
     if (currentContext && typeof currentContext.setAppState === 'function') {
       try {
-        currentContext.setAppState({
-          tungstenActiveSession: undefined,
-          tungstenPanelVisible: false,
+        currentContext.setAppState(function(prev) {
+          return Object.assign({}, prev, {
+            tungstenActiveSession: undefined,
+            tungstenPanelVisible: false,
+          });
         });
       } catch (_) {}
     }
