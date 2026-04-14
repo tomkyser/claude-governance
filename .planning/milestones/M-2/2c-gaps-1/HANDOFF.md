@@ -1,7 +1,7 @@
 # Phase 2c-gaps-1 Handoff — Tungsten + Governance Critical Gaps
 
 **Status:** COMPLETE
-**Commits:** adc62cd (T1 crash fix), 6e6472c (T2-T11 all gaps)
+**Commits:** adc62cd (T1 crash fix), 6e6472c (T2-T11 all gaps), 58cf589 (T12 panel setAppState fix)
 **SOVEREIGN:** 19/19 on CC 2.1.101
 
 ## What Was Delivered
@@ -39,11 +39,26 @@
 - 7-step guide in RESEARCH.md for verifying session isolation, FS9 chain, and panel rendering.
 - Requires user to run in live CC session (not automatable).
 
+### Panel setAppState Fix (G40 — T12)
+- **Root cause:** `setAppState` expects `(prev: AppState) => AppState` function form, but tungsten.js passed bare objects. Try/catch silently swallowed the TypeError, so panel state never wrote. Selectors always returned null → panel never rendered.
+- **Fix:** All 4 `setAppState` calls converted to `function(prev) { return Object.assign({}, prev, {...}) }`.
+- **Verified:** Panel renders in live TUI session — cyan-bordered box with session name, last command, and terminal content.
+
+### Live Testing Results (G36 — User Verified)
+All G36 checks passed in live CC TUI session:
+- Session isolation: governance socket (`claude-{PID}`) separate from user tmux
+- FS9 chain: `echo $TMUX` returns governance socket via Tungsten, Bash, REPL bash(), Agent→Bash, Agent→REPL→bash()
+- Kill + recreate: clean lifecycle, new server PID on recreate
+- Name validation: `.bad` and `bad:name` rejected, empty defaults to `main`
+- Duplicate create guard: no-op with clean message
+- Panel rendering: visible after create with session name + command + terminal content
+
 ## Key Decisions
 
 - D4: FS9 feature verified real — no code changes needed, just documentation.
 - D5: "signatures present" language distinguishes from "functional" probes.
 - D7: Kill cleanup switches active session to next remaining (not just clear state).
+- D8: setAppState requires function form — CC Tool.ts interface takes `(prev) => newState`, not bare objects.
 
 ## Files Modified
 
@@ -57,12 +72,12 @@
 
 ## Known Gaps
 
-- Panel rendering untested in live session (G36 guide provided).
-- Tungsten probe not automated (requires tmux + live session).
+- REPL `agent()` → subagent Bash: "O is not a function" runtime error (REPL gap, not Tungsten — logged to REPL-IMPROVEMENTS.md).
+- Tungsten automated probe still requires live session (Ping + REPL probes are automated).
 - No integration test suite for vault paths (tested manually this phase).
 
 ## What Comes Next
 
-- User runs G36 testing guide in live CC session.
+- Phase 2c-gaps-2: Tungsten adoption — prompt integration, hook enforcement, statusline clarity.
 - Milestone 2 gap analysis (M-2 GAPS.md).
-- Consider: automated vault integration tests, panel rendering verification.
+- M-2 retrospective.

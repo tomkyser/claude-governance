@@ -15,24 +15,15 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Phase:** 2c-gaps-1 — COMPLETE
-**Status:** All 11 tasks done, all 10 gaps (G29-G39) addressed.
+**Phase:** 2c-gaps-1 — COMPLETE (all live testing passed)
+**Status:** All 12 tasks done, all gaps (G29-G40) addressed and verified.
 **19/19 SOVEREIGN** on CC 2.1.101
 **Probes:** Ping ✓, REPL ✓, Tungsten (live-session-only)
-
-**Commits:** adc62cd (T1 crash fix), 6e6472c (T2-T11 all gaps)
-
-**User live testing pending (G36):**
-The 7-step guide in `.planning/milestones/M-2/2c-gaps-1/RESEARCH.md` (section "G36 — Live Session Verification Guide") must be run by the user in a live CC session. Automated probes verified Ping + REPL. The following require manual verification:
-- Panel rendering in TUI mode
-- Tungsten session creation and isolation
-- FS9 chain: `echo $TMUX` in Bash after Tungsten session
-- Kill cleanup and state file lifecycle
-- Name validation (`.`, `:`, empty)
-- Duplicate session `create` guard
+**Panel:** Rendering ✓ (setAppState fix — 58cf589)
+**FS9:** 5/5 propagation paths verified
+**Commits:** adc62cd (T1 crash fix), 6e6472c (T2-T11 all gaps), 58cf589 (T12 panel fix)
 
 **What's next:**
-- User runs G36 live testing guide
+- Phase 2c-gaps-2: Tungsten adoption — prompt integration, hook enforcement, statusline clarity
 - Milestone 2 gap analysis → M-2 GAPS.md
-- If gaps found: plan 2c-gaps-2 or next phase
-- If clean: M-2 retrospective
+- M-2 retrospective

@@ -2,10 +2,14 @@
 
 ## Active State
 
-- Phase COMPLETE — all 11 tasks done, 19/19 SOVEREIGN on CC 2.1.101
+- Phase COMPLETE — all 12 tasks done, 19/19 SOVEREIGN on CC 2.1.101
 - Functional probes confirmed: Ping functional, REPL functional, Tungsten (live-session-only)
 - Restore paths verified: clean backup path ✓, contaminated backup + vault fallback ✓
 - Apply path verified: contaminated backup detected, vault recovery used ✓
+- **Panel rendering: VERIFIED** — setAppState calling convention fixed (58cf589), panel visible in live TUI
+- **FS9 chain: VERIFIED** — 5/5 paths (Tungsten send, Bash, REPL bash(), Agent→Bash, Agent→REPL→bash())
+- **Name validation: VERIFIED** — `.` and `:` rejected, empty defaults to `main`
+- **Duplicate create guard: VERIFIED** — no-op with clean message
 
 ## Key Architectural Facts (Updated)
 
@@ -52,7 +56,13 @@
 - `src/patches/governance.ts` -- T4 (tungsten-panel passDetail honest label)
 - `data/tools/tungsten.js` -- T8 (create guard G37, kill cleanup G38, name validation G39)
 
+## Known Gaps (Not In Scope)
+
+- REPL `agent()` → subagent Bash: "O is not a function" runtime error (REPL gap, not Tungsten)
+- Panel disappearance on kill not visually confirmed (kill tested functionally, panel presence tested on create)
+
 ## Successor Work
 
-- Phase 2d or next cycle: live session testing by user (G36 guide in RESEARCH.md)
-- Roadmap items: any remaining M-2 gaps not in 2c-gaps-1 scope
+- Phase 2c-gaps-2: Tungsten adoption — prompt integration, hook enforcement, statusline clarity
+- Milestone 2 gap analysis → M-2 GAPS.md
+- M-2 retrospective

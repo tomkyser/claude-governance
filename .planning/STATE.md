@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-04-13
+Last updated: 2026-04-14
 
 ## Current Claude Code Version
 - **Installed:** 2.1.101 (native, arm64-darwin)
@@ -92,6 +92,7 @@ and governance-specific `check` command added.
 - **2b-gaps-3:** COMPLETE — G16-G23 + replace mode hardening. Glob .gitignore fix, catch-all pattern fix, mode-aware prompts (coexist/replace), comprehensive replace prompt with primitive tool guidance, binary patch strengthened. Replace mode verified: Sonnet fresh session, single-prompt dashboard.
 - **2c:** COMPLETE — Clean-Room Tungsten. 6 deliverables: tungsten.js tool, FS9 binary patch, render tree injection, live panel, statusline TNG, REPL prompt update. 19/19 SOVEREIGN.
 - **2-PM-update:** COMPLETE — PM restructuring + project rename. REFERENCES.md (35 refs), per-phase directories (14 phases), milestone docs (IMPACT/FINDINGS/GAPS/RETROSPECTIVE), CLAUDE.md lifecycle (6-step phase + milestone), TASKS.md sync protocol, PLANNING.md bidirectional scope, milestone CONTEXT.md archived to artifacts. Project renamed to claude-governance, GitHub repo renamed.
+- **2c-gaps-1:** COMPLETE — 11 gaps (G29-G40) closed. Panel crash fix, restore/apply vault wiring, verification honesty, FS9 verified, tungsten.js robustness, panel setAppState fix. All verified in live TUI session. 19/19 SOVEREIGN.
 
 ### Binary Vault (from 2a-gaps)
 - **Module:** `src/binaryVault.ts` — XDG path discovery, GCS download, SHA256 verification, immutable locking

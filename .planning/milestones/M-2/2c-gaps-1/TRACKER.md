@@ -19,13 +19,19 @@
 - T10 COMPLETE — Live verification guide written to RESEARCH.md (G36)
 - T11 COMPLETE — Housekeeping
 
+- T12 COMPLETE — Panel fix: setAppState calling convention (58cf589) + live testing all pass
+
 ## Final State
 
 - 19/19 SOVEREIGN on CC 2.1.101
-- All 11 gaps (G29-G39) addressed
+- All 11 gaps (G29-G39) addressed + G40 (panel setAppState)
 - Functional probes: Ping ✓, REPL ✓, Tungsten (live-session-only)
 - Build: clean, 168.78 kB total
 - Restore path verified: clean backup ✓, contaminated backup → vault fallback ✓
+- Panel rendering: VERIFIED in live TUI session
+- FS9 chain: VERIFIED across 5 tool/agent paths
+- Name validation: VERIFIED (`.`, `:` rejected)
+- Duplicate create guard: VERIFIED (no-op with clean message)
 
 ## Decisions
 
@@ -36,6 +42,7 @@
 - D5: Verification display uses "signatures present" language, separate from "functional" probe results
 - D6: Tungsten session name validation: reject empty, dot, colon, whitespace (tmux reserved chars)
 - D7: Kill cleanup now switches active session to next remaining session (not just clearing state)
+- D8: setAppState requires function form `(prev) => newState`, not bare objects — CC Tool.ts interface
 
 ## Blockers
 
