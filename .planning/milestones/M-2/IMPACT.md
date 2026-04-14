@@ -25,3 +25,4 @@ internal use.
 | 2b-gaps-2 | Production readiness: embedded search confirmed, prompt effectiveness |
 | 2b-gaps-3 | Coexist hardening: glob .gitignore, mode-aware prompts, replace verified |
 | 2c | Clean-room Tungsten: 6 deliverables, FS9 patch, panel injection, 19/19 SOVEREIGN |
+| 2-PM-update | PM restructuring + rename: REFERENCES.md, per-phase dirs, lifecycle updates, project → claude-governance |
