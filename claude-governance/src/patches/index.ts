@@ -40,6 +40,7 @@ import {
   writeEmbeddedToolsGateResolution,
   writeToolInjection,
   writeReplToolGuidance,
+  writeTungstenFs9Patch,
   GOVERNANCE_DEFAULTS,
   isContentPatched,
   VERIFICATION_REGISTRY,
@@ -159,6 +160,13 @@ const PATCH_DEFINITIONS = [
     group: PatchGroup.GOVERNANCE,
     description:
       'Injects REPL batch-operation guidance into the Using your tools section',
+  },
+  {
+    id: 'tungsten-fs9',
+    name: 'Tungsten bashProvider Activation',
+    group: PatchGroup.GOVERNANCE,
+    description:
+      'Patches FS9() stub so Bash commands inherit tmux environment after Tungsten creates a session',
   },
 ] as const;
 
@@ -706,6 +714,10 @@ export const applyCustomization = async (
     'repl-tool-guidance': {
       fn: c => writeReplToolGuidance(c),
       signature: 'could one REPL call do this',
+    },
+    'tungsten-fs9': {
+      fn: c => writeTungstenFs9Patch(c),
+      signature: '__CLAUDE_GOVERNANCE_TMUX_ENV',
     },
   };
 
