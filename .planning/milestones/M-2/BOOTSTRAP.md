@@ -4,8 +4,9 @@
 
 Read these files in order:
 
-1. `.planning/milestones/M-2/IMPACT.md` — Milestone scope and phase impact
-2. `.planning/ROADMAP.md` — Phase status and what's next
+1. `.planning/VISION.md` -- Understand the intent of the project.
+2. `.planning/milestones/M-2/IMPACT.md` — Milestone scope and phase impact
+2. `.planning/ROADMAP.md` — Phase status and what's next at line 294.
 3. `.planning/STATE.md` — Global project state
 4. `.planning/FINDINGS.md` — Architecture-informing discoveries (F1-F21)
 5. `.planning/milestones/M-2/2-PM-update/HANDOFF.md` — Latest handoff
