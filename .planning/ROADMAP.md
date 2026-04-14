@@ -1,4 +1,4 @@
-# Roadmap — Claude Code Governance Platform
+# Roadmap — claude-governance
 
 Last updated: 2026-04-13
 

@@ -1,4 +1,4 @@
-# Milestone 1 Impact — Core Engine
+# Milestone 1 Impact — claude-governance Core Engine
 
 Retroactively created during Phase 2-PM-update.
 

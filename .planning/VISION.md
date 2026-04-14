@@ -1,4 +1,4 @@
-# Vision — Claude Code Governance Platform
+# Vision — claude-governance
 
 ## The Problem
 

@@ -1,4 +1,4 @@
-# References — Claude Code Governance Platform
+# References — claude-governance
 
 Canonical index of all external resources. Cite by identifier (e.g., `[tweakcc1]`) in
 planning docs instead of raw URLs. Grouped by category, sorted by relevance.

@@ -1,4 +1,4 @@
-# Findings — Notable Discoveries
+# Findings — claude-governance
 
 Record significant technical discoveries, goldmine moments, and architecture-informing
 findings here. These are facts that shape decisions across phases and milestones.

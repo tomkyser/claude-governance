@@ -25,7 +25,7 @@ Written: 2026-04-12 (final — both phases COMPLETE)
 5. communication-style evaluation — no override needed (aligned with governance)
 
 ### Housekeeping
-- Repo published to GitHub as `sovereign` (https://github.com/tomkyser/sovereign)
+- Repo published to GitHub as `claude-governance` (https://github.com/tomkyser/claude-governance)
 - Reference dirs (cc-source, tweakcc, clawback) moved out of repo to `/Users/tom.kyser/dev/`
 - Project restructured into `.planning/` hierarchy
 - Rigid process codified in CLAUDE.md (15-step per-phase checklist)

@@ -1,4 +1,4 @@
-# Claude Code Patches — Project Instructions
+# claude-governance — Project Instructions
 
 ## What This Project Is
 
