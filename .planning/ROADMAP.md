@@ -312,8 +312,6 @@ Gaps surfaced during testing of 2b-gaps. All resolved.
 -----> ensure that it is used for proper persistence including within tools and other agents or subagents.
 ------> Clear indication that it is in use in status line vs not in use.
 
-
-
 ---
 ### Milestone 2 Retro
 - [ ] Commentary
@@ -361,6 +359,8 @@ These are quality-of-output improvements that Anthropic withholds from paying us
 - [ ] Phase 3f - Canary prompts Inject unique test phrases into prompt overrides, verify at runtime by prompting model for canary response. Requires conversation-level integration.
   - [ ] TBD
 - [ ] Phase 3g - Integrate Optional Clawback install module [clawback1]
+  - [ ] TBD
+- [ ] Phase 3h - Impact assessment and corrections across any part of the greater project that may have degraded because of this milestone's work.
   - [ ] TBD
 
 ---
