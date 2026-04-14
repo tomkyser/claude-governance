@@ -16,7 +16,7 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Completed:** 2a (tool injection), 2a-gaps (12/12), 2b (clean-room REPL), 2b-gaps (14/14 + 2 post-testing fixes), 2b-gaps-2 (G15 + G9/G11 tests), 2b-gaps-3 (8/8 gaps — glob .gitignore, exclusion params, model fallback, Ping fix, hooks design)
+**Completed:** 2a (tool injection), 2a-gaps (12/12), 2b (clean-room REPL), 2b-gaps (14/14 + 2 post-testing fixes), 2b-gaps-2 (G15 + G9/G11 tests), 2b-gaps-3 (8/8 gaps + replace mode hardening — glob fix, mode-aware prompts, comprehensive replace prompt, verified)
 **Next:** 2c (Clean-Room Tungsten)
 **Then:** 2d (Context Snipping Tool)
 

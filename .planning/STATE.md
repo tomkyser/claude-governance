@@ -89,7 +89,7 @@ and governance-specific `check` command added.
 - **2b:** COMPLETE — clean-room REPL (auto-discovery loader, 9 handlers, coexist/replace modes). Post-testing fixes: replace mode stash, state persistence, IIFE fallback, defensive extraction.
 - **2b-gaps:** COMPLETE — 14/14 gaps + 2 post-testing fixes (parentMessage F17, IIFE script-source). User benchmark: 6.5/7 handlers functional.
 - **2b-gaps-2:** COMPLETE — G15 already working (F18), G9-test/G11-test prompt effectiveness verified
-- **2b-gaps-3:** COMPLETE — G16-G23: glob respects .gitignore (46 vs 10K files), exclusion params, model fallback prevention, Ping fix, defensive batch patterns, hooks module designed (pre-M7), benchmark rewritten.
+- **2b-gaps-3:** COMPLETE — G16-G23 + replace mode hardening. Glob .gitignore fix, catch-all pattern fix, mode-aware prompts (coexist/replace), comprehensive replace prompt with primitive tool guidance, binary patch strengthened. Replace mode verified: Sonnet fresh session, single-prompt dashboard.
 - **2c:** NEXT — Clean-Room Tungsten (spec at specs/tungsten-clean-room.md)
 - **2c:** Planned — clean-room Tungsten (spec at specs/tungsten-clean-room.md)
 

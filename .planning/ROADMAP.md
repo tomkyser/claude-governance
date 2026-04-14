@@ -279,6 +279,8 @@ Gaps surfaced during testing of 2b-gaps. All resolved.
 - [x] **G21: Hooks module designed** — Full design in tracker. Implementation pinned pre-M7.
 - [x] **G22: Duplicate hooks migration planned** — Covered by G21 design.
 - [x] **G23: Benchmark doc rewritten** — False "system-level" claims removed, glob updated.
+- [x] **Replace mode hardening** — Mode-aware prompts, glob catch-all fix, comprehensive replace prompt with primitive tool guidance. Verified: Sonnet fresh session dashboard.
+- **Post-Tungsten gaps:** G24 (probe in replace mode), G25 (coexist nudging), G26 (oversized labeling), G27 (CLI mode switch), G28 (coexist prompt parity).
 
 ### Phase 2c: Clean-Room Tungsten
 - [ ] Implement per spec: `specs/tungsten-clean-room.md`

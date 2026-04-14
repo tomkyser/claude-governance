@@ -2,7 +2,7 @@
 
 **Status:** COMPLETE
 **Started:** 2026-04-13
-**Completed:** 2026-04-13
+**Completed:** 2026-04-13 (extended for replace mode hardening)
 **Scope:** G16-G23 — Glob defaults, model behavior, hooks module, benchmark doc
 
 ## Gaps
@@ -64,3 +64,8 @@ source files, not 10K node_modules entries. So we differ intentionally:
 
 - REPL VM caches loaded functions within a session. Changes to repl.js only take effect in a fresh session. This is by design (persistent VM context) but means testing glob fixes requires a new session.
 - CC's native GlobTool uses --no-ignore --hidden by default. Our design choice to differ is intentional and documented.
+- glob catch-all patterns (*, **/, **) bypass .gitignore in rg. Fixed by dropping --glob flag for these.
+- Replace mode confirmed working: Sonnet fresh session, single-prompt codebase dashboard in 1m42s.
+- Ant REPL mode confirmed: USER_TYPE=ant + cli entrypoint filters REPL_ONLY_TOOLS (8 tools) and replaces Using your tools section.
+- Functional probe fails in replace mode — model behavior changes prevent Ping marker detection. Non-blocking.
+- Post-Tungsten gap phase needed for: probe in replace mode, coexist prompt parity, CLI mode switching.
