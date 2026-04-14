@@ -260,9 +260,18 @@ async function grep(pattern, searchPath, opts) {
 async function glob(pattern, opts) {
   checkAbort();
   const dir = (opts && opts.cwd) || '.';
-  const parts = ['rg', '--files', '--glob', JSON.stringify(pattern),
-    '--sort=modified', '--no-ignore', '--hidden'];
+  const parts = ['rg', '--files', '--glob', JSON.stringify(pattern), '--sort=modified'];
+  // G16: Respect .gitignore by default. --no-ignore only when explicitly requested.
+  if (opts && opts.noIgnore) parts.push('--no-ignore');
+  // G16: Skip hidden files by default. --hidden only when explicitly requested.
+  if (opts && opts.hidden) parts.push('--hidden');
   if (opts && opts.maxDepth) parts.push('--max-depth', String(opts.maxDepth));
+  // G17: Custom exclusion patterns via --glob '!pattern'
+  if (opts && opts.ignore && Array.isArray(opts.ignore)) {
+    for (const excl of opts.ignore) {
+      parts.push('--glob', JSON.stringify('!' + excl));
+    }
+  }
   parts.push(JSON.stringify(dir));
   const cmd = parts.join(' ');
   const args = { command: cmd };
@@ -562,7 +571,11 @@ For simple single-file reads or one-off commands, use the individual tools direc
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
 - \`glob(pattern, opts?)\` → newline-separated file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
+  - Respects .gitignore by default — ignored files (node_modules, build, etc.) are excluded
   - opts: \`{ cwd, maxDepth }\`
+  - opts: \`{ noIgnore: true }\` to include .gitignore'd files
+  - opts: \`{ hidden: true }\` to include hidden files (dotfiles)
+  - opts: \`{ ignore: ['*.min.js', 'dist/**'] }\` to add custom exclusions
 
 ### Notebook
 - \`notebook_edit(path, { new_source, cell_id?, cell_type?, edit_mode? })\` → confirmation
@@ -611,6 +624,21 @@ const deps = Object.keys(pkg.dependencies || {});
 return { name: pkg.name, depCount: deps.length, deps };
 \`\`\`
 
+### Defensive batch read (handles large/missing files)
+\`\`\`javascript
+const files = (await glob('**/*.ts', { cwd: 'src' })).split('\\n').filter(Boolean);
+const results = [];
+for (const f of files) {
+  try {
+    const content = await read(f);
+    results.push({ file: f, lines: content.split('\\n').length });
+  } catch (e) {
+    results.push({ file: f, error: e.message });
+  }
+}
+return results;
+\`\`\`
+
 ## State Persistence
 - Scripts WITHOUT \`await\` or \`return\`: \`var\` declarations and bare assignments persist across calls
   - \`var x = 42\` in call 1 → \`x\` available in call 2
@@ -620,6 +648,16 @@ return { name: pkg.name, depCount: deps.length, deps };
   - Use \`state.x = 42\` for values that must survive across async REPL calls
   - The \`state\` object always persists regardless of script type
 - Bare expressions always work: \`42 + 1\` returns the value without needing \`return\`
+
+## Error Recovery
+
+When a REPL script fails, **fix the script and retry in REPL** — do not fall back to individual tools. Common fixes:
+- File not found → check the path with \`glob()\` first, then retry
+- Large file truncation → use \`read(path, { offset, limit })\` to read in chunks
+- Permission denied → the file may be read-only; check with \`bash('ls -la ...')\`
+- Syntax error → fix the JavaScript syntax and resubmit
+
+Falling back to individual Read/Write/Edit calls after a REPL error wastes the batch advantage and floods the context window. Stay in REPL.
 
 ## Notes
 - \`console.log()\` output is captured and included in the result

@@ -11,10 +11,10 @@ module.exports = {
     required: ['message'],
   },
   async prompt() {
-    return 'Echo a message back. Use this tool to verify that custom tools are working. Pass a message and it will be returned unchanged.';
+    return 'Internal governance verification tool. Used automatically during setup and apply — not intended for use during normal sessions. If you need to test something, use REPL instead.';
   },
   async description() {
-    return 'Echo a message (governance tool injection test)';
+    return 'Internal governance verification (not for general use)';
   },
   async call(args) {
     return {
