@@ -282,11 +282,14 @@ Gaps surfaced during testing of 2b-gaps. All resolved.
 - [x] **Replace mode hardening** — Mode-aware prompts, glob catch-all fix, comprehensive replace prompt with primitive tool guidance. Verified: Sonnet fresh session dashboard.
 - **Post-Tungsten gaps:** G24 (probe in replace mode), G25 (coexist nudging), G26 (oversized labeling), G27 (CLI mode switch), G28 (coexist prompt parity).
 
-### Phase 2c: Clean-Room Tungsten
-- [ ] Implement per spec: `specs/tungsten-clean-room.md`
-- [ ] Single tool with action enum (send, capture, create, list, kill, interrupt)
-- [ ] tmux session management via child_process
-- [ ] PID-based socket isolation, lazy session creation
+### Phase 2c: Clean-Room Tungsten [COMPLETE]
+- [x] D1: `tungsten.js` — 6 actions (send/capture/create/list/kill/interrupt), PID socket isolation, lazy init, auto-capture
+- [x] D2: FS9() binary patch — bashProvider tmux activation, 2 detection strategies, version-resilient
+- [x] D3: Render tree injection — DCE'd TungstenLiveMonitor site, createElement with React primitives as props
+- [x] D4: `tungsten-panel.js` — clean-room live monitor in data/ui/, 2s polling, AppState-driven
+- [x] D5: Statusline TNG segment — reads tungsten-state.json, stale PID cleanup
+- [x] D6: REPL prompt update — Tungsten awareness in coexist and replace prompts
+- [x] 19/19 SOVEREIGN on 2.1.101
 
 ### Phase 2d: Context Snipping Tool
 - [ ] Design spec (clean-room)

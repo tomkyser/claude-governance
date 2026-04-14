@@ -21,7 +21,7 @@ and governance-specific `check` command added.
 - **Verify:** `node dist/index.mjs check`
 - **Restore:** `node dist/index.mjs --restore`
 
-### What's Applied (Verified 15/15 via `check`)
+### What's Applied (Verified 19/19 via `check`)
 **Governance Patches (4 active):**
 - Disclaimer neutralization — replaces "may or may not be relevant" with directive framing
 - Context header reframing — replaces ambient "use the following context" with mandatory framing
@@ -90,8 +90,7 @@ and governance-specific `check` command added.
 - **2b-gaps:** COMPLETE — 14/14 gaps + 2 post-testing fixes (parentMessage F17, IIFE script-source). User benchmark: 6.5/7 handlers functional.
 - **2b-gaps-2:** COMPLETE — G15 already working (F18), G9-test/G11-test prompt effectiveness verified
 - **2b-gaps-3:** COMPLETE — G16-G23 + replace mode hardening. Glob .gitignore fix, catch-all pattern fix, mode-aware prompts (coexist/replace), comprehensive replace prompt with primitive tool guidance, binary patch strengthened. Replace mode verified: Sonnet fresh session, single-prompt dashboard.
-- **2c:** NEXT — Clean-Room Tungsten (spec at specs/tungsten-clean-room.md)
-- **2c:** Planned — clean-room Tungsten (spec at specs/tungsten-clean-room.md)
+- **2c:** COMPLETE — Clean-Room Tungsten. 6 deliverables: tungsten.js tool, FS9 binary patch, render tree injection, live panel, statusline TNG, REPL prompt update. 19/19 SOVEREIGN.
 
 ### Binary Vault (from 2a-gaps)
 - **Module:** `src/binaryVault.ts` — XDG path discovery, GCS download, SHA256 verification, immutable locking
