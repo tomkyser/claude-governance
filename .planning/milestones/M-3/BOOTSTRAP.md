@@ -16,73 +16,74 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Status:** REPL-fixes COMPLETE — next: quiet_salted_ember binary patch + P1 prompt overrides
-**Previous:** GP3 COMPLETE, P0 investigations COMPLETE, PM1 COMPLETE, REPL-fixes COMPLETE
-**Last completed:** REPL-fixes at `1366176`
-**Baseline:** 20/20 SOVEREIGN on CC 2.1.101
+**Status:** Phase 3a COMPLETE — next: determine Phase 3b scope
+**Previous:** GP3 COMPLETE, P0 COMPLETE, PM1 COMPLETE, REPL-fixes COMPLETE, Phase 3a COMPLETE
+**Last completed:** Phase 3a at `ac69ab6`
+**Baseline:** 21/21 SOVEREIGN on CC 2.1.101
 
-## What Was Done This Session (REPL-fixes)
+## What Was Done This Session (Phase 3a)
 
-### Fixes Shipped (7 files, commit `1366176`)
-1. **Read handler context override** — removes CC's `fileReadingLimits` (maxSizeBytes=256KB, maxTokens=25K) by passing `{maxSizeBytes: 10MB, maxTokens: Infinity}` in the context. Files up to 10MB now read directly into REPL VM memory. Agent-chunked fallback if nativeRead fails.
-2. **Agent canUseTool fix** — passes permissive `canUseTool` callback instead of `undefined`. Fixes "O is not a function" crash when agents spawned from REPL try to use tools.
-3. **Agent text extraction** — `extractAgentText()` parses JSON metadata and extracts `content[0].text` instead of returning raw JSON blob.
-4. **Glob absolute paths** — `nodePath.resolve()` on all rg output. Paths from `glob()` are directly usable by `read()`.
-5. **Async SyntaxError fix (F14)** — `err.name === 'SyntaxError'` string check instead of `instanceof` (cross-realm VM boundary issue).
-6. **maxReadFileSize config** — configurable threshold (256KB default) in `config.json` under `repl.maxReadFileSize`.
-7. **Prompt updates** — read/glob docs and error recovery guidance updated in both coexist and replace prompts.
+### quiet_salted_ember Binary Patch (PATCH 12, commit `ac69ab6`)
+Surgically removed `clientDataCache` from ms7() bootstrap function — three edits:
+1. `let _=H.client_data??null,` — dead variable removed
+2. `Pj(O.clientDataCache,_)&&` — comparison removed from deep-equal chain
+3. `clientDataCache:_,` — field removed from p_() config write callback
 
-### Key Discoveries (F25-F28)
-- **F25:** Bash tool maxResultSizeChars=30,000 (hard cap). Read=Infinity. Agent=100,000.
-- **F26:** Read tool's `fileReadingLimits` overridable via context object. Env var `CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS` also overrides. GrowthBook flag `tengu_amber_wren`.
-- **F27:** Agent canUseTool crash root cause — `undefined` for 3rd arg of `tool.call()`. Leaked source: `toolExecution.ts:1207` invokes `canUseTool(...)` unconditionally.
-- **F28:** Agent tool returns `{status, content: [{type:"text", text:"..."}], ...}` as JSON string. Must parse and extract `.content[0].text`.
+Combined with writing `{quiet_salted_ember:"true", coral_reef_sonnet:"true"}` to
+`~/.claude.json` during `apply`, this unlocks:
+- 7 wJH-gated prompt sections (Communication Style, numeric anchors, comment
+  discipline, exploratory questions, condensed Doing tasks, condensed Using your
+  tools, session guidance)
+- coral_reef_sonnet (Sonnet 4.6 1M context window)
 
-### Verified Results
-| File Size | Content | Path |
-|-----------|---------|------|
-| 19B | Full | nativeRead |
-| 289KB | Full (288,889 chars) | context override |
-| 1.2MB | Full (10,000 lines) | context override |
-| 3.4MB | Full (3,423,889 chars) | context override |
-| Agent bash test | "AGENT_TOOLS_WORK" | canUseTool fix |
-| Async/await | ASYNC_99 | SyntaxError fix |
-| Glob paths | Absolute | nodePath.resolve |
+### P1 Prompt Overrides (5 DCE'd ant-only texts injected)
+Added to `system-prompt-doing-tasks-ambitious.md` override:
+- **I-003:** Misconception correction — "You're a collaborator, not just an executor"
+- **I-004:** False-claims mitigation — "Report outcomes faithfully"
+- **I-005:** Thoroughness counterweight — "Before reporting a task complete, verify it actually works"
+- **I-092:** Context decay awareness — "Re-read after 10+ tool calls"
+- **I-094:** Priority hierarchy — "CLAUDE.md wins over system prompt"
 
-### Full 12-layer verification passed — zero degradations from prior work.
+### Issues Closed (12 total)
+I-040, I-054, I-001, I-003, I-004, I-005, I-051, I-052, I-053, I-091, I-092, I-094
+
+### Runtime Verification (all passed)
+| Test | Result |
+|------|--------|
+| CC launches with patched binary | OK |
+| Communication Style section (wJH gate) | Active — model quotes it |
+| Numeric length anchors (wJH gate) | Active — model quotes it |
+| I-004 false-claims mitigation | Present in prompt |
+| I-094 priority hierarchy | Present in prompt |
+| REPL tool functional | OK (42*37=1554) |
+| Ping tool functional | OK (governance injection confirmed) |
+| 21/21 SOVEREIGN | Verified |
+
+### New Files
+- `claude-governance/src/patches/governance/client-data-cache.ts` — PATCH 12 implementation
+
+### Key Finding
+- **F29:** ms7() bootstrap patch is the highest-leverage single patch. One function edit
+  + two config values unlock 12 issues worth of improvements.
 
 ## Next Session Work
 
-### Priority 1: quiet_salted_ember Binary Patch
-The highest-leverage single action. Patch `ms7()` bootstrap function to preserve
-our `clientDataCache` values. This unlocks 7 prompt improvements already compiled
-into the binary without needing individual prompt overrides:
-- Communication Style (replaces Output Efficiency)
-- Numeric length anchors (≤25/≤100 words)
-- Comment discipline (default no-comments)
-- Exploratory question protocol (2-3 sentences)
-- Condensed Doing tasks section
-- Session guidance compression
+### Immediate: Scope Phase 3b
+Phase 3a closed 12 issues. Remaining M-3 phases (3b-3h) in ROADMAP.md are still TBD.
+Review the investigation registry for what's next:
+- Remaining P1: I-081 (Bash prohibition reframe) — TODO
+- P2 items: I-090 (Plan mode authority), I-065 (downgrade detection), I-070 (GrowthBook monitoring), I-096 (system-reminder dedup), I-082 (permission tiering)
+- P3 items: I-012 (EnterPlanMode), I-093 (error recovery), I-095 (git safety), I-080 (dedup)
 
-### Priority 2: P1 Prompt Overrides (6 new)
-These address gaps that quiet_salted_ember does NOT cover (DCE'd ant-only text):
-- **I-003: Misconception correction** — "If you notice the user's request is based on a misconception, say so"
-- **I-004: False-claims mitigation** — "Report outcomes faithfully..."
-- **I-005: Thoroughness counterweight** — "Before reporting a task complete, verify it actually works"
-- **I-092: Context decay awareness** — New section
-- **I-094: Priority hierarchy clarification** — New section
-- **I-054: Communication Style** — Only needed if quiet_salted_ember patch fails
-
-### Tungsten Statusline Issue
-User reported not seeing the Tungsten status panel during this session despite
-an active Tungsten session. The panel injection patch is verified present
-(`check` shows "present (requires live session to verify rendering)") but the
-actual rendering may have a bug. Investigate in a live TUI session.
+### Tungsten Statusline Panel
+Panel injection patch present but rendering not visually confirmed in live TUI.
+Needs investigation in interactive session.
 
 ### M-2 retro recommendations (updated):
 - ~~Phase 3prelim (codebase reorganization)~~ DONE
 - ~~GP3 (Ant vs External divergence)~~ DONE
 - ~~P0 investigations~~ DONE
+- ~~Phase 3a (quiet_salted_ember + P1 overrides)~~ DONE
 - Budget for prompt testing infrastructure
 - Hooks module (G21) before public release
 - Maintain gap phase pattern
