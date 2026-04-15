@@ -1,534 +1,104 @@
-// Clean-Room REPL — Batch Operations Engine
-// Executes JavaScript in a persistent Node.js VM with access to CC's native tools.
-// Architecture: Tool Delegation (Option B) — all I/O goes through CC's tool.call()
+//#region rolldown:runtime
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __copyProps = (to, from, except, desc) => {
+	if (from && typeof from === "object" || typeof from === "function") {
+		for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
+			key = keys[i];
+			if (!__hasOwnProp.call(to, key) && key !== except) {
+				__defProp(to, key, {
+					get: ((k) => from[k]).bind(null, key),
+					enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+				});
+			}
+		}
+	}
+	return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
+	value: mod,
+	enumerable: true
+}) : target, mod));
 
-const vm = require('vm');
-const pathMod = require('path');
+//#endregion
+let node_vm = require("node:vm");
+node_vm = __toESM(node_vm);
+let node_os = require("node:os");
+node_os = __toESM(node_os);
+let node_fs = require("node:fs");
+node_fs = __toESM(node_fs);
+let node_path = require("node:path");
+node_path = __toESM(node_path);
 
-// ---------------------------------------------------------------------------
-// Module-level persistent state (survives across REPL calls within a session)
-// ---------------------------------------------------------------------------
-
-let vmContext = null;
-let currentContext = null;
-let operations = [];
-let selfRef = null; // Set after module.exports — holds ref to this tool object
-
-// CC's tools access parentMessage fields via optional chaining ($?.message.id,
-// $?.uuid). When $ is undefined, the chain short-circuits safely. But when $
-// is a non-null object missing .message, it crashes. We must provide all
-// fields that CC's tools may access.
-function makeParentMessage() {
-  const id = 'repl-' + Math.random().toString(36).substring(2, 15);
-  return { uuid: id, message: { id: id, role: 'assistant', content: [] } };
-}
-
-// ---------------------------------------------------------------------------
-// Config (read from ~/.claude-governance/config.json on first call)
-// ---------------------------------------------------------------------------
-
+//#region src/tools/repl/config.ts
 let replConfig = null;
-
 function loadConfig() {
-  if (replConfig) return replConfig;
-  try {
-    const os = require('os');
-    const fs = require('fs');
-    const cfgPath = pathMod.join(os.homedir(), '.claude-governance', 'config.json');
-    const raw = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-    const cfg = raw.repl || {};
-    // G12: Validate config values — warn on invalid, fall through to defaults
-    if (cfg.mode && cfg.mode !== 'coexist' && cfg.mode !== 'replace') {
-      console.error('[REPL] Invalid repl.mode: "' + cfg.mode + '" — must be "coexist" or "replace"');
-      delete cfg.mode;
-    }
-    if (cfg.timeout !== undefined && (typeof cfg.timeout !== 'number' || cfg.timeout < 1000)) {
-      console.error('[REPL] Invalid repl.timeout: ' + cfg.timeout + ' — must be number >= 1000');
-      delete cfg.timeout;
-    }
-    if (cfg.maxResultSize !== undefined && (typeof cfg.maxResultSize !== 'number' || cfg.maxResultSize < 1000)) {
-      console.error('[REPL] Invalid repl.maxResultSize: ' + cfg.maxResultSize + ' — must be number >= 1000');
-      delete cfg.maxResultSize;
-    }
-    replConfig = cfg;
-  } catch (e) {
-    if (e.message && e.message.includes('JSON')) {
-      console.error('[REPL] config.json parse error — using defaults');
-    }
-    replConfig = {};
-  }
-  return replConfig;
+	if (replConfig) return replConfig;
+	try {
+		const cfgPath = node_path.join(node_os.homedir(), ".claude-governance", "config.json");
+		const cfg = JSON.parse(node_fs.readFileSync(cfgPath, "utf8")).repl || {};
+		if (cfg.mode && cfg.mode !== "coexist" && cfg.mode !== "replace") {
+			console.error("[REPL] Invalid repl.mode: \"" + cfg.mode + "\" — must be \"coexist\" or \"replace\"");
+			delete cfg.mode;
+		}
+		if (cfg.timeout !== void 0 && (typeof cfg.timeout !== "number" || cfg.timeout < 1e3)) {
+			console.error("[REPL] Invalid repl.timeout: " + cfg.timeout + " — must be number >= 1000");
+			delete cfg.timeout;
+		}
+		if (cfg.maxResultSize !== void 0 && (typeof cfg.maxResultSize !== "number" || cfg.maxResultSize < 1e3)) {
+			console.error("[REPL] Invalid repl.maxResultSize: " + cfg.maxResultSize + " — must be number >= 1000");
+			delete cfg.maxResultSize;
+		}
+		replConfig = cfg;
+	} catch (e) {
+		if ((e instanceof Error ? e.message : "").includes("JSON")) console.error("[REPL] config.json parse error — using defaults");
+		replConfig = {};
+	}
+	return replConfig;
 }
-
 function getTimeout() {
-  return loadConfig().timeout || 120000;
+	return loadConfig().timeout || 12e4;
 }
-
 function getMaxResultSize() {
-  return loadConfig().maxResultSize || 100000;
+	return loadConfig().maxResultSize || 1e5;
 }
 
-// ---------------------------------------------------------------------------
-// Tool Lookup Helper
-// ---------------------------------------------------------------------------
+//#endregion
+//#region src/tools/repl/schema.ts
+const inputJSONSchema = {
+	type: "object",
+	properties: {
+		script: {
+			type: "string",
+			description: "JavaScript code to execute. Use await for async operations. Return a value to include it in the response."
+		},
+		description: {
+			type: "string",
+			description: "Brief description of what this script does"
+		}
+	},
+	required: ["script"]
+};
 
-function findTool(name) {
-  // In replace mode, primitives are filtered from context.options.tools.
-  // The binary-patched loader stashes them on this tool object as _stashedTools.
-  // Check stashed tools first (replace mode), then registry (coexist mode).
-  if (selfRef && selfRef._stashedTools) {
-    for (let i = 0; i < selfRef._stashedTools.length; i++) {
-      if (selfRef._stashedTools[i].name === name) return selfRef._stashedTools[i];
-    }
-  }
-  const tools = currentContext && currentContext.options && currentContext.options.tools;
-  if (!tools) return null;
-  for (let i = 0; i < tools.length; i++) {
-    if (tools[i].name === name) return tools[i];
-  }
-  return null;
+//#endregion
+//#region src/tools/repl/prompt.ts
+function getPrompt() {
+	if ((loadConfig().mode || "coexist") === "replace") return replacePrompt();
+	return coexistPrompt();
 }
-
-function checkAbort() {
-  if (currentContext && currentContext.abortController &&
-      currentContext.abortController.signal &&
-      currentContext.abortController.signal.aborted) {
-    throw new Error('Operation cancelled');
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Operation Tracking
-// ---------------------------------------------------------------------------
-
-function summarizeArgs(toolName, args) {
-  const s = {};
-  for (const k of Object.keys(args)) {
-    const v = args[k];
-    if (typeof v === 'string' && v.length > 100) {
-      s[k] = v.substring(0, 97) + '...';
-    } else {
-      s[k] = v;
-    }
-  }
-  return s;
-}
-
-function summarizeResult(toolName, result) {
-  if (toolName === 'read') {
-    if (typeof result === 'string') {
-      const lines = result.split('\n').length;
-      return `${lines} lines read`;
-    }
-  }
-  if (toolName === 'bash' || toolName === 'grep' || toolName === 'glob') {
-    if (typeof result === 'string') {
-      const lines = result.split('\n').filter(Boolean).length;
-      return `${lines} lines`;
-    }
-  }
-  if (toolName === 'write') return String(result);
-  if (toolName === 'edit') return String(result);
-  if (result === undefined || result === null) return 'ok';
-  if (typeof result === 'string') return result.substring(0, 80);
-  try { return JSON.stringify(result).substring(0, 80); } catch (e) { return String(result); }
-}
-
-async function tracked(toolName, args, fn) {
-  const op = { tool: toolName, args: summarizeArgs(toolName, args), startTime: Date.now() };
-  try {
-    const result = await fn();
-    op.success = true;
-    op.resultSummary = summarizeResult(toolName, result);
-    op.duration = Date.now() - op.startTime;
-    operations.push(op);
-    return result;
-  } catch (err) {
-    op.success = false;
-    op.error = err.message || String(err);
-    op.duration = Date.now() - op.startTime;
-    operations.push(op);
-    throw err;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Inner Tool Handlers
-// ---------------------------------------------------------------------------
-
-async function read(filePath, opts) {
-  checkAbort();
-  const args = { file_path: filePath };
-  if (opts && opts.offset !== undefined) args.offset = opts.offset;
-  if (opts && opts.limit !== undefined) args.limit = opts.limit;
-  if (opts && opts.pages !== undefined) args.pages = opts.pages;
-
-  return tracked('read', args, async () => {
-    const tool = findTool('Read');
-    if (!tool) throw new Error('Read tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    // Defensive extraction: primary path, fallback to raw
-    try {
-      if (result && result.data && result.data.file && result.data.file.content !== undefined) {
-        return result.data.file.content;
-      }
-      // Notebook or other non-text Read results
-      if (result && result.data !== undefined) {
-        return typeof result.data === 'string' ? result.data : JSON.stringify(result.data, null, 2);
-      }
-      return String(result);
-    } catch (e) {
-      return String(result);
-    }
-  });
-}
-
-async function write(filePath, content) {
-  checkAbort();
-  const args = { file_path: filePath, content: content };
-
-  return tracked('write', args, async () => {
-    const tool = findTool('Write');
-    if (!tool) throw new Error('Write tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    try {
-      return `${result.data.type}: ${result.data.filePath}`;
-    } catch (e) {
-      return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-    }
-  });
-}
-
-async function edit(filePath, oldString, newString, opts) {
-  checkAbort();
-  const args = { file_path: filePath, old_string: oldString, new_string: newString };
-  if (opts && opts.replace_all !== undefined) args.replace_all = opts.replace_all;
-
-  return tracked('edit', args, async () => {
-    const tool = findTool('Edit');
-    if (!tool) throw new Error('Edit tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    try {
-      return `edited: ${result.data.filePath}`;
-    } catch (e) {
-      return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-    }
-  });
-}
-
-async function bash(command, opts) {
-  checkAbort();
-  const args = { command: command };
-  if (opts && opts.timeout !== undefined) args.timeout = opts.timeout;
-  if (opts && opts.description !== undefined) args.description = opts.description;
-
-  return tracked('bash', args, async () => {
-    const tool = findTool('Bash');
-    if (!tool) throw new Error('Bash tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    try {
-      let output = result.data.stdout || '';
-      if (result.data.stderr) output += (output ? '\n' : '') + result.data.stderr;
-      return output;
-    } catch (e) {
-      return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-    }
-  });
-}
-
-async function grep(pattern, searchPath, opts) {
-  checkAbort();
-  const safePath = searchPath || '.';
-  const flags = (opts && opts.flags) || '-rn';
-  const cmd = `grep ${flags} ${JSON.stringify(pattern)} ${JSON.stringify(safePath)}`;
-  const args = { command: cmd };
-
-  return tracked('grep', args, async () => {
-    const tool = findTool('Bash');
-    if (!tool) throw new Error('Bash tool not found in registry');
-    try {
-      const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-      return result.data.stdout || '';
-    } catch (e) {
-      // grep returns exit 1 for no matches — not an error
-      if (e.message && e.message.includes('Shell command failed')) return '';
-      throw e;
-    }
-  });
-}
-
-async function glob(pattern, opts) {
-  checkAbort();
-  const dir = (opts && opts.cwd) || '.';
-  const parts = ['rg', '--files'];
-  // Catch-all patterns bypass .gitignore in rg when passed via --glob.
-  // Drop --glob entirely for these — rg --files alone lists all non-ignored files.
-  var isCatchAll = (pattern === '*' || pattern === '**/*' || pattern === '**');
-  if (!isCatchAll) {
-    parts.push('--glob', JSON.stringify(pattern));
-  }
-  parts.push('--sort=modified');
-  if (opts && opts.noIgnore) parts.push('--no-ignore');
-  if (opts && opts.hidden) parts.push('--hidden');
-  if (opts && opts.maxDepth) parts.push('--max-depth', String(opts.maxDepth));
-  if (opts && opts.ignore && Array.isArray(opts.ignore)) {
-    for (const excl of opts.ignore) {
-      parts.push('--glob', JSON.stringify('!' + excl));
-    }
-  }
-  parts.push(JSON.stringify(dir));
-  const cmd = parts.join(' ');
-  const args = { command: cmd };
-
-  return tracked('glob', args, async () => {
-    const tool = findTool('Bash');
-    if (!tool) throw new Error('Bash tool not found in registry');
-    try {
-      const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-      return (result.data.stdout || '').trim();
-    } catch (e) {
-      if (e.message && e.message.includes('Shell command failed')) return '';
-      throw e;
-    }
-  });
-}
-
-async function notebook_edit(notebookPath, editOps) {
-  checkAbort();
-  if (!editOps || typeof editOps !== 'object') {
-    throw new Error('notebook_edit requires editOps: { new_source, cell_id?, cell_type?, edit_mode? }');
-  }
-  // G7: Normalize common arg variants to match CC's NotebookEdit schema
-  const ops = { ...editOps };
-  if (ops.source !== undefined && ops.new_source === undefined) {
-    ops.new_source = ops.source;
-    delete ops.source;
-  }
-  if (!ops.new_source && ops.edit_mode !== 'delete') {
-    throw new Error('notebook_edit requires new_source (the cell content to write)');
-  }
-  const args = { notebook_path: notebookPath, ...ops };
-
-  return tracked('notebook_edit', args, async () => {
-    const tool = findTool('NotebookEdit');
-    if (!tool) throw new Error('NotebookEdit tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    try {
-      if (result.data && result.data.error) return 'Error: ' + result.data.error;
-      return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-    } catch (e) {
-      return String(result);
-    }
-  });
-}
-
-async function fetch_url(url, opts) {
-  checkAbort();
-  const args = { url: url };
-  if (opts && opts.prompt !== undefined) args.prompt = opts.prompt;
-
-  return tracked('fetch', args, async () => {
-    const tool = findTool('WebFetch');
-    if (!tool) throw new Error('WebFetch tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    try {
-      return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-    } catch (e) {
-      return String(result);
-    }
-  });
-}
-
-async function agent(prompt, opts) {
-  checkAbort();
-  if (!prompt) throw new Error('agent() requires a prompt string');
-  const args = { prompt: prompt };
-  if (opts) {
-    // G8: Pass through all Agent tool options
-    for (const key of ['description', 'subagent_type', 'model', 'name',
-      'run_in_background', 'team_name', 'mode', 'isolation']) {
-      if (opts[key] !== undefined) args[key] = opts[key];
-    }
-    if (!args.description) args.description = prompt.substring(0, 50);
-  } else {
-    args.description = prompt.substring(0, 50);
-  }
-
-  return tracked('agent', args, async () => {
-    const tool = findTool('Agent');
-    if (!tool) throw new Error('Agent tool not found in registry');
-    const result = await tool.call(args, currentContext, undefined, makeParentMessage());
-    try {
-      return typeof result.data === 'string' ? result.data : JSON.stringify(result.data);
-    } catch (e) {
-      return String(result);
-    }
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Console Capture
-// ---------------------------------------------------------------------------
-
-function createCapturedConsole() {
-  const stdout = [];
-  const stderr = [];
-  return {
-    log: (...args) => stdout.push(args.map(String).join(' ')),
-    warn: (...args) => stderr.push(args.map(String).join(' ')),
-    error: (...args) => stderr.push(args.map(String).join(' ')),
-    info: (...args) => stdout.push(args.map(String).join(' ')),
-    dir: (obj) => stdout.push(JSON.stringify(obj, null, 2)),
-    table: (data) => stdout.push(JSON.stringify(data, null, 2)),
-    debug: (...args) => stdout.push(args.map(String).join(' ')),
-    getStdout: () => stdout.join('\n'),
-    getStderr: () => stderr.join('\n'),
-    clear: () => { stdout.length = 0; stderr.length = 0; },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Safe Require
-// ---------------------------------------------------------------------------
-
-const SAFE_MODULES = new Set(['path', 'url', 'querystring', 'crypto', 'util', 'os']);
-
-function createSafeRequire() {
-  return function safeRequire(moduleName) {
-    if (SAFE_MODULES.has(moduleName)) return require(moduleName);
-    throw new Error(
-      `require('${moduleName}') is not allowed. ` +
-      `Allowed modules: ${[...SAFE_MODULES].join(', ')}. ` +
-      `Use the tool handlers (read, write, bash, etc.) for I/O.`
-    );
-  };
-}
-
-// ---------------------------------------------------------------------------
-// VM Context Creation
-// ---------------------------------------------------------------------------
-
-function getOrCreateVM() {
-  if (vmContext) return vmContext;
-
-  const capturedConsole = createCapturedConsole();
-  const sandbox = {
-    // Tool handlers
-    read, write, edit, bash, grep, glob, notebook_edit,
-    fetch: fetch_url, agent,
-
-    // Persistent state object — survives across REPL calls even in async scripts
-    // Use: state.myVar = 42 in one call, state.myVar in the next
-    state: {},
-
-    // Console
-    console: capturedConsole,
-
-    // Safe globals
-    JSON, Math, Date, RegExp, Array, Object, Map, Set, WeakMap, WeakSet,
-    Promise, Symbol, Proxy, Reflect,
-    Buffer, URL, URLSearchParams, TextEncoder, TextDecoder,
-    setTimeout, clearTimeout, setInterval, clearInterval,
-    parseInt, parseFloat, isNaN, isFinite,
-    encodeURIComponent, decodeURIComponent,
-    encodeURI, decodeURI,
-    Error, TypeError, RangeError, SyntaxError, ReferenceError,
-
-    // Safe require
-    require: createSafeRequire(),
-  };
-
-  vmContext = vm.createContext(sandbox);
-  return vmContext;
-}
-
-// ---------------------------------------------------------------------------
-// Result Formatting
-// ---------------------------------------------------------------------------
-
-function formatResult(description, startTime, returnValue, error) {
-  const duration = Date.now() - startTime;
-  const ctx = getOrCreateVM();
-  const capturedConsole = ctx.console;
-  const maxSize = getMaxResultSize();
-
-  const parts = [];
-
-  // Header
-  const header = description ? `=== REPL: ${description} ===` : '=== REPL ===';
-  const failCount = operations.filter(op => !op.success).length;
-  const opSummary = failCount > 0
-    ? `${operations.length} (${failCount} failed)`
-    : String(operations.length);
-  parts.push(header);
-  parts.push(`Duration: ${duration}ms | Operations: ${opSummary}`);
-
-  // Operations log
-  if (operations.length > 0) {
-    parts.push('');
-    parts.push('--- Operations ---');
-    for (let i = 0; i < operations.length; i++) {
-      const op = operations[i];
-      const argStr = op.args.command || op.args.file_path || op.args.prompt || '';
-      const truncArg = argStr.length > 60 ? argStr.substring(0, 57) + '...' : argStr;
-      if (op.success) {
-        const summary = op.resultSummary || 'ok';
-        const truncSummary = summary.length > 60 ? summary.substring(0, 57) + '...' : summary;
-        parts.push(`${i + 1}. ${op.tool}(${truncArg}) → ${truncSummary} [${op.duration}ms]`);
-      } else {
-        parts.push(`${i + 1}. ${op.tool}(${truncArg}) → ERROR: ${op.error} [${op.duration}ms]`);
-      }
-    }
-  }
-
-  // Console output
-  const stdout = capturedConsole.getStdout();
-  const stderr = capturedConsole.getStderr();
-  if (stdout || stderr) {
-    parts.push('');
-    parts.push('--- Console Output ---');
-    if (stdout) parts.push(stdout);
-    if (stderr) parts.push('[stderr] ' + stderr);
-  }
-
-  // Error or return value
-  if (error) {
-    parts.push('');
-    parts.push('--- Error ---');
-    parts.push(error.stack || error.message || String(error));
-  } else if (returnValue !== undefined) {
-    parts.push('');
-    parts.push('--- Result ---');
-    const rendered = typeof returnValue === 'string'
-      ? returnValue
-      : JSON.stringify(returnValue, null, 2);
-    parts.push(rendered);
-  }
-
-  let result = parts.join('\n');
-
-  // Truncate if too large
-  if (result.length > maxSize) {
-    result = result.substring(0, maxSize - 50) +
-      `\n\n[Truncated — ${result.length} chars exceeded ${maxSize} limit]`;
-  }
-
-  return result;
-}
-
-// ---------------------------------------------------------------------------
-// Prompt Functions (mode-aware)
-// ---------------------------------------------------------------------------
-
 function coexistPrompt() {
-  return `# REPL — Batch Operations Engine
+	return `# REPL \u2014 Batch Operations Engine
 
 Execute JavaScript code with access to file and shell operations. Batch multiple operations in one call to reduce round-trips.
 
 ## When to Use REPL
 
 Use REPL when a task involves **3 or more tool operations**, or when you need:
-- Scan-filter-act patterns (glob → read → process → write)
+- Scan-filter-act patterns (glob \u2192 read \u2192 process \u2192 write)
 - Bulk reads or edits across multiple files
 - Loops, conditionals, or data processing
 - Complex multi-step operations that would be noisy as individual tool calls
@@ -539,46 +109,46 @@ For simple single-file reads or one-off commands, use the individual tools direc
 
 ## When NOT to use REPL
 
-- **Single file read/edit** — bare Read and Edit have diff visibility and hook enforcement
-- **Safety-critical edits** — bare Edit shows diffs for user review; REPL edits are silent
-- **Exploratory debugging** — per-call error isolation is easier with individual tools
-- **One-off shell commands** — bare Bash is simpler for a single command
+- **Single file read/edit** \u2014 bare Read and Edit have diff visibility and hook enforcement
+- **Safety-critical edits** \u2014 bare Edit shows diffs for user review; REPL edits are silent
+- **Exploratory debugging** \u2014 per-call error isolation is easier with individual tools
+- **One-off shell commands** \u2014 bare Bash is simpler for a single command
 
-## Available Functions (all async — use await)
+## Available Functions (all async \u2014 use await)
 
 ### File Operations
-- \`read(path, opts?)\` → string (file content)
+- \`read(path, opts?)\` \u2192 string (file content)
   - opts: \`{ offset, limit, pages }\`
-- \`write(path, content)\` → confirmation string
-- \`edit(path, oldString, newString, opts?)\` → confirmation string
+- \`write(path, content)\` \u2192 confirmation string
+- \`edit(path, oldString, newString, opts?)\` \u2192 confirmation string
   - opts: \`{ replace_all: true }\` to replace all occurrences
 
 ### Shell & Search
-- \`bash(command, opts?)\` → stdout string
+- \`bash(command, opts?)\` \u2192 stdout string
   - opts: \`{ timeout, description }\`
-- \`grep(pattern, path?, opts?)\` → matching lines string
+- \`grep(pattern, path?, opts?)\` \u2192 matching lines string
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
-- \`glob(pattern, opts?)\` → newline-separated file paths (sorted by modification time)
+- \`glob(pattern, opts?)\` \u2192 newline-separated file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
-  - Respects .gitignore by default — ignored files (node_modules, build, etc.) are excluded
+  - Respects .gitignore by default \u2014 ignored files (node_modules, build, etc.) are excluded
   - opts: \`{ cwd, maxDepth }\`
   - opts: \`{ noIgnore: true }\` to include .gitignore'd files
   - opts: \`{ hidden: true }\` to include hidden files (dotfiles)
   - opts: \`{ ignore: ['*.min.js', 'dist/**'] }\` to add custom exclusions
 
 ### Notebook
-- \`notebook_edit(path, { new_source, cell_id?, cell_type?, edit_mode? })\` → confirmation
+- \`notebook_edit(path, { new_source, cell_id?, cell_type?, edit_mode? })\` \u2192 confirmation
   - \`new_source\`: the cell content to write (required unless deleting)
   - \`cell_id\`: cell ID to edit (required for replace/delete)
   - \`cell_type\`: 'code' or 'markdown' (required for insert)
   - \`edit_mode\`: 'replace' (default), 'insert', or 'delete'
 
 ### Web & Agents
-- \`fetch(url, opts?)\` → AI-summarized response (NOT raw HTTP)
+- \`fetch(url, opts?)\` \u2192 AI-summarized response (NOT raw HTTP)
   - Returns CC's WebFetch output: a markdown summary of the page, not the raw response body
   - For raw HTTP/JSON, use \`bash('curl -s ...')\` instead
-  - opts: \`{ prompt }\` — guide the summarization
-- \`agent(prompt, opts?)\` → agent result string
+  - opts: \`{ prompt }\` \u2014 guide the summarization
+- \`agent(prompt, opts?)\` \u2192 agent result string
   - opts: \`{ description, subagent_type, model, name, run_in_background, mode, isolation }\`
   - \`description\` auto-generated from prompt if omitted
 
@@ -630,21 +200,21 @@ return results;
 
 ## State Persistence
 - Scripts WITHOUT \`await\` or \`return\`: \`var\` declarations and bare assignments persist across calls
-  - \`var x = 42\` in call 1 → \`x\` available in call 2
-  - \`x = 42\` (no keyword) in call 1 → \`x\` available in call 2
+  - \`var x = 42\` in call 1 \u2192 \`x\` available in call 2
+  - \`x = 42\` (no keyword) in call 1 \u2192 \`x\` available in call 2
   - \`const\`/\`let\` do NOT persist (block-scoped by V8 design)
-- Scripts WITH \`await\` or \`return\`: wrapped in async function — local variables don't persist
+- Scripts WITH \`await\` or \`return\`: wrapped in async function \u2014 local variables don't persist
   - Use \`state.x = 42\` for values that must survive across async REPL calls
   - The \`state\` object always persists regardless of script type
 - Bare expressions always work: \`42 + 1\` returns the value without needing \`return\`
 
 ## Error Recovery
 
-When a REPL script fails, **fix the script and retry in REPL** — do not fall back to individual tools. Common fixes:
-- File not found → check the path with \`glob()\` first, then retry
-- Large file truncation → use \`read(path, { offset, limit })\` to read in chunks
-- Permission denied → the file may be read-only; check with \`bash('ls -la ...')\`
-- Syntax error → fix the JavaScript syntax and resubmit
+When a REPL script fails, **fix the script and retry in REPL** \u2014 do not fall back to individual tools. Common fixes:
+- File not found \u2192 check the path with \`glob()\` first, then retry
+- Large file truncation \u2192 use \`read(path, { offset, limit })\` to read in chunks
+- Permission denied \u2192 the file may be read-only; check with \`bash('ls -la ...')\`
+- Syntax error \u2192 fix the JavaScript syntax and resubmit
 
 Falling back to individual Read/Write/Edit calls after a REPL error wastes the batch advantage and floods the context window. Stay in REPL.
 
@@ -653,17 +223,16 @@ Falling back to individual Read/Write/Edit calls after a REPL error wastes the b
 - \`return\` a value to include it in the response
 - Use \`try/catch\` inside scripts to handle errors gracefully
 - \`require()\` is available for: path, url, querystring, crypto, util, os
-- All I/O goes through CC's permission system — writes will prompt for approval when configured
+- All I/O goes through CC's permission system \u2014 writes will prompt for approval when configured
 
 ## Tungsten Integration
-- REPL's \`bash()\` runs one-shot commands — state is lost between calls
+- REPL's \`bash()\` runs one-shot commands \u2014 state is lost between calls
 - For persistent processes (dev servers, watchers, debuggers), use the Tungsten tool instead
 - After Tungsten creates a session, Bash commands automatically inherit the tmux environment
 - Use REPL for batch computation; use Tungsten for long-running processes`;
 }
-
 function replacePrompt() {
-  return `# REPL \u2014 Your Execution Environment
+	return `# REPL \u2014 Your Execution Environment
 
 REPL is a persistent Node.js VM with full access to file operations, shell commands, search, and data processing. JavaScript and bash work in tandem \u2014 you have the expressiveness of a programming language with the reach of a shell, all in a single tool call.
 
@@ -675,7 +244,7 @@ Every task is a script. A file read is \`await read(path)\`. A shell command is 
 
 **The power is composition.** Instead of one call to find files, another to read them, another to process, another to write \u2014 write one script that does all four in a loop, with error handling, in one call.
 
-**This is JavaScript, not Python.** Use string concatenation or template literals for formatting, .padStart()/.padEnd() for alignment, JSON.stringify() for serialization. No f-strings, no \u0060{:>5}\u0060 format specs.
+**This is JavaScript, not Python.** Use string concatenation or template literals for formatting, .padStart()/.padEnd() for alignment, JSON.stringify() for serialization. No f-strings, no \`{:>5}\` format specs.
 
 ## Available Functions (all async \u2014 use await)
 
@@ -698,7 +267,7 @@ Every task is a script. A file read is \`await read(path)\`. A shell command is 
 - \`bash(command, opts?)\` \u2192 stdout string
   - opts: \`{ timeout, description }\`
 - \`grep(pattern, path?, opts?)\` \u2192 matching lines string
-  - Uses ripgrep. Full regex syntax: \`"log.*Error"\`, \`"function\\s+\\w+"\`
+  - Uses ripgrep. Full regex syntax: \`"log.*Error"\`, \`"function\\\\s+\\\\w+"\`
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
 - \`glob(pattern, opts?)\` \u2192 newline-separated file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
@@ -820,100 +389,493 @@ When a script fails, fix it and retry. Common fixes:
 - After Tungsten creates a session, Bash commands automatically inherit the tmux environment
 - Use REPL for batch computation; use Tungsten for long-running processes`;
 }
-// ---------------------------------------------------------------------------
-// Tool Definition
-// ---------------------------------------------------------------------------
 
-module.exports = {
-  name: 'REPL',
-  inputJSONSchema: {
-    type: 'object',
-    properties: {
-      script: {
-        type: 'string',
-        description: 'JavaScript code to execute. Use await for async operations. Return a value to include it in the response.',
-      },
-      description: {
-        type: 'string',
-        description: 'Brief description of what this script does',
-      },
-    },
-    required: ['script'],
-  },
+//#endregion
+//#region src/tools/repl/vm.ts
+let vmContext = null;
+let currentContext = null;
+let operations = [];
+let selfRef = null;
+function getCurrentContext() {
+	return currentContext;
+}
+function setCurrentContext(ctx) {
+	currentContext = ctx;
+}
+function getOperations() {
+	return operations;
+}
+function resetOperations() {
+	operations = [];
+}
+function setSelfRef(ref) {
+	selfRef = ref;
+}
+function makeParentMessage() {
+	const id = "repl-" + Math.random().toString(36).substring(2, 15);
+	return {
+		uuid: id,
+		message: {
+			id,
+			role: "assistant",
+			content: []
+		}
+	};
+}
+function findTool(name) {
+	if (selfRef && selfRef._stashedTools) {
+		for (let i = 0; i < selfRef._stashedTools.length; i++) if (selfRef._stashedTools[i].name === name) return selfRef._stashedTools[i];
+	}
+	const tools = currentContext && currentContext.options && currentContext.options.tools;
+	if (!tools) return null;
+	for (let i = 0; i < tools.length; i++) if (tools[i].name === name) return tools[i];
+	return null;
+}
+function checkAbort() {
+	if (currentContext && currentContext.abortController && currentContext.abortController.signal && currentContext.abortController.signal.aborted) throw new Error("Operation cancelled");
+}
+function summarizeArgs(toolName, args) {
+	const s = {};
+	for (const k of Object.keys(args)) {
+		const v = args[k];
+		if (typeof v === "string" && v.length > 100) s[k] = v.substring(0, 97) + "...";
+		else s[k] = v;
+	}
+	return s;
+}
+function summarizeResult(toolName, result) {
+	if (toolName === "read") {
+		if (typeof result === "string") return `${result.split("\n").length} lines read`;
+	}
+	if (toolName === "bash" || toolName === "grep" || toolName === "glob") {
+		if (typeof result === "string") return `${result.split("\n").filter(Boolean).length} lines`;
+	}
+	if (toolName === "write") return String(result);
+	if (toolName === "edit") return String(result);
+	if (result === void 0 || result === null) return "ok";
+	if (typeof result === "string") return result.substring(0, 80);
+	try {
+		return JSON.stringify(result).substring(0, 80);
+	} catch {
+		return String(result);
+	}
+}
+async function tracked(toolName, args, fn) {
+	const op = {
+		tool: toolName,
+		args: summarizeArgs(toolName, args),
+		startTime: Date.now()
+	};
+	try {
+		const result = await fn();
+		op.success = true;
+		op.resultSummary = summarizeResult(toolName, result);
+		op.duration = Date.now() - op.startTime;
+		operations.push(op);
+		return result;
+	} catch (err) {
+		op.success = false;
+		op.error = err instanceof Error ? err.message : String(err);
+		op.duration = Date.now() - op.startTime;
+		operations.push(op);
+		throw err;
+	}
+}
+function createCapturedConsole() {
+	const stdout = [];
+	const stderr = [];
+	return {
+		log: (...args) => stdout.push(args.map(String).join(" ")),
+		warn: (...args) => stderr.push(args.map(String).join(" ")),
+		error: (...args) => stderr.push(args.map(String).join(" ")),
+		info: (...args) => stdout.push(args.map(String).join(" ")),
+		dir: (obj) => stdout.push(JSON.stringify(obj, null, 2)),
+		table: (data) => stdout.push(JSON.stringify(data, null, 2)),
+		debug: (...args) => stdout.push(args.map(String).join(" ")),
+		getStdout: () => stdout.join("\n"),
+		getStderr: () => stderr.join("\n"),
+		clear: () => {
+			stdout.length = 0;
+			stderr.length = 0;
+		}
+	};
+}
+const SAFE_MODULES = new Set([
+	"path",
+	"url",
+	"querystring",
+	"crypto",
+	"util",
+	"os"
+]);
+function createSafeRequire() {
+	return function safeRequire(moduleName) {
+		if (SAFE_MODULES.has(moduleName)) return require(moduleName);
+		throw new Error(`require('${moduleName}') is not allowed. Allowed modules: ${[...SAFE_MODULES].join(", ")}. Use the tool handlers (read, write, bash, etc.) for I/O.`);
+	};
+}
+function getOrCreateVM(handlers) {
+	if (vmContext) return vmContext;
+	const capturedConsole = createCapturedConsole();
+	const sandbox = {
+		...handlers,
+		state: {},
+		console: capturedConsole,
+		JSON,
+		Math,
+		Date,
+		RegExp,
+		Array,
+		Object,
+		Map,
+		Set,
+		WeakMap,
+		WeakSet,
+		Promise,
+		Symbol,
+		Proxy,
+		Reflect,
+		Buffer,
+		URL,
+		URLSearchParams,
+		TextEncoder,
+		TextDecoder,
+		setTimeout,
+		clearTimeout,
+		setInterval,
+		clearInterval,
+		parseInt,
+		parseFloat,
+		isNaN,
+		isFinite,
+		encodeURIComponent,
+		decodeURIComponent,
+		encodeURI,
+		decodeURI,
+		Error,
+		TypeError,
+		RangeError,
+		SyntaxError,
+		ReferenceError,
+		require: createSafeRequire()
+	};
+	vmContext = node_vm.createContext(sandbox);
+	return vmContext;
+}
 
-  async prompt() {
-    const mode = loadConfig().mode || 'coexist';
-    if (mode === 'replace') return replacePrompt();
-    return coexistPrompt();
-  },
+//#endregion
+//#region src/tools/repl/format.ts
+function formatResult(description, startTime, returnValue, error, handlers) {
+	const duration = Date.now() - startTime;
+	const capturedConsole = getOrCreateVM(handlers).console;
+	const maxSize = getMaxResultSize();
+	const operations$1 = getOperations();
+	const parts = [];
+	const header = description ? `=== REPL: ${description} ===` : "=== REPL ===";
+	const failCount = operations$1.filter((op) => !op.success).length;
+	const opSummary = failCount > 0 ? `${operations$1.length} (${failCount} failed)` : String(operations$1.length);
+	parts.push(header);
+	parts.push(`Duration: ${duration}ms | Operations: ${opSummary}`);
+	if (operations$1.length > 0) {
+		parts.push("");
+		parts.push("--- Operations ---");
+		for (let i = 0; i < operations$1.length; i++) {
+			const op = operations$1[i];
+			const argStr = String(op.args.command || op.args.file_path || op.args.prompt || "");
+			const truncArg = argStr.length > 60 ? argStr.substring(0, 57) + "..." : argStr;
+			if (op.success) {
+				const summary = op.resultSummary || "ok";
+				const truncSummary = summary.length > 60 ? summary.substring(0, 57) + "..." : summary;
+				parts.push(`${i + 1}. ${op.tool}(${truncArg}) → ${truncSummary} [${op.duration}ms]`);
+			} else parts.push(`${i + 1}. ${op.tool}(${truncArg}) → ERROR: ${op.error} [${op.duration}ms]`);
+		}
+	}
+	const stdout = capturedConsole.getStdout();
+	const stderr = capturedConsole.getStderr();
+	if (stdout || stderr) {
+		parts.push("");
+		parts.push("--- Console Output ---");
+		if (stdout) parts.push(stdout);
+		if (stderr) parts.push("[stderr] " + stderr);
+	}
+	if (error) {
+		parts.push("");
+		parts.push("--- Error ---");
+		const e = error;
+		parts.push(e.stack || e.message || String(error));
+	} else if (returnValue !== void 0) {
+		parts.push("");
+		parts.push("--- Result ---");
+		const rendered = typeof returnValue === "string" ? returnValue : JSON.stringify(returnValue, null, 2);
+		parts.push(rendered);
+	}
+	let result = parts.join("\n");
+	if (result.length > maxSize) result = result.substring(0, maxSize - 50) + `\n\n[Truncated — ${result.length} chars exceeded ${maxSize} limit]`;
+	return result;
+}
 
-  async description() {
-    return 'Execute JavaScript with access to file and shell operations. Batch multiple operations in one call.';
-  },
+//#endregion
+//#region src/tools/repl/handlers/read.ts
+async function read(filePath, opts) {
+	checkAbort();
+	const args = { file_path: filePath };
+	if (opts?.offset !== void 0) args.offset = opts.offset;
+	if (opts?.limit !== void 0) args.limit = opts.limit;
+	if (opts?.pages !== void 0) args.pages = opts.pages;
+	return tracked("read", args, async () => {
+		const tool$1 = findTool("Read");
+		if (!tool$1) throw new Error("Read tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			if (result?.data?.file?.content !== void 0) return result.data.file.content;
+			if (result?.data !== void 0) return typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
+			return String(result);
+		} catch {
+			return String(result);
+		}
+	});
+}
 
-  async call(args, context) {
-    const startTime = Date.now();
-    const { script, description } = args;
+//#endregion
+//#region src/tools/repl/handlers/write.ts
+async function write(filePath, content) {
+	checkAbort();
+	const args = {
+		file_path: filePath,
+		content
+	};
+	return tracked("write", args, async () => {
+		const tool$1 = findTool("Write");
+		if (!tool$1) throw new Error("Write tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			return `${result.data.type}: ${result.data.filePath}`;
+		} catch {
+			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+		}
+	});
+}
 
-    // Update module-level context for tool handlers
-    currentContext = context;
+//#endregion
+//#region src/tools/repl/handlers/edit.ts
+async function edit(filePath, oldString, newString, opts) {
+	checkAbort();
+	const args = {
+		file_path: filePath,
+		old_string: oldString,
+		new_string: newString
+	};
+	if (opts?.replace_all !== void 0) args.replace_all = opts.replace_all;
+	return tracked("edit", args, async () => {
+		const tool$1 = findTool("Edit");
+		if (!tool$1) throw new Error("Edit tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			return `edited: ${result.data.filePath}`;
+		} catch {
+			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+		}
+	});
+}
 
-    // Get or create persistent VM
-    const ctx = getOrCreateVM();
+//#endregion
+//#region src/tools/repl/handlers/bash.ts
+async function bash(command, opts) {
+	checkAbort();
+	const args = { command };
+	if (opts?.timeout !== void 0) args.timeout = opts.timeout;
+	if (opts?.description !== void 0) args.description = opts.description;
+	return tracked("bash", args, async () => {
+		const tool$1 = findTool("Bash");
+		if (!tool$1) throw new Error("Bash tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			let output = result.data.stdout || "";
+			if (result.data.stderr) output += (output ? "\n" : "") + result.data.stderr;
+			return output;
+		} catch {
+			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+		}
+	});
+}
 
-    // Reset per-call state
-    operations = [];
-    ctx.console.clear();
+//#endregion
+//#region src/tools/repl/handlers/grep.ts
+async function grep(pattern, searchPath, opts) {
+	checkAbort();
+	const safePath = searchPath || ".";
+	const args = { command: `grep ${opts?.flags || "-rn"} ${JSON.stringify(pattern)} ${JSON.stringify(safePath)}` };
+	return tracked("grep", args, async () => {
+		const tool$1 = findTool("Bash");
+		if (!tool$1) throw new Error("Bash tool not found in registry");
+		try {
+			return (await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage())).data.stdout || "";
+		} catch (e) {
+			if (e instanceof Error && e.message.includes("Shell command failed")) return "";
+			throw e;
+		}
+	});
+}
 
-    let returnValue;
-    let error;
+//#endregion
+//#region src/tools/repl/handlers/glob.ts
+async function glob(pattern, opts) {
+	checkAbort();
+	const dir = opts?.cwd || ".";
+	const parts = ["rg", "--files"];
+	if (!(pattern === "*" || pattern === "**/*" || pattern === "**")) parts.push("--glob", JSON.stringify(pattern));
+	parts.push("--sort=modified");
+	if (opts?.noIgnore) parts.push("--no-ignore");
+	if (opts?.hidden) parts.push("--hidden");
+	if (opts?.maxDepth) parts.push("--max-depth", String(opts.maxDepth));
+	if (opts?.ignore && Array.isArray(opts.ignore)) for (const excl of opts.ignore) parts.push("--glob", JSON.stringify("!" + excl));
+	parts.push(JSON.stringify(dir));
+	const args = { command: parts.join(" ") };
+	return tracked("glob", args, async () => {
+		const tool$1 = findTool("Bash");
+		if (!tool$1) throw new Error("Bash tool not found in registry");
+		try {
+			return ((await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage())).data.stdout || "").trim();
+		} catch (e) {
+			if (e instanceof Error && e.message.includes("Shell command failed")) return "";
+			throw e;
+		}
+	});
+}
 
-    // Two-pass execution for variable persistence:
-    // Pass 1: Run script directly (no wrapper). Top-level var and implicit
-    //   globals persist on the VM context across calls. This fails if the
-    //   script uses `await` (SyntaxError: await outside async function).
-    // Pass 2: Wrap in async IIFE for await support. Variables declared with
-    //   const/let/var are function-scoped and DON'T persist. Use the `state`
-    //   object for explicit cross-call persistence in async scripts.
-    try {
-      returnValue = vm.runInContext(script, ctx, {
-        timeout: getTimeout(),
-        filename: 'repl-script.js',
-        displayErrors: true,
-      });
-      // If the result is a promise (user wrote async code without await keyword
-      // at top level), await it
-      if (returnValue && typeof returnValue.then === 'function') {
-        returnValue = await returnValue;
-      }
-    } catch (syncErr) {
-      // G10: Only retry with IIFE when the script uses await/return keywords.
-      // Check SCRIPT SOURCE, not error message — V8 error wording varies
-      // (e.g. "for await" gives "Unexpected reserved word", not mentioning await).
-      // If script doesn't use these keywords, the SyntaxError is genuine.
-      const needsWrapping = syncErr.name === 'SyntaxError' && (
-        /\bawait\b/.test(script) ||
-        /\breturn\b/.test(script)
-      );
-      if (needsWrapping) {
-        try {
-          const wrappedScript = `(async () => { ${script} })()`;
-          returnValue = await vm.runInContext(wrappedScript, ctx, {
-            timeout: getTimeout(),
-            filename: 'repl-script.js',
-            displayErrors: true,
-          });
-        } catch (asyncErr) {
-          error = asyncErr;
-        }
-      } else {
-        error = syncErr;
-      }
-    }
+//#endregion
+//#region src/tools/repl/handlers/notebook_edit.ts
+async function notebook_edit(notebookPath, editOps) {
+	checkAbort();
+	if (!editOps || typeof editOps !== "object") throw new Error("notebook_edit requires editOps: { new_source, cell_id?, cell_type?, edit_mode? }");
+	const ops = { ...editOps };
+	if (ops.source !== void 0 && ops.new_source === void 0) {
+		ops.new_source = ops.source;
+		delete ops.source;
+	}
+	if (!ops.new_source && ops.edit_mode !== "delete") throw new Error("notebook_edit requires new_source (the cell content to write)");
+	const args = {
+		notebook_path: notebookPath,
+		...ops
+	};
+	return tracked("notebook_edit", args, async () => {
+		const tool$1 = findTool("NotebookEdit");
+		if (!tool$1) throw new Error("NotebookEdit tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			if (result.data?.error) return "Error: " + result.data.error;
+			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+		} catch {
+			return String(result);
+		}
+	});
+}
 
-    return { data: formatResult(description, startTime, returnValue, error) };
-  },
+//#endregion
+//#region src/tools/repl/handlers/fetch.ts
+async function fetch_url(url, opts) {
+	checkAbort();
+	const args = { url };
+	if (opts?.prompt !== void 0) args.prompt = opts.prompt;
+	return tracked("fetch", args, async () => {
+		const tool$1 = findTool("WebFetch");
+		if (!tool$1) throw new Error("WebFetch tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+		} catch {
+			return String(result);
+		}
+	});
+}
+
+//#endregion
+//#region src/tools/repl/handlers/agent.ts
+async function agent(prompt, opts) {
+	checkAbort();
+	if (!prompt) throw new Error("agent() requires a prompt string");
+	const args = { prompt };
+	if (opts) {
+		for (const key of [
+			"description",
+			"subagent_type",
+			"model",
+			"name",
+			"run_in_background",
+			"team_name",
+			"mode",
+			"isolation"
+		]) if (opts[key] !== void 0) args[key] = opts[key];
+		if (!args.description) args.description = prompt.substring(0, 50);
+	} else args.description = prompt.substring(0, 50);
+	return tracked("agent", args, async () => {
+		const tool$1 = findTool("Agent");
+		if (!tool$1) throw new Error("Agent tool not found in registry");
+		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		try {
+			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
+		} catch {
+			return String(result);
+		}
+	});
+}
+
+//#endregion
+//#region src/tools/repl/index.ts
+const vmHandlers = {
+	read,
+	write,
+	edit,
+	bash,
+	grep,
+	glob,
+	notebook_edit,
+	fetch: fetch_url,
+	agent
 };
+const tool = {
+	name: "REPL",
+	inputJSONSchema,
+	async prompt() {
+		return getPrompt();
+	},
+	async description() {
+		return "Execute JavaScript with access to file and shell operations. Batch multiple operations in one call.";
+	},
+	async call(args, context) {
+		const startTime = Date.now();
+		const { script, description } = args;
+		setCurrentContext(context);
+		const ctx = getOrCreateVM(vmHandlers);
+		resetOperations();
+		ctx.console.clear();
+		let returnValue;
+		let error;
+		try {
+			returnValue = node_vm.runInContext(script, ctx, {
+				timeout: getTimeout(),
+				filename: "repl-script.js",
+				displayErrors: true
+			});
+			if (returnValue && typeof returnValue.then === "function") returnValue = await returnValue;
+		} catch (syncErr) {
+			if (syncErr instanceof SyntaxError && (/\bawait\b/.test(script) || /\breturn\b/.test(script))) try {
+				const wrappedScript = `(async () => { ${script} })()`;
+				returnValue = await node_vm.runInContext(wrappedScript, ctx, {
+					timeout: getTimeout(),
+					filename: "repl-script.js",
+					displayErrors: true
+				});
+			} catch (asyncErr) {
+				error = asyncErr;
+			}
+			else error = syncErr;
+		}
+		return { data: formatResult(description, startTime, returnValue, error, vmHandlers) };
+	}
+};
+var repl_default = tool;
+setSelfRef(tool);
 
-// Self-reference so findTool can access _stashedTools set by the binary-patched loader
-selfRef = module.exports;
+//#endregion
+module.exports = repl_default;

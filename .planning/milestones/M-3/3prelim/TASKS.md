@@ -45,11 +45,14 @@
 - **Status:** COMPLETE (covered by T4 + verification pass)
 
 ### T6: Split REPL tool
-- Create `src/tools/repl/` with: index.ts, prompt.ts, schema.ts, vm.ts, config.ts, format.ts
-- Create `src/tools/repl/handlers/` with 9 handler files
-- Build → `data/tools/repl.js`
+- Created `src/tools/repl/` with 6 modules: index.ts, prompt.ts, schema.ts, vm.ts, config.ts, format.ts
+- Created `src/tools/repl/handlers/` with 9 handler files + barrel (read, write, edit, bash, grep, glob, notebook_edit, fetch, agent)
+- State centralized in vm.ts with getter/setter functions to avoid circular dependencies
+- getOrCreateVM takes handlers param to break handler→vm→handler cycle
+- Build → `data/tools/repl.js` (33.49KB from TypeScript, vs 37.2KB hand-written original)
+- Live probes: REPL 42*42=1764, glob handler found 16 files in src/tools/repl/
 - **Verify:** Layers 1, 2, 3, 4, 5, 6 (build, signatures, clean apply, probe, hooks, tool deploy)
-- **Status:** TODO
+- **Status:** COMPLETE
 
 ### T7: Split Tungsten tool
 - Create `src/tools/tungsten/` with: index.ts, prompt.ts, schema.ts, tmux.ts, state.ts, validate.ts
