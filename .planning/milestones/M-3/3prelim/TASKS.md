@@ -38,10 +38,11 @@
 - **Status:** COMPLETE
 
 ### T5: Split Ping tool (pipeline validation)
-- Create `src/tools/ping/index.ts`
-- Build → `data/tools/ping.js`
+- Source created in T4 as pipeline proof-of-concept (`src/tools/ping/index.ts`)
+- Build → `data/tools/ping.js` via `pnpm build:tools`
+- Full 6-layer verification: build (170.46KB), signatures (20/20), clean apply, probes (live claude -p), hooks (SessionStart confirmed), tool deploy (3 tools, all VALID)
 - **Verify:** Layers 1, 2, 3, 4, 5, 6 (build, signatures, clean apply, probe, hooks, tool deploy)
-- **Status:** TODO
+- **Status:** COMPLETE (covered by T4 + verification pass)
 
 ### T6: Split REPL tool
 - Create `src/tools/repl/` with: index.ts, prompt.ts, schema.ts, vm.ts, config.ts, format.ts
