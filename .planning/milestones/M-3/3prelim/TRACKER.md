@@ -11,6 +11,7 @@
 - **D3:** PatchGroup enum moved from index.ts to orchestration/index.ts to break circular import. Re-exported via barrel.
 - **D4:** `import.meta.url` paths in deploy.ts use single `..` (bundle-relative) not double `..` (source-relative). The bundle is flat regardless of source tree depth.
 - **D5:** `deployUiComponents` included in orchestration/deploy.ts alongside `deployTools` and `deployPromptOverrides` — same deployment pattern, belongs together.
+- **D6:** Tool build uses tsdown CJS format with `.cjs→.js` rename post-step. `"type":"module"` in package.json forces `.cjs` extension for CJS output; `data/tools/package.json` with `{"type":"commonjs"}` overrides this for `require()` compatibility.
 
 ## Progress
 
@@ -19,8 +20,9 @@
 | T1: Cleanup | COMPLETE | `a674460` | L1 (170KB), L2 (20/20) |
 | T2: Split governance.ts | COMPLETE | `51a9c4a` | L1, L2, L3, L7 + live session test (Ping/REPL/Tungsten all functional) |
 | T3: Split index.ts | COMPLETE | — | L1 (170.46KB), L2 (20/20), L3, L4 (Ping+REPL), L6 (3 tools), L7 + live claude -p probes |
-| T4: Tool build pipeline | NEXT | — | — |
-| T5-T8 | PENDING | — | — |
+| T4: Tool build pipeline | COMPLETE | — | L1 (170.46KB + 0.70KB tools), L4 (live claude -p Ping), L6 (3 tools, all shapes valid) |
+| T5: Split Ping | NEXT | — | — |
+| T6-T8 | PENDING | — | — |
 
 ## Blockers
 

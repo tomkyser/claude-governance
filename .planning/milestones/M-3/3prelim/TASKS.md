@@ -27,11 +27,15 @@
 - **Status:** COMPLETE
 
 ### T4: Set up tool build pipeline
-- Create `src/tools/` directory
-- Configure tsdown (or esbuild fallback) to bundle each tool dir → single `.js` in `data/tools/`
-- Verify index.js (auto-discovery loader) still works with built output
+- Created `src/tools/` directory with Ping as pipeline proof-of-concept
+- `tsdown.tools.config.ts`: CJS format, `data/tools/` output, `clean:false`, node builtins external
+- `build:tools` script: tsdown + .cjs→.js rename (needed because `"type":"module"` forces .cjs extension)
+- `data/tools/package.json`: `{"type":"commonjs"}` — overrides parent ESM type for require() compatibility
+- Integrated into main `pnpm build` (runs after main build)
+- `import.meta.url` insight: bundle is flat → data dir paths use single `..` from dist/ regardless of source depth
+- Loader discovers all 3 tools (Ping built from TS + REPL/Tungsten hand-written)
 - **Verify:** Layers 1, 4, 6 (build, probe, tool deploy — actually require() the output)
-- **Status:** TODO
+- **Status:** COMPLETE
 
 ### T5: Split Ping tool (pipeline validation)
 - Create `src/tools/ping/index.ts`

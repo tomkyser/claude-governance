@@ -15,8 +15,9 @@
     }
   },
   "scripts": {
-    "build": "tsc --noEmit && tsdown --minify --dts src/index.tsx src/lib/index.ts",
+    "build": "tsc --noEmit && tsdown --minify --dts src/index.tsx src/lib/index.ts && pnpm build:tools",
     "build:dev": "tsdown --dts src/index.tsx src/lib/index.ts",
+    "build:tools": "tsdown --config tsdown.tools.config.ts && node -e \"require('fs').readdirSync('data/tools').filter(f=>f.endsWith('.cjs')).forEach(f=>{require('fs').renameSync('data/tools/'+f,'data/tools/'+f.replace('.cjs','.js'))})\"",
     "watch": "tsdown --watch --dts src/index.tsx src/lib/index.ts",
     "start": "node dist/index.mjs",
     "lint": "tsc --noEmit && eslint src",
