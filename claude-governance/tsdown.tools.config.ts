@@ -1,16 +1,18 @@
 import { defineConfig } from 'tsdown';
 
-export default defineConfig({
-  entry: {
-    ping: 'src/tools/ping/index.ts',
-    repl: 'src/tools/repl/index.ts',
-    // T7: tungsten: 'src/tools/tungsten/index.ts',
-  },
-  format: 'cjs',
+const common = {
+  format: 'cjs' as const,
   outDir: 'data/tools',
   clean: false,
   dts: false,
   fixedExtension: false,
-  target: 'node20',
+  splitting: false,
+  target: 'node20' as const,
   external: [/^node:/],
-});
+};
+
+export default defineConfig([
+  { ...common, entry: { ping: 'src/tools/ping/index.ts' } },
+  { ...common, entry: { repl: 'src/tools/repl/index.ts' } },
+  { ...common, entry: { tungsten: 'src/tools/tungsten/index.ts' } },
+]);
