@@ -40,3 +40,17 @@ Used fetch() to grab the Haseeb gist. Got a useful AI summary. But if you need e
 
 **2026-04-14 | REPL agent() → subagent bash() fails with "O is not a function"** | bug, agent-spawning
 Testing Tungsten tmux environment propagation through various tool/agent paths. REPL's own bash() works fine. Top-level Agent tool spawning subagents that call bash() works fine. But REPL's agent() function spawning a subagent that then calls bash() hits a runtime error: "O is not a function" — likely a minification artifact where a dependency isn't properly resolved in the subagent's tool runtime when spawned through REPL's agent() path. The subagent ran (3 tool calls, ~49K tokens) but couldn't execute any bash commands. The REPL-to-agent-to-bash path has a tool runtime initialization issue that doesn't exist in the top-level Agent-to-bash path.
+
+## 2026-04-14 — GP3 Research Session
+
+### REPL read() 512KB limit hit
+- Context: Attempted to read /tmp/cc-extracted.js (12.8M chars) via REPL's read()
+- The file is ~512KB which exceeds REPL's 256KB limit
+- Had to fall back to grep via Bash for binary analysis
+- Observation: For large file analysis, REPL should either support chunked reads or the limit should be documented in the prompt
+
+### REPL glob() returns relative paths
+- Context: Used glob() to find files in cc-source directory
+- The paths returned were relative to cwd, but read() needs absolute paths
+- The srcBase prefix wasn't being properly joined because glob returns paths differently than expected
+- Observation: glob() path resolution behavior should be clearer — does it return paths relative to cwd or to the provided cwd option?
