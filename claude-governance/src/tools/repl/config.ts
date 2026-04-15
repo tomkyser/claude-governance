@@ -6,6 +6,7 @@ export interface ReplConfig {
   mode?: 'coexist' | 'replace';
   timeout?: number;
   maxResultSize?: number;
+  maxReadFileSize?: number;
 }
 
 let replConfig: ReplConfig | null = null;
@@ -28,6 +29,10 @@ export function loadConfig(): ReplConfig {
       console.error('[REPL] Invalid repl.maxResultSize: ' + cfg.maxResultSize + ' — must be number >= 1000');
       delete cfg.maxResultSize;
     }
+    if (cfg.maxReadFileSize !== undefined && (typeof cfg.maxReadFileSize !== 'number' || cfg.maxReadFileSize < 1024)) {
+      console.error('[REPL] Invalid repl.maxReadFileSize: ' + cfg.maxReadFileSize + ' — must be number >= 1024');
+      delete cfg.maxReadFileSize;
+    }
     replConfig = cfg;
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : '';
@@ -45,4 +50,8 @@ export function getTimeout(): number {
 
 export function getMaxResultSize(): number {
   return loadConfig().maxResultSize || 100000;
+}
+
+export function getMaxReadFileSize(): number {
+  return loadConfig().maxReadFileSize || 256 * 1024;
 }

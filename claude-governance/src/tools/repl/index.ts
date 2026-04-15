@@ -62,7 +62,9 @@ const tool = {
         returnValue = await returnValue;
       }
     } catch (syncErr: unknown) {
-      const needsWrapping = syncErr instanceof SyntaxError && (
+      const isSyntaxError = syncErr instanceof SyntaxError ||
+        (syncErr !== null && typeof syncErr === 'object' && (syncErr as { name?: string }).name === 'SyntaxError');
+      const needsWrapping = isSyntaxError && (
         /\bawait\b/.test(script) ||
         /\breturn\b/.test(script)
       );

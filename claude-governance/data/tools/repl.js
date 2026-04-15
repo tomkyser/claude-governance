@@ -53,6 +53,10 @@ function loadConfig() {
 			console.error("[REPL] Invalid repl.maxResultSize: " + cfg.maxResultSize + " — must be number >= 1000");
 			delete cfg.maxResultSize;
 		}
+		if (cfg.maxReadFileSize !== void 0 && (typeof cfg.maxReadFileSize !== "number" || cfg.maxReadFileSize < 1024)) {
+			console.error("[REPL] Invalid repl.maxReadFileSize: " + cfg.maxReadFileSize + " — must be number >= 1024");
+			delete cfg.maxReadFileSize;
+		}
 		replConfig = cfg;
 	} catch (e) {
 		if ((e instanceof Error ? e.message : "").includes("JSON")) console.error("[REPL] config.json parse error — using defaults");
@@ -65,6 +69,9 @@ function getTimeout() {
 }
 function getMaxResultSize() {
 	return loadConfig().maxResultSize || 1e5;
+}
+function getMaxReadFileSize() {
+	return loadConfig().maxReadFileSize || 256 * 1024;
 }
 
 //#endregion
@@ -119,6 +126,8 @@ For simple single-file reads or one-off commands, use the individual tools direc
 ### File Operations
 - \`read(path, opts?)\` \u2192 string (file content)
   - opts: \`{ offset, limit, pages }\`
+  - Files over 256KB are automatically read via bash \u2014 no action needed
+  - For very large files, use \`{ offset, limit }\` to read specific line ranges
 - \`write(path, content)\` \u2192 confirmation string
 - \`edit(path, oldString, newString, opts?)\` \u2192 confirmation string
   - opts: \`{ replace_all: true }\` to replace all occurrences
@@ -128,7 +137,7 @@ For simple single-file reads or one-off commands, use the individual tools direc
   - opts: \`{ timeout, description }\`
 - \`grep(pattern, path?, opts?)\` \u2192 matching lines string
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
-- \`glob(pattern, opts?)\` \u2192 newline-separated file paths (sorted by modification time)
+- \`glob(pattern, opts?)\` \u2192 newline-separated absolute file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
   - Respects .gitignore by default \u2014 ignored files (node_modules, build, etc.) are excluded
   - opts: \`{ cwd, maxDepth }\`
@@ -212,7 +221,7 @@ return results;
 
 When a REPL script fails, **fix the script and retry in REPL** \u2014 do not fall back to individual tools. Common fixes:
 - File not found \u2192 check the path with \`glob()\` first, then retry
-- Large file truncation \u2192 use \`read(path, { offset, limit })\` to read in chunks
+- Large file truncation \u2192 read() auto-handles files over 256KB via bash; for very large files use \`read(path, { offset, limit })\`
 - Permission denied \u2192 the file may be read-only; check with \`bash('ls -la ...')\`
 - Syntax error \u2192 fix the JavaScript syntax and resubmit
 
@@ -251,9 +260,10 @@ Every task is a script. A file read is \`await read(path)\`. A shell command is 
 ### File Operations
 - \`read(path, opts?)\` \u2192 string (file content)
   - opts: \`{ offset, limit, pages }\`
-  - Reads up to 2000 lines by default. Files over 256KB throw an error \u2014 use offset/limit for large files
+  - Files over 256KB are automatically read via bash \u2014 no action needed
+  - For very large files, use \`{ offset, limit }\` to read specific line ranges
   - Binary files (images, videos, fonts) will throw \u2014 filter by extension before reading
-  - Path should be absolute or relative to cwd
+  - Relative paths are resolved to absolute automatically
 - \`write(path, content)\` \u2192 confirmation string
   - Overwrites existing files. Prefer edit() for modifications \u2014 write() is for new files or complete rewrites
   - NEVER create documentation files (*.md) unless the user explicitly asks
@@ -269,7 +279,7 @@ Every task is a script. A file read is \`await read(path)\`. A shell command is 
 - \`grep(pattern, path?, opts?)\` \u2192 matching lines string
   - Uses ripgrep. Full regex syntax: \`"log.*Error"\`, \`"function\\\\s+\\\\w+"\`
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
-- \`glob(pattern, opts?)\` \u2192 newline-separated file paths (sorted by modification time)
+- \`glob(pattern, opts?)\` \u2192 newline-separated absolute file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
   - Respects .gitignore by default \u2014 ignored files (node_modules, build, etc.) are excluded
   - For a complete file inventory, use \`bash('git ls-files')\` instead of glob('**/*')
@@ -370,7 +380,7 @@ When scanning many files, return computed metrics and structured objects \u2014 
 
 When a script fails, fix it and retry. Common fixes:
 - File not found \u2192 check the path with \`glob()\` or \`bash('ls')\` first
-- Large file error \u2192 use \`read(path, { offset, limit })\` to read in chunks
+- Large file error \u2192 read() auto-handles files over 256KB via bash; for very large files use \`read(path, { offset, limit })\`
 - Binary file error \u2192 filter by extension before reading (skip png, jpg, mp4, etc.)
 - glob returns too many files \u2192 use a specific extension pattern or \`bash('git ls-files')\`
 - Syntax error \u2192 this is JavaScript, not Python. Fix the syntax and resubmit
@@ -615,23 +625,128 @@ function formatResult(description, startTime, returnValue, error, handlers) {
 }
 
 //#endregion
+//#region src/tools/repl/handlers/agent.ts
+function extractAgentText(data) {
+	if (typeof data === "string") try {
+		return extractAgentText(JSON.parse(data));
+	} catch {
+		return data;
+	}
+	if (data && typeof data === "object") {
+		const obj = data;
+		if (Array.isArray(obj.content)) {
+			const texts = obj.content.filter((c) => c && typeof c === "object" && c.type === "text").map((c) => String(c.text || ""));
+			if (texts.length > 0) return texts.join("\n");
+		}
+		if (typeof obj.result === "string") return obj.result;
+		if (typeof obj.text === "string") return obj.text;
+		return JSON.stringify(data, null, 2);
+	}
+	return String(data);
+}
+function makeCanUseTool() {
+	return async (_tool, input) => ({
+		behavior: "allow",
+		updatedInput: input,
+		decisionReason: {
+			type: "mode",
+			mode: "bypassPermissions"
+		}
+	});
+}
+async function agent(prompt, opts) {
+	checkAbort();
+	if (!prompt) throw new Error("agent() requires a prompt string");
+	const args = { prompt };
+	if (opts) {
+		for (const key of [
+			"description",
+			"subagent_type",
+			"model",
+			"name",
+			"run_in_background",
+			"team_name",
+			"mode",
+			"isolation"
+		]) if (opts[key] !== void 0) args[key] = opts[key];
+		if (!args.description) args.description = prompt.substring(0, 50);
+	} else args.description = prompt.substring(0, 50);
+	return tracked("agent", args, async () => {
+		const tool$1 = findTool("Agent");
+		if (!tool$1) throw new Error("Agent tool not found in registry");
+		return extractAgentText((await tool$1.call(args, getCurrentContext(), makeCanUseTool(), makeParentMessage()))?.data);
+	});
+}
+
+//#endregion
 //#region src/tools/repl/handlers/read.ts
+const HARD_CAP = 10 * 1024 * 1024;
+const AGENT_CHUNK_SIZE = 256 * 1024;
+function unlimitedContext() {
+	return {
+		...getCurrentContext(),
+		fileReadingLimits: {
+			maxSizeBytes: HARD_CAP,
+			maxTokens: Infinity
+		}
+	};
+}
+async function nativeRead(args) {
+	const tool$1 = findTool("Read");
+	if (!tool$1) throw new Error("Read tool not found in registry");
+	const result = await tool$1.call(args, unlimitedContext(), void 0, makeParentMessage());
+	try {
+		if (result?.data?.file?.content !== void 0) return result.data.file.content;
+		if (result?.data !== void 0) return typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
+		return String(result);
+	} catch {
+		return String(result);
+	}
+}
+async function agentChunkedRead(filePath, fileSize) {
+	const bashTool = findTool("Bash");
+	if (!bashTool) throw new Error("Bash tool not found");
+	let totalLines;
+	try {
+		const wcResult = await bashTool.call({ command: `wc -l < ${JSON.stringify(filePath)}` }, getCurrentContext(), void 0, makeParentMessage());
+		totalLines = parseInt((wcResult.data.stdout || "0").trim(), 10);
+	} catch {
+		throw new Error(`Cannot determine line count for ${filePath}`);
+	}
+	if (totalLines <= 0) throw new Error(`File appears empty or binary: ${filePath}`);
+	const numChunks = Math.ceil(fileSize / AGENT_CHUNK_SIZE);
+	const linesPerChunk = Math.ceil(totalLines / numChunks);
+	const basename = node_path.basename(filePath);
+	const chunks = [];
+	for (let i = 0; i < numChunks; i++) {
+		checkAbort();
+		const startLine = i * linesPerChunk + 1;
+		const endLine = Math.min((i + 1) * linesPerChunk, totalLines);
+		const result = await agent(`Read lines ${startLine}-${endLine} of ${filePath} using the Read tool with parameters: file_path="${filePath}", offset=${startLine}, limit=${endLine - startLine + 1}. Return ONLY the raw file content. No commentary, no formatting, no markdown.`, { description: `Read ${basename} chunk ${i + 1}/${numChunks}` });
+		chunks.push(result);
+	}
+	return chunks.join("\n");
+}
 async function read(filePath, opts) {
 	checkAbort();
-	const args = { file_path: filePath };
+	const resolved = node_path.isAbsolute(filePath) ? filePath : node_path.resolve(process.cwd(), filePath);
+	const args = { file_path: resolved };
 	if (opts?.offset !== void 0) args.offset = opts.offset;
 	if (opts?.limit !== void 0) args.limit = opts.limit;
 	if (opts?.pages !== void 0) args.pages = opts.pages;
 	return tracked("read", args, async () => {
-		const tool$1 = findTool("Read");
-		if (!tool$1) throw new Error("Read tool not found in registry");
-		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
+		let fileSize;
 		try {
-			if (result?.data?.file?.content !== void 0) return result.data.file.content;
-			if (result?.data !== void 0) return typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2);
-			return String(result);
+			fileSize = node_fs.statSync(resolved).size;
 		} catch {
-			return String(result);
+			return nativeRead(args);
+		}
+		if (fileSize > HARD_CAP) throw new Error(`File too large: ${Math.round(fileSize / 1024 / 1024)}MB exceeds ${Math.round(HARD_CAP / 1024 / 1024)}MB hard cap. Process with bash() pipelines (grep, awk, sed) or read sections with read(path, {offset, limit}).`);
+		try {
+			return await nativeRead(args);
+		} catch (err) {
+			if (fileSize > getMaxReadFileSize()) return agentChunkedRead(resolved, fileSize);
+			throw err;
 		}
 	});
 }
@@ -735,7 +850,14 @@ async function glob(pattern, opts) {
 		const tool$1 = findTool("Bash");
 		if (!tool$1) throw new Error("Bash tool not found in registry");
 		try {
-			return ((await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage())).data.stdout || "").trim();
+			const output = ((await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage())).data.stdout || "").trim();
+			if (!output) return "";
+			const absDir = node_path.isAbsolute(dir) ? dir : node_path.resolve(process.cwd(), dir);
+			return output.split("\n").map((line) => {
+				const trimmed = line.trim();
+				if (!trimmed) return "";
+				return node_path.isAbsolute(trimmed) ? trimmed : node_path.resolve(absDir, trimmed);
+			}).filter(Boolean).join("\n");
 		} catch (e) {
 			if (e instanceof Error && e.message.includes("Shell command failed")) return "";
 			throw e;
@@ -790,37 +912,6 @@ async function fetch_url(url, opts) {
 }
 
 //#endregion
-//#region src/tools/repl/handlers/agent.ts
-async function agent(prompt, opts) {
-	checkAbort();
-	if (!prompt) throw new Error("agent() requires a prompt string");
-	const args = { prompt };
-	if (opts) {
-		for (const key of [
-			"description",
-			"subagent_type",
-			"model",
-			"name",
-			"run_in_background",
-			"team_name",
-			"mode",
-			"isolation"
-		]) if (opts[key] !== void 0) args[key] = opts[key];
-		if (!args.description) args.description = prompt.substring(0, 50);
-	} else args.description = prompt.substring(0, 50);
-	return tracked("agent", args, async () => {
-		const tool$1 = findTool("Agent");
-		if (!tool$1) throw new Error("Agent tool not found in registry");
-		const result = await tool$1.call(args, getCurrentContext(), void 0, makeParentMessage());
-		try {
-			return typeof result.data === "string" ? result.data : JSON.stringify(result.data);
-		} catch {
-			return String(result);
-		}
-	});
-}
-
-//#endregion
 //#region src/tools/repl/index.ts
 const vmHandlers = {
 	read,
@@ -859,7 +950,7 @@ const tool = {
 			});
 			if (returnValue && typeof returnValue.then === "function") returnValue = await returnValue;
 		} catch (syncErr) {
-			if (syncErr instanceof SyntaxError && (/\bawait\b/.test(script) || /\breturn\b/.test(script))) try {
+			if ((syncErr instanceof SyntaxError || syncErr !== null && typeof syncErr === "object" && syncErr.name === "SyntaxError") && (/\bawait\b/.test(script) || /\breturn\b/.test(script))) try {
 				const wrappedScript = `(async () => { ${script} })()`;
 				returnValue = await node_vm.runInContext(wrappedScript, ctx, {
 					timeout: getTimeout(),

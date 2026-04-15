@@ -11,6 +11,39 @@ interface AgentOpts {
   isolation?: string;
 }
 
+function extractAgentText(data: unknown): string {
+  if (typeof data === 'string') {
+    try {
+      const parsed = JSON.parse(data);
+      return extractAgentText(parsed);
+    } catch {
+      return data;
+    }
+  }
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    if (Array.isArray(obj.content)) {
+      const texts = obj.content
+        .filter((c: unknown) => c && typeof c === 'object' && (c as Record<string, unknown>).type === 'text')
+        .map((c: unknown) => String((c as Record<string, unknown>).text || ''));
+      if (texts.length > 0) return texts.join('\n');
+    }
+    if (typeof obj.result === 'string') return obj.result;
+    if (typeof obj.text === 'string') return obj.text;
+    return JSON.stringify(data, null, 2);
+  }
+  return String(data);
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function makeCanUseTool(): (...args: any[]) => Promise<any> {
+  return async (_tool: unknown, input: unknown) => ({
+    behavior: 'allow',
+    updatedInput: input,
+    decisionReason: { type: 'mode', mode: 'bypassPermissions' },
+  });
+}
+
 export async function agent(prompt: string, opts?: AgentOpts): Promise<string> {
   checkAbort();
   if (!prompt) throw new Error('agent() requires a prompt string');
@@ -28,8 +61,7 @@ export async function agent(prompt: string, opts?: AgentOpts): Promise<string> {
   return tracked('agent', args, async () => {
     const tool = findTool('Agent');
     if (!tool) throw new Error('Agent tool not found in registry');
-    const result = await tool.call(args, getCurrentContext(), undefined, makeParentMessage());
-    try { return typeof result.data === 'string' ? result.data : JSON.stringify(result.data); }
-    catch { return String(result); }
+    const result = await tool.call(args, getCurrentContext(), makeCanUseTool(), makeParentMessage());
+    return extractAgentText(result?.data);
   });
 }

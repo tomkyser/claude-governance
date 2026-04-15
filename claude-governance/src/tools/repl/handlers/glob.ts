@@ -1,3 +1,4 @@
+import * as nodePath from 'node:path';
 import { findTool, checkAbort, tracked, makeParentMessage, getCurrentContext } from '../vm';
 
 interface GlobOpts {
@@ -34,7 +35,15 @@ export async function glob(pattern: string, opts?: GlobOpts): Promise<string> {
     if (!tool) throw new Error('Bash tool not found in registry');
     try {
       const result = await tool.call(args, getCurrentContext(), undefined, makeParentMessage());
-      return (result.data.stdout || '').trim();
+      const output = (result.data.stdout || '').trim();
+      if (!output) return '';
+
+      const absDir = nodePath.isAbsolute(dir) ? dir : nodePath.resolve(process.cwd(), dir);
+      return output.split('\n').map((line: string) => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        return nodePath.isAbsolute(trimmed) ? trimmed : nodePath.resolve(absDir, trimmed);
+      }).filter(Boolean).join('\n');
     } catch (e: unknown) {
       if (e instanceof Error && e.message.includes('Shell command failed')) return '';
       throw e;

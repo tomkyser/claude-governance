@@ -35,6 +35,8 @@ For simple single-file reads or one-off commands, use the individual tools direc
 ### File Operations
 - \`read(path, opts?)\` \u2192 string (file content)
   - opts: \`{ offset, limit, pages }\`
+  - Files over 256KB are automatically read via bash \u2014 no action needed
+  - For very large files, use \`{ offset, limit }\` to read specific line ranges
 - \`write(path, content)\` \u2192 confirmation string
 - \`edit(path, oldString, newString, opts?)\` \u2192 confirmation string
   - opts: \`{ replace_all: true }\` to replace all occurrences
@@ -44,7 +46,7 @@ For simple single-file reads or one-off commands, use the individual tools direc
   - opts: \`{ timeout, description }\`
 - \`grep(pattern, path?, opts?)\` \u2192 matching lines string
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
-- \`glob(pattern, opts?)\` \u2192 newline-separated file paths (sorted by modification time)
+- \`glob(pattern, opts?)\` \u2192 newline-separated absolute file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
   - Respects .gitignore by default \u2014 ignored files (node_modules, build, etc.) are excluded
   - opts: \`{ cwd, maxDepth }\`
@@ -128,7 +130,7 @@ return results;
 
 When a REPL script fails, **fix the script and retry in REPL** \u2014 do not fall back to individual tools. Common fixes:
 - File not found \u2192 check the path with \`glob()\` first, then retry
-- Large file truncation \u2192 use \`read(path, { offset, limit })\` to read in chunks
+- Large file truncation \u2192 read() auto-handles files over 256KB via bash; for very large files use \`read(path, { offset, limit })\`
 - Permission denied \u2192 the file may be read-only; check with \`bash('ls -la ...')\`
 - Syntax error \u2192 fix the JavaScript syntax and resubmit
 
@@ -168,9 +170,10 @@ Every task is a script. A file read is \`await read(path)\`. A shell command is 
 ### File Operations
 - \`read(path, opts?)\` \u2192 string (file content)
   - opts: \`{ offset, limit, pages }\`
-  - Reads up to 2000 lines by default. Files over 256KB throw an error \u2014 use offset/limit for large files
+  - Files over 256KB are automatically read via bash \u2014 no action needed
+  - For very large files, use \`{ offset, limit }\` to read specific line ranges
   - Binary files (images, videos, fonts) will throw \u2014 filter by extension before reading
-  - Path should be absolute or relative to cwd
+  - Relative paths are resolved to absolute automatically
 - \`write(path, content)\` \u2192 confirmation string
   - Overwrites existing files. Prefer edit() for modifications \u2014 write() is for new files or complete rewrites
   - NEVER create documentation files (*.md) unless the user explicitly asks
@@ -186,7 +189,7 @@ Every task is a script. A file read is \`await read(path)\`. A shell command is 
 - \`grep(pattern, path?, opts?)\` \u2192 matching lines string
   - Uses ripgrep. Full regex syntax: \`"log.*Error"\`, \`"function\\\\s+\\\\w+"\`
   - path defaults to \`'.'\`; opts: \`{ flags: '-rn' }\`
-- \`glob(pattern, opts?)\` \u2192 newline-separated file paths (sorted by modification time)
+- \`glob(pattern, opts?)\` \u2192 newline-separated absolute file paths (sorted by modification time)
   - Supports full glob syntax including \`**\` recursion: \`'**/*.ts'\`, \`'src/**/*.js'\`
   - Respects .gitignore by default \u2014 ignored files (node_modules, build, etc.) are excluded
   - For a complete file inventory, use \`bash('git ls-files')\` instead of glob('**/*')
@@ -287,7 +290,7 @@ When scanning many files, return computed metrics and structured objects \u2014 
 
 When a script fails, fix it and retry. Common fixes:
 - File not found \u2192 check the path with \`glob()\` or \`bash('ls')\` first
-- Large file error \u2192 use \`read(path, { offset, limit })\` to read in chunks
+- Large file error \u2192 read() auto-handles files over 256KB via bash; for very large files use \`read(path, { offset, limit })\`
 - Binary file error \u2192 filter by extension before reading (skip png, jpg, mp4, etc.)
 - glob returns too many files \u2192 use a specific extension pattern or \`bash('git ls-files')\`
 - Syntax error \u2192 this is JavaScript, not Python. Fix the syntax and resubmit
