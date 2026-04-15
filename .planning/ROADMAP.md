@@ -483,10 +483,10 @@ do not use the fetch() tool for web sources, fetch tool returns only AI summarie
 
 ---
 ### Milestone 3 Retro
-- [ ] Commentary
-- [ ] Gap analysis
-- [ ] Housekeeping
-- [ ] Bootstrap Prompt
+- [x] Commentary — RETROSPECTIVE.md
+- [x] Gap analysis — GAPS.md (7 non-deferred gaps, 7 phases + 11 issues deferred to 1.2.0)
+- [x] Housekeeping
+- [x] Bootstrap Prompt
 ---
 
 ## Milestone 3.5: Wire — Inter-Session Communication
