@@ -7,7 +7,7 @@ Last updated: 2026-04-14
 - **Binary:** `~/.local/share/claude/versions/2.1.101` (191MB Mach-O)
 - **Auto-updater:** Disabled (`DISABLE_AUTOUPDATER=1`)
 
-## Current Patching: claude-governance (M-2 Complete, M-3 3prelim Complete)
+## Current Patching: claude-governance (M-2 Complete, M-3 GP3 Complete)
 
 All governance patches and prompt overrides applied by `claude-governance` —
 our fork of tweakcc with cosmetic patches stripped, Ink/React UI removed,
@@ -106,6 +106,7 @@ and governance-specific `check` command added.
 - **2c-gaps-2:** COMPLETE — Tungsten-first execution posture. PATCH 11 (v2) directive in "Using your tools", tool prompt reframe (complementary layers + lifecycle), SessionStart/Stop lifecycle hooks. 20/20 SOVEREIGN.
 - **M-2 Retro:** COMPLETE — 10 phases evaluated. 13 outstanding gaps catalogued (GAPS.md). Key outcome: GP3 (Ant vs External divergence) defines M-3 scope. Phase 3prelim (codebase reorg) recommended first.
 - **3prelim:** COMPLETE — Codebase reorganization. governance.ts (1184L) → 14 files, index.ts (955L) → 3 orchestration modules, 3 tools → TypeScript with build pipeline. 8 tasks, 7-layer verification. 20/20 SOVEREIGN.
+- **GP3:** COMPLETE — Ant vs External Divergence Research. 3-tier gating system discovered (DCE/GrowthBook/feature-flags). quiet_salted_ember gate mapped. 14 prompt sections extracted. 62 issues registered across 112 findings from 5 data sources. P0: quiet_salted_ember activation, dynamic boundary audit, thinking depth verification.
 
 ### Binary Vault (from 2a-gaps)
 - **Module:** `src/binaryVault.ts` — XDG path discovery, GCS download, SHA256 verification, immutable locking

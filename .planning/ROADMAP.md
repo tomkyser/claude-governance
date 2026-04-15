@@ -350,8 +350,19 @@ These are quality-of-output improvements that Anthropic withholds from paying us
   - [x] T7: Tungsten tool → 12 TypeScript modules in src/tools/tungsten/
   - [x] T8: Full 7-layer system proof — SOVEREIGN 20/20, all tools verified live
 
+- [x] Phase GP3 - Ant vs External Divergence Research [COMPLETE]
+  - [x] Binary extraction and analysis (virgin + patched comparison)
+  - [x] Leaked source analysis (prompts.ts, tools.ts, undercover.ts, etc.)
+  - [x] 3-tier gating system discovered (DCE, GrowthBook/wJH, feature flags)
+  - [x] quiet_salted_ember gate function identified and mapped
+  - [x] 14 prompt sections extracted to extracted-prompts/
+  - [x] Improvement framework: 62 issues, 112 findings, P0-P3 priority tiers
+  - [x] Community friction research (41 findings), prompt analysis (25 findings)
+  - [x] Self-analysis (20 friction points), introspective probe (5 findings)
+  - [x] Coverage gap analysis: 2/12 divergences covered, 10 gaps remaining
+
 - [ ] Phase 3a - Full system prompt extraction with version tracking
-  - [ ] TBD
+  - [ ] TBD — scope informed by GP3 findings
 - [ ] Phase 3b - Prompt diff tool (compare across CC versions)
   - [ ] TBD
 - [ ] Phase 3c - Targeted fixes for specific degradation prompts

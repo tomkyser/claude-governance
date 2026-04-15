@@ -6,8 +6,9 @@ Read these files in order:
 
 1. `.planning/VISION.md` — Project intent
 2. `.planning/milestones/M-3/IMPACT.md` — Milestone scope
-3. `.planning/milestones/M-3/3prelim/HANDOFF.md` — Last completed phase handoff
-4. Active phase docs (path below)
+3. `.planning/milestones/M-3/GP3/RESEARCH.md` — GP3 research (the core findings)
+4. `extracted-prompts/IMPROVEMENT-FRAMEWORK.md` — Issue registry and priority ranking
+5. Active phase docs (path below)
 
 Quick verify:
 ```bash
@@ -15,21 +16,37 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Status:** Phase 3prelim COMPLETE — next phase TBD (GP3 research or 3a)
-**Previous:** 3prelim COMPLETE — 8 tasks, 7-layer verified, 20/20 SOVEREIGN
-**Last handoff:** `.planning/milestones/M-3/3prelim/HANDOFF.md`
+**Status:** Phase GP3 COMPLETE — next: P0 investigations (quiet_salted_ember, dynamic boundary audit)
+**Previous:** GP3 COMPLETE — 112 findings, 62 issues, 14 extracted prompts
+**Last completed:** GP3 research at `b2839d2`
 **Baseline:** 20/20 SOVEREIGN on CC 2.1.101
 
+**GP3 key findings:**
+- **3-tier gating system** in binary: DCE (build-time), GrowthBook/wJH (runtime), feature flags
+- **`quiet_salted_ember`** — GrowthBook flag + Opus 4.6 check unlocks improved prompts already in binary
+- **`tengu_hive_evidence`** — GrowthBook flag gates VERIFICATION_AGENT (full implementation in binary)
+- **2/12 divergences covered** by existing overrides; 10 gaps remain
+- **62 issues registered** (I-001..I-098) with quality dimensions, categories, fix classes
+- **4 cross-cutting patterns:** thinking depth, lossy context, undermined authority, token economics
+
+**P0 investigations for next session:**
+1. **I-040: quiet_salted_ember** — Find where `clientDataCache` is stored. If in `~/.claude.json`, one flag flip unlocks 7 improvements
+2. **I-097: Dynamic boundary audit** — Verify our prompt overrides land BEFORE `SYSTEM_PROMPT_DYNAMIC_BOUNDARY`. If after, our patches break prompt cache every turn
+3. **I-064: Verify thinking depth env vars** — Confirm `EFFORT_LEVEL=max` + `DISABLE_ADAPTIVE_THINKING=1` are effective
+
+**P1 prompt overrides to write (6 new):**
+- Communication Style (G1) — replace "Output efficiency"
+- Misconception correction (P1) — add to "Doing tasks"
+- False-claims mitigation (P2) — add to "Doing tasks"
+- Thoroughness counterweight (P4) — add to "Doing tasks"
+- Context decay awareness (PA-009) — new section
+- Priority hierarchy clarification (PA-012) — new section
+
+**Extracted prompts:** `extracted-prompts/` has 14 files with all wJH-gated, DCE'd, and external prompt text verified against virgin binary
+
 **M-2 retro recommendations for M-3 (updated):**
-- ~~Phase 3prelim (codebase reorganization) before adding features~~ DONE
-- GP3 (Ant vs External divergence) is the core research question — do this next
+- ~~Phase 3prelim (codebase reorganization)~~ DONE
+- ~~GP3 (Ant vs External divergence)~~ DONE — defines M-3 scope
 - Budget for prompt testing infrastructure
 - Hooks module (G21) before public release
 - Maintain gap phase pattern
-
-**What 3prelim delivered:**
-- `src/patches/governance/` — 14 per-patch files (was 1184-line monolith)
-- `src/patches/orchestration/` — 3 modules (was 955-line monolith)
-- `src/tools/{ping,repl,tungsten}/` — all 3 tools now TypeScript with build pipeline
-- `tsdown.tools.config.ts` — CJS build per tool, no shared chunks
-- 7-layer verification protocol codified and proven across all tasks
