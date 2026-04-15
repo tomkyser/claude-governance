@@ -7,7 +7,7 @@ Last updated: 2026-04-15
 - **Binary:** `~/.local/share/claude/versions/2.1.101` (191MB Mach-O)
 - **Auto-updater:** Disabled (`DISABLE_AUTOUPDATER=1`)
 
-## Current Patching: claude-governance (M-2 Complete, M-3 Phase 3a Complete)
+## Current Patching: claude-governance (M-2 Complete, M-3 Complete)
 
 All governance patches and prompt overrides applied by `claude-governance` —
 our fork of tweakcc with cosmetic patches stripped, Ink/React UI removed,
@@ -28,7 +28,7 @@ and governance-specific `check` command added.
   - `src/tools/tungsten/` — Tungsten tool (12 modules: 6 core + 6 actions)
   - `data/tools/` — built tool artifacts (CJS .js via tsdown)
 
-### What's Applied (Verified 21/21 via `check`)
+### What's Applied (Verified 22/22 via `check`)
 **Governance Patches (6 active):**
 - Disclaimer neutralization — replaces "may or may not be relevant" with directive framing
 - Context header reframing — replaces ambient "use the following context" with mandatory framing
@@ -45,9 +45,10 @@ and governance-specific `check` command added.
 - Loader fills TOOL_DEFAULTS, tools use inputJSONSchema (standard JSON Schema, no Zod)
 - Sample Ping tool deployed for runtime testing
 
-**Prompt Overrides (9 active — output-efficiency removed by Anthropic, replaced by wJH Communication Style):**
+**Prompt Overrides (10 active — output-efficiency removed by Anthropic, replaced by wJH Communication Style):**
 - Agent Prompt: Explore, General Purpose
 - System Prompt: Agent thread notes, Doing tasks (3 overrides + P1: misconception, false-claims, thoroughness, context decay, priority hierarchy), Executing actions, Tone/style
+- Tool Description: Bash prohibition reframe (I-081 — "IMPORTANT:" severity prefix removed)
 
 ### CLI Commands
 | Command | Description |
@@ -55,7 +56,7 @@ and governance-specific `check` command added.
 | `(default)` / `--apply` | Apply all governance patches + prompt overrides |
 | `launch [-- args]` | Pre-flight verify + launch CC (wrapper mode) |
 | `--restore` | Restore binary to original state from backup |
-| `check` | Verify 21 governance signatures against extracted JS |
+| `check` | Verify 22 governance signatures against extracted JS |
 | `modules` | List governance modules and their status |
 | `setup` | First-run wizard — module selection, apply, verify |
 | `--list-patches` | List available governance patches |
@@ -112,6 +113,8 @@ and governance-specific `check` command added.
 - **PM1:** COMPLETE — Investigation table added to ROADMAP.md (62 issues, P0-P3 tiers). Developer docs created in /docs/ (10 files, 1625 lines, verified against source).
 - **REPL-fixes:** COMPLETE — 6 fixes across 7 files. Context-override nativeRead (files up to 10MB), agent canUseTool fix, glob absolute paths, async SyntaxError fix, agent text extraction, maxReadFileSize config. I-020 and I-021 closed. New findings: F25-F28.
 - **3a (quiet_salted_ember + P1 overrides):** COMPLETE — Binary patch: ms7() clientDataCache preservation (PATCH 12). Activates 7 wJH-gated prompt sections + coral_reef_sonnet. 5 P1 prompt overrides injected (I-003, I-004, I-005, I-092, I-094). 12 issues closed. 21/21 SOVEREIGN.
+- **I-081 (Bash prohibition reframe):** COMPLETE — Removed "IMPORTANT:" severity prefix from Bash tool description. 22/22 SOVEREIGN.
+- **M-3:** COMPLETE — Remaining phases (3b-3h) moved to 1.2.0 post-launch milestone.
 
 ### Binary Vault (from 2a-gaps)
 - **Module:** `src/binaryVault.ts` — XDG path discovery, GCS download, SHA256 verification, immutable locking

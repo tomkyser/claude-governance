@@ -37,7 +37,7 @@ Cross-references: `extracted-prompts/IMPROVEMENT-FRAMEWORK.md` (full analysis), 
 | I-001 | **Reasoning suppression** — "Lead with the answer, not the reasoning" replaced by Communication Style section (activated via I-040). anti_verbosity dynamic section now active. | DC-P | FX-O | DONE (via I-040) |
 | I-002 | **Compound brevity pressure** — "Be extra concise" + "short and concise" compound to suppress useful detail. | DC-P | FX-O | PARTIAL (existing overrides) |
 | I-009 | **Redundant tone brevity** — "Your responses should be short and concise" in Tone section. | DC-P | FX-O | PARTIAL (existing overrides) |
-| I-081 | **Bash prohibition reframe** — "CRITICAL" prohibition forces 3-4x tool calls. Change to tiered guidance. | DC-P | FX-O | TODO |
+| I-081 | **Bash prohibition reframe** — Removed "IMPORTANT:" severity prefix from Bash tool description. Downgrades blanket prohibition to standard guidance, aligning with wJH condensed "Using your tools" section. Override deployed as `tool-description-bash-prefer-dedicated-tools.md`. Verification: anti-signature confirms original "IMPORTANT: Avoid" gone. | DC-P | FX-O | DONE |
 
 ### P2 — Strategic Improvements (medium effort)
 
@@ -473,20 +473,13 @@ do not use the fetch() tool for web sources, fetch tool returns only AI summarie
   - [x] P1 prompt override: I-094 priority hierarchy clarification (new)
   - [x] Verification: 21/21 SOVEREIGN, all 5 P1 texts verified in binary
   - [x] Issues resolved: I-040 DONE, I-054 DONE, I-003 DONE, I-004 DONE, I-005 DONE, I-092 DONE, I-094 DONE, I-001 DONE, I-051 DONE, I-052 DONE, I-053 DONE, I-091 DONE (12 issues closed)
-- [ ] Phase 3b - Prompt diff tool (compare across CC versions)
-  - [ ] TBD
-- [ ] Phase 3c - Targeted fixes for specific degradation prompts
-  - [ ] TBD
-- [ ] Phase 3d - User-editable prompt overrides with merge-on-update
-  - [ ] TBD
-- [ ] Phase 3e - Prompt version control (git-style diffing across CC versions)
-  - [ ] TBD
-- [ ] Phase 3f - Canary prompts Inject unique test phrases into prompt overrides, verify at runtime by prompting model for canary response. Requires conversation-level integration.
-  - [ ] TBD
-- [ ] Phase 3g - Integrate Optional Clawback install module [clawback1]
-  - [ ] TBD
-- [ ] Phase 3h - Impact assessment and corrections across any part of the greater project that may have degraded because of this milestone's work.
-  - [ ] TBD
+
+- [x] I-081: Bash Prohibition Reframe [COMPLETE]
+  - [x] Prompt override: removed "IMPORTANT:" severity prefix from `tool-description-bash-prefer-dedicated-tools.md`
+  - [x] Verification entry with anti-signature confirms original prohibition gone
+  - [x] 22/22 SOVEREIGN
+
+**Remaining M-3 phases moved to 1.2.0 (post-launch):** 3b (prompt diff tool), 3c (targeted degradation fixes), 3d (user-editable overrides), 3e (prompt version control), 3f (canary prompts), 3g (Clawback integration), 3h (impact assessment)
 
 ---
 ### Milestone 3 Retro
@@ -704,6 +697,43 @@ This will be 1.0.0 everything after this shall then adhere to the strict semver 
 
 ---
 ## 1.1.0
+- [ ] Commentary
+- [ ] Gap analysis
+- [ ] Housekeeping
+- [ ] Bootstrap Prompt
+---
+
+## 1.2.0: Prompt Refinements & Monitoring
+
+Deferred from M-3 — lower priority prompt improvements and defensive monitoring.
+Collected from Investigation Registry P1 (remaining), P2, and P3 items.
+
+### Prompt Overrides (from M-3 backlog)
+- [ ] Phase 3b - Prompt diff tool (compare across CC versions)
+- [ ] Phase 3c - Targeted fixes for specific degradation prompts
+  - I-002: Compound brevity pressure (PARTIAL)
+  - I-009: Redundant tone brevity (PARTIAL)
+  - I-012: EnterPlanMode over-caution
+  - I-090: Plan mode authority override ("supercedes any other instructions")
+  - I-093: Error recovery strategy
+  - I-095: Git Safety simplification (500 tokens of "NEVER" language)
+  - I-080: Prompt deduplication (~80 wasted tokens)
+  - I-082: Permission tiering
+  - I-061: Read:Edit ratio collapsed
+  - I-062: Write overuse doubled
+- [ ] Phase 3d - User-editable prompt overrides with merge-on-update
+- [ ] Phase 3e - Prompt version control (git-style diffing across CC versions)
+- [ ] Phase 3f - Canary prompts — inject unique test phrases, verify at runtime
+- [ ] Phase 3g - Integrate Optional Clawback install module [clawback1]
+- [ ] Phase 3h - Impact assessment and corrections
+
+### Monitoring Hooks
+- [ ] I-065: Silent model downgrade detection (after 3x 529 errors)
+- [ ] I-070: GrowthBook flag monitoring (flags change silently server-side)
+- [ ] I-096: System-reminder deduplication (binary patch)
+
+---
+## 1.2.0
 - [ ] Commentary
 - [ ] Gap analysis
 - [ ] Housekeeping

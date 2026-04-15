@@ -142,6 +142,15 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     category: 'prompt-override',
   },
   {
+    id: 'prompt-bash-reframe',
+    name: 'Prompt Override: Bash Prohibition Reframe',
+    signature: /Avoid using this tool to run \$\{[$\w]+\} commands, unless/,
+    antiSignature: /IMPORTANT: Avoid using this tool to run/,
+    critical: false,
+    category: 'prompt-override',
+    passDetail: 'IMPORTANT prefix removed',
+  },
+  {
     id: 'repl-tool-guidance',
     name: 'REPL Tool Guidance Injection',
     signature: 'could one REPL call do this',
