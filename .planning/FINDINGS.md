@@ -474,6 +474,75 @@ The leaked source showed this flag, but it was either:
 
 ---
 
+## F25: Per-Tool maxResultSizeChars Limits (2026-04-15)
+
+**Phase:** REPL-fixes | **Impact:** CRITICAL — explains all tool output truncation behavior
+
+From leaked source `FileReadTool.ts:342`, `BashTool.tsx:424`, `AgentTool.tsx:229`:
+
+| Tool | maxResultSizeChars | Notes |
+|------|-------------------|-------|
+| Read | Infinity | No output truncation — unlimited result size |
+| Bash | 30,000 | Hard 30K char ceiling on stdout capture |
+| Agent | 100,000 | 100K agent result cap |
+
+The 30K Bash limit explains all observed stdout truncation. Read has no limit — the
+gates are `fileReadingLimits.maxSizeBytes` (256KB) and `fileReadingLimits.maxTokens` (25K),
+both overridable via context.
+
+---
+
+## F26: fileReadingLimits Context Override (2026-04-15)
+
+**Phase:** REPL-fixes | **Impact:** CRITICAL — removes CC's artificial read limits
+
+From `FileReadTool/limits.ts` and `FileReadTool.ts:502-507`:
+
+```typescript
+const { readFileState, fileReadingLimits } = context
+const maxSizeBytes = fileReadingLimits?.maxSizeBytes ?? defaults.maxSizeBytes
+const maxTokens = fileReadingLimits?.maxTokens ?? defaults.maxTokens
+```
+
+Both limits come from the context object passed to tool.call(). Our REPL handler
+clones the context and sets `{ maxSizeBytes: 10MB, maxTokens: Infinity }`. Tested:
+289KB, 1.2MB, and 3.4MB files all read in full via this override.
+
+**Env var:** `CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS` overrides maxTokens globally.
+**GrowthBook:** `tengu_amber_wren` can override both limits remotely.
+**Known mismatch (line 9):** "maxSizeBytes gates on total file size, not the slice."
+
+---
+
+## F27: Agent canUseTool — "O is not a function" Root Cause (2026-04-15)
+
+**Phase:** REPL-fixes | **Impact:** Fixes agents spawned from injected tools
+
+When our REPL handler calls `Agent.call(args, context, undefined, parentMessage)`,
+passing `undefined` for `canUseTool` causes the subagent's tool execution loop
+(`toolExecution.ts:1207`) to crash when invoking any tool. The minified parameter
+`O` is `canUseTool`, and `O(...)` on undefined throws "O is not a function."
+
+**Fix:** Pass a permissive callback: `async (_tool, input) => ({ behavior: 'allow',
+updatedInput: input, decisionReason: { type: 'mode', mode: 'bypassPermissions' } })`.
+
+Leaked source context: `AgentTool.tsx:606-627` shows fork-path vs non-fork-path tool
+inheritance. Non-fork path calls `assembleToolPool()` fresh. Fork path inherits
+parent's `toolUseContext.options.tools` directly. The `canUseTool` callback is threaded
+through both paths and must be a callable function.
+
+---
+
+## F28: Agent Result Structure — content[0].text Extraction (2026-04-15)
+
+**Phase:** REPL-fixes | **Impact:** Fixes agent() return values in REPL
+
+CC's Agent tool returns: `{ status, content: [{type: "text", text: "..."}], totalTokens, ... }`
+as a JSON-serialized string in `result.data`. Our original handler returned this raw JSON.
+Fix: parse the JSON string, extract `content[0].text` for each text block, join with newlines.
+
+---
+
 --- OLD FINDINGS FROM CLAUDE.md refactor: ---
 
 - **EMBEDDED_SEARCH_TOOLS**: Single env var activates bfs/ugrep/rg already compiled into

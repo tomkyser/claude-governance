@@ -109,6 +109,7 @@ and governance-specific `check` command added.
 - **GP3:** COMPLETE — Ant vs External Divergence Research. 3-tier gating system discovered (DCE/GrowthBook/feature-flags). quiet_salted_ember gate mapped. 14 prompt sections extracted. 62 issues registered across 112 findings from 5 data sources.
 - **P0 Investigations:** COMPLETE — 4/4 investigated. quiet_salted_ember activation path found (clientDataCache in ~/.claude.json, needs ms7() binary patch). Dynamic boundary audit: safe (overrides in static portion). Thinking depth env vars: verified effective. VERIFICATION_AGENT: not in v2.1.101 binary.
 - **PM1:** COMPLETE — Investigation table added to ROADMAP.md (62 issues, P0-P3 tiers). Developer docs created in /docs/ (10 files, 1625 lines, verified against source).
+- **REPL-fixes:** COMPLETE — 6 fixes across 7 files. Context-override nativeRead (files up to 10MB), agent canUseTool fix, glob absolute paths, async SyntaxError fix, agent text extraction, maxReadFileSize config. I-020 and I-021 closed. New findings: F25-F28.
 
 ### Binary Vault (from 2a-gaps)
 - **Module:** `src/binaryVault.ts` — XDG path discovery, GCS download, SHA256 verification, immutable locking

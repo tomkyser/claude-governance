@@ -16,37 +16,40 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Status:** P0 investigations COMPLETE — next: quiet_salted_ember binary patch + P1 prompt overrides
-**Previous:** GP3 COMPLETE (112 findings, 62 issues), P0 investigations COMPLETE (4/4)
-**Last completed:** P0 investigations at `8e1a050`
+**Status:** REPL-fixes COMPLETE — next: quiet_salted_ember binary patch + P1 prompt overrides
+**Previous:** GP3 COMPLETE, P0 investigations COMPLETE, PM1 COMPLETE, REPL-fixes COMPLETE
+**Last completed:** REPL-fixes at `1366176`
 **Baseline:** 20/20 SOVEREIGN on CC 2.1.101
 
-## P0 Investigation Results (COMPLETE)
+## What Was Done This Session (REPL-fixes)
 
-### I-040: quiet_salted_ember — ACTIVATION PATH FOUND
-- `wJH()` checks `w_().clientDataCache?.quiet_salted_ember === "true"`
-- `clientDataCache` lives in `~/.claude.json` (the global config file, read by `w_()` = `getGlobalConfig()`)
-- Currently empty `{}` — populated by bootstrap function `ms7()` from Anthropic API
-- Server returns `null` for external users → `clientDataCache` stays empty
-- Manual write to `~/.claude.json` works BUT `ms7()` overwrites on next bootstrap (deep equality check)
-- **Fix needed:** Binary patch `ms7()` to skip `clientDataCache` overwrite, OR pre-session injection via launch wrapper
-- **Bonus:** `coral_reef_sonnet` uses same mechanism (gates Sonnet 4.6 extended context)
+### Fixes Shipped (7 files, commit `1366176`)
+1. **Read handler context override** — removes CC's `fileReadingLimits` (maxSizeBytes=256KB, maxTokens=25K) by passing `{maxSizeBytes: 10MB, maxTokens: Infinity}` in the context. Files up to 10MB now read directly into REPL VM memory. Agent-chunked fallback if nativeRead fails.
+2. **Agent canUseTool fix** — passes permissive `canUseTool` callback instead of `undefined`. Fixes "O is not a function" crash when agents spawned from REPL try to use tools.
+3. **Agent text extraction** — `extractAgentText()` parses JSON metadata and extracts `content[0].text` instead of returning raw JSON blob.
+4. **Glob absolute paths** — `nodePath.resolve()` on all rg output. Paths from `glob()` are directly usable by `read()`.
+5. **Async SyntaxError fix (F14)** — `err.name === 'SyntaxError'` string check instead of `instanceof` (cross-realm VM boundary issue).
+6. **maxReadFileSize config** — configurable threshold (256KB default) in `config.json` under `repl.maxReadFileSize`.
+7. **Prompt updates** — read/glob docs and error recovery guidance updated in both coexist and replace prompts.
 
-### I-097: Dynamic boundary — NON-ISSUE (CLOSED)
-- Our prompt overrides target static sections assembled BEFORE `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__`
-- Assembly order: `[bk5, Ik5, xk5, uk5, mk5, gk5, ...HMH..., ...dynamic]`
-- Our overrides replace text within static section functions (xk5, etc.) → cached correctly
-- wJH-gated sections (Communication Style, numeric anchors) are in dynamic array → no conflict
+### Key Discoveries (F25-F28)
+- **F25:** Bash tool maxResultSizeChars=30,000 (hard cap). Read=Infinity. Agent=100,000.
+- **F26:** Read tool's `fileReadingLimits` overridable via context object. Env var `CLAUDE_CODE_FILE_READ_MAX_OUTPUT_TOKENS` also overrides. GrowthBook flag `tengu_amber_wren`.
+- **F27:** Agent canUseTool crash root cause — `undefined` for 3rd arg of `tool.call()`. Leaked source: `toolExecution.ts:1207` invokes `canUseTool(...)` unconditionally.
+- **F28:** Agent tool returns `{status, content: [{type:"text", text:"..."}], ...}` as JSON string. Must parse and extract `.content[0].text`.
 
-### I-064: Thinking depth env vars — VERIFIED (CLOSED)
-- `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` confirmed: skips `{type:"adaptive"}` thinking
-- `CLAUDE_CODE_EFFORT_LEVEL=max` confirmed: `_wH()` reads it, sets max effort
-- Both present in `~/.claude/settings.json` via env-flags module
+### Verified Results
+| File Size | Content | Path |
+|-----------|---------|------|
+| 19B | Full | nativeRead |
+| 289KB | Full (288,889 chars) | context override |
+| 1.2MB | Full (10,000 lines) | context override |
+| 3.4MB | Full (3,423,889 chars) | context override |
+| Agent bash test | "AGENT_TOOLS_WORK" | canUseTool fix |
+| Async/await | ASYNC_99 | SyntaxError fix |
+| Glob paths | Absolute | nodePath.resolve |
 
-### I-041: VERIFICATION_AGENT — NOT IN BINARY (CLOSED)
-- `tengu_hive_evidence` has ZERO occurrences in v2.1.101 binary
-- VERIFICATION_AGENT exists only as `querySource` string (telemetry), not a gated feature
-- No activation path exists in current binary version
+### Full 12-layer verification passed — zero degradations from prior work.
 
 ## Next Session Work
 
@@ -70,10 +73,11 @@ These address gaps that quiet_salted_ember does NOT cover (DCE'd ant-only text):
 - **I-094: Priority hierarchy clarification** — New section
 - **I-054: Communication Style** — Only needed if quiet_salted_ember patch fails
 
-### Developer Documentation
-Complete verified docs now in `/docs/` (10 files, 1625 lines):
-- architecture, binary-patching, prompt-overrides, tool-injection
-- verification-engine, session-hooks, configuration, cli-reference, env-flags
+### Tungsten Statusline Issue
+User reported not seeing the Tungsten status panel during this session despite
+an active Tungsten session. The panel injection patch is verified present
+(`check` shows "present (requires live session to verify rendering)") but the
+actual rendering may have a bug. Investigate in a live TUI session.
 
 ### M-2 retro recommendations (updated):
 - ~~Phase 3prelim (codebase reorganization)~~ DONE

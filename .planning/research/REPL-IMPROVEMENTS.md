@@ -54,3 +54,40 @@ Testing Tungsten tmux environment propagation through various tool/agent paths. 
 - The paths returned were relative to cwd, but read() needs absolute paths
 - The srcBase prefix wasn't being properly joined because glob returns paths differently than expected
 - Observation: glob() path resolution behavior should be clearer — does it return paths relative to cwd or to the provided cwd option?
+- **FIXED:** glob handler now resolves all paths to absolute via nodePath.resolve (commit 1366176)
+
+## 2026-04-15 — REPL Fixes Session
+
+### CC tool output limits discovered empirically
+- Context: investigating why read() and bash() both returned only 30K chars for a 500K file
+- Discovery: `maxResultSizeChars` per tool — Bash=30,000, Read=Infinity, Agent=100,000
+- Found in leaked source: `BashTool.tsx:424`, `FileReadTool.ts:342`, `AgentTool.tsx:229`
+- Observation: the 30K limit is exclusively Bash, not Read. Read's gates are fileReadingLimits (separate mechanism)
+
+### fileReadingLimits override unblocks arbitrarily large reads
+- Context: trying to read 289KB-3.4MB files through REPL read()
+- Discovery: `fileReadingLimits` (maxSizeBytes=256KB, maxTokens=25K) comes from context object, fully overridable
+- Fix: clone context, set `{maxSizeBytes: 10MB, maxTokens: Infinity}`, pass to tool.call()
+- Observation: this is the cleanest fix — no bash fallback, no chunking, no agents needed for the read itself
+
+### Agent canUseTool was undefined — "O is not a function"
+- Context: testing agent() from REPL to delegate large file reads
+- Root cause: handler passed `undefined` as 3rd arg to Agent.call(). Subagent toolExecution calls canUseTool() unconditionally
+- Fix: pass `async (_tool, input) => ({behavior:'allow', updatedInput: input, ...})`
+- Observation: every injected tool that calls other tools via tool.call() should pass a proper canUseTool, not undefined
+
+### Agent result was JSON metadata, not text
+- Context: agent() returning `{status, content, totalTokens}` JSON string instead of the agent's actual text response
+- Root cause: handler did `typeof result.data === 'string' ? result.data : JSON.stringify(result.data)` — result.data IS a string (JSON), so it returned raw JSON
+- Fix: extractAgentText() parses JSON, walks content[0].text
+- Observation: all tool result extraction should handle CC's nested JSON envelope pattern
+
+### MaxFileReadTokenExceededError fires on total file size, not slice
+- Context: tried read(path, {offset:1, limit:100}) on a 618KB file — threw even though slice is tiny
+- Root cause: leaked source limits.ts line 9: "Known mismatch: maxSizeBytes gates on total file size, not the slice"
+- Observation: this is a CC bug they know about (ticket #21841). Our context override bypasses it entirely
+
+### claude -p test reliability
+- Context: running functional probes via `claude -p "Use REPL: ..."` 
+- The model paraphrases results instead of returning raw output. Hard to distinguish "model summarized 30,000" from "REPL returned 30,000"
+- Observation: need a more deterministic probe mechanism — maybe a dedicated test harness that inspects REPL tool result directly

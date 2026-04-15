@@ -66,8 +66,8 @@ Cross-references: `extracted-prompts/IMPROVEMENT-FRAMEWORK.md` (full analysis), 
 
 | ID | Issue | Category | Fix | Status |
 |----|-------|----------|-----|--------|
-| I-020 | **REPL read() 256KB limit** — Prevents large file analysis. | DC-A | FX-T | TODO |
-| I-021 | **REPL glob() path ambiguity** — Relative vs absolute path resolution. | DC-A | FX-T | TODO |
+| I-020 | **REPL read() 256KB limit** — Fixed: context override removes CC's fileReadingLimits (maxSizeBytes/maxTokens). Files up to 10MB read directly. Agent-chunked fallback. Discovered Bash maxResultSizeChars=30K, Read=Infinity. | DC-A | FX-T | DONE |
+| I-021 | **REPL glob() path ambiguity** — Fixed: glob handler resolves all paths to absolute via nodePath.resolve. | DC-A | FX-T | DONE |
 | I-022 | **Parallel Bash cascade cancellation** — One error kills sibling calls. | DC-A | FX-X | WONTFIX (CC arch) |
 | I-023 | **WebFetch only returns summaries** — Useless for exact text research. | DC-A | FX-T | WONTFIX (CC design) |
 | I-024 | **Large Bash output to unreadable JSONL** — Detail loss in persisted output. | DC-A | FX-X | TODO |
