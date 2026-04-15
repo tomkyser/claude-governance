@@ -55,11 +55,13 @@
 - **Status:** COMPLETE
 
 ### T7: Split Tungsten tool
-- Create `src/tools/tungsten/` with: index.ts, prompt.ts, schema.ts, tmux.ts, state.ts, validate.ts
-- Create `src/tools/tungsten/actions/` with 6 action files
-- Build → `data/tools/tungsten.js`
+- Created `src/tools/tungsten/` with 6 modules: index.ts, prompt.ts, schema.ts, tmux.ts, state.ts, validate.ts
+- Created `src/tools/tungsten/actions/` with 6 action files (create, send, capture, list, kill, interrupt)
+- Fixed code splitting: separate builds per tool (defineConfig array) prevents shared chunks
+- Build → `data/tools/tungsten.js` (17.27KB from TypeScript, vs 18.8KB hand-written original)
+- Live probe: Tungsten create + send 'echo T7-TUNGSTEN-VERIFIED' — output captured correctly
 - **Verify:** Layers 1, 2, 3, 4, 5, 6 (build, signatures, clean apply, probe, hooks, tool deploy)
-- **Status:** TODO
+- **Status:** COMPLETE
 
 ### T8: Final verification — full system proof
 - **ALL 7 layers, no exceptions:**
