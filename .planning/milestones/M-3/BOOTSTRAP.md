@@ -6,9 +6,9 @@ Read these files in order:
 
 1. `.planning/VISION.md` — Project intent
 2. `.planning/milestones/M-3/IMPACT.md` — Milestone scope
-3. `.planning/milestones/M-3/GP3/RESEARCH.md` — GP3 research (the core findings)
+3. `docs/README.md` — Developer docs index (10 verified docs covering full architecture)
 4. `extracted-prompts/IMPROVEMENT-FRAMEWORK.md` — Issue registry and priority ranking
-5. Active phase docs (path below)
+5. `.planning/ROADMAP.md` — Investigation Registry (top of body) + full phase history
 
 Quick verify:
 ```bash
@@ -16,44 +16,69 @@ cd /Users/tom.kyser/dev/claude-code-patches/claude-governance
 pnpm build && node dist/index.mjs check
 ```
 
-**Status:** Phase GP3 COMPLETE — next: P0 investigations (quiet_salted_ember, dynamic boundary audit)
-**Previous:** GP3 COMPLETE — 112 findings, 62 issues, 14 extracted prompts
-**Last completed:** GP3 research at `b2839d2`
+**Status:** P0 investigations COMPLETE — next: quiet_salted_ember binary patch + P1 prompt overrides
+**Previous:** GP3 COMPLETE (112 findings, 62 issues), P0 investigations COMPLETE (4/4)
+**Last completed:** P0 investigations at `8e1a050`
 **Baseline:** 20/20 SOVEREIGN on CC 2.1.101
 
-**GP3 key findings:**
-- **3-tier gating system** in binary: DCE (build-time), GrowthBook/wJH (runtime), feature flags
-- **`quiet_salted_ember`** — GrowthBook flag + Opus 4.6 check unlocks improved prompts already in binary
-- **`tengu_hive_evidence`** — GrowthBook flag gates VERIFICATION_AGENT (full implementation in binary)
-- **2/12 divergences covered** by existing overrides; 10 gaps remain
-- **62 issues registered** (I-001..I-098) with quality dimensions, categories, fix classes
-- **4 cross-cutting patterns:** thinking depth, lossy context, undermined authority, token economics
+## P0 Investigation Results (COMPLETE)
 
-**P0 investigations for next session:**
-1. **I-040: quiet_salted_ember** — Find where `clientDataCache` is stored. If in `~/.claude.json`, one flag flip unlocks 7 improvements
-2. **I-097: Dynamic boundary audit** — Verify our prompt overrides land BEFORE `SYSTEM_PROMPT_DYNAMIC_BOUNDARY`. If after, our patches break prompt cache every turn
-3. **Identify exactly what we currently fix vs what quiet_salted_ember would gain us**
-4. **what is needed to enable this:** tengu_hive_evidence
+### I-040: quiet_salted_ember — ACTIVATION PATH FOUND
+- `wJH()` checks `w_().clientDataCache?.quiet_salted_ember === "true"`
+- `clientDataCache` lives in `~/.claude.json` (the global config file, read by `w_()` = `getGlobalConfig()`)
+- Currently empty `{}` — populated by bootstrap function `ms7()` from Anthropic API
+- Server returns `null` for external users → `clientDataCache` stays empty
+- Manual write to `~/.claude.json` works BUT `ms7()` overwrites on next bootstrap (deep equality check)
+- **Fix needed:** Binary patch `ms7()` to skip `clientDataCache` overwrite, OR pre-session injection via launch wrapper
+- **Bonus:** `coral_reef_sonnet` uses same mechanism (gates Sonnet 4.6 extended context)
 
-**PM1(new) Create Investigation Table in ROADMAP** 
-1. copy over and format all items for investigation that resulted from the research previously to an Investigation table at the top of roadmap's body before milestones.
-2. be sure to include all items, this is a shortened example: **I-064: Verify thinking depth env vars** — Confirm `EFFORT_LEVEL=max` + `DISABLE_ADAPTIVE_THINKING=1` are effective
-3. Complete and comprehensive developer documentation for everything we have done so far and how to use it, in /docs, absolute verification of truth at every layer is required. No assumptions whatsoever. Add pointer to the new docs in CLAUDE.md Steps.
-  a. it is essential that you and possibly other developers know how everything we have done and built works, so while we are building it you don't have to relearn everything from code every context wipe.
+### I-097: Dynamic boundary — NON-ISSUE (CLOSED)
+- Our prompt overrides target static sections assembled BEFORE `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__`
+- Assembly order: `[bk5, Ik5, xk5, uk5, mk5, gk5, ...HMH..., ...dynamic]`
+- Our overrides replace text within static section functions (xk5, etc.) → cached correctly
+- wJH-gated sections (Communication Style, numeric anchors) are in dynamic array → no conflict
 
-**P1 prompt overrides to write (6 new):**
-- Communication Style (G1) — replace "Output efficiency"
-- Misconception correction (P1) — add to "Doing tasks"
-- False-claims mitigation (P2) — add to "Doing tasks"
-- Thoroughness counterweight (P4) — add to "Doing tasks"
-- Context decay awareness (PA-009) — new section
-- Priority hierarchy clarification (PA-012) — new section
+### I-064: Thinking depth env vars — VERIFIED (CLOSED)
+- `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` confirmed: skips `{type:"adaptive"}` thinking
+- `CLAUDE_CODE_EFFORT_LEVEL=max` confirmed: `_wH()` reads it, sets max effort
+- Both present in `~/.claude/settings.json` via env-flags module
 
-**Extracted prompts:** `extracted-prompts/` has 14 files with all wJH-gated, DCE'd, and external prompt text verified against virgin binary
+### I-041: VERIFICATION_AGENT — NOT IN BINARY (CLOSED)
+- `tengu_hive_evidence` has ZERO occurrences in v2.1.101 binary
+- VERIFICATION_AGENT exists only as `querySource` string (telemetry), not a gated feature
+- No activation path exists in current binary version
 
-**M-2 retro recommendations for M-3 (updated):**
+## Next Session Work
+
+### Priority 1: quiet_salted_ember Binary Patch
+The highest-leverage single action. Patch `ms7()` bootstrap function to preserve
+our `clientDataCache` values. This unlocks 7 prompt improvements already compiled
+into the binary without needing individual prompt overrides:
+- Communication Style (replaces Output Efficiency)
+- Numeric length anchors (≤25/≤100 words)
+- Comment discipline (default no-comments)
+- Exploratory question protocol (2-3 sentences)
+- Condensed Doing tasks section
+- Session guidance compression
+
+### Priority 2: P1 Prompt Overrides (6 new)
+These address gaps that quiet_salted_ember does NOT cover (DCE'd ant-only text):
+- **I-003: Misconception correction** — "If you notice the user's request is based on a misconception, say so"
+- **I-004: False-claims mitigation** — "Report outcomes faithfully..."
+- **I-005: Thoroughness counterweight** — "Before reporting a task complete, verify it actually works"
+- **I-092: Context decay awareness** — New section
+- **I-094: Priority hierarchy clarification** — New section
+- **I-054: Communication Style** — Only needed if quiet_salted_ember patch fails
+
+### Developer Documentation
+Complete verified docs now in `/docs/` (10 files, 1625 lines):
+- architecture, binary-patching, prompt-overrides, tool-injection
+- verification-engine, session-hooks, configuration, cli-reference, env-flags
+
+### M-2 retro recommendations (updated):
 - ~~Phase 3prelim (codebase reorganization)~~ DONE
-- ~~GP3 (Ant vs External divergence)~~ DONE — defines M-3 scope
+- ~~GP3 (Ant vs External divergence)~~ DONE
+- ~~P0 investigations~~ DONE
 - Budget for prompt testing infrastructure
 - Hooks module (G21) before public release
 - Maintain gap phase pattern

@@ -422,6 +422,58 @@ at runtime. Any key can be written via context.setAppState() and read via useApp
 The Zustand-like store (useSyncExternalStore) triggers re-renders on any state change,
 regardless of which keys changed. Our tool writes, our injected component reads.
 
+## F22: clientDataCache Is the quiet_salted_ember Activation Vector (2026-04-15)
+
+**Phase:** P0 investigation | **Impact:** CRITICAL — unlocks 7 prompt improvements
+
+`wJH()` gate function: `if(!L1(H).includes("opus-4-6")) return !1; return w_().clientDataCache?.quiet_salted_ember==="true"`
+
+- `w_()` = `getGlobalConfig()` reading `~/.claude.json`
+- `clientDataCache` is a top-level key in the global config, currently `{}`
+- Populated by bootstrap function `ms7()` which calls Anthropic's API for `client_data`
+- Server returns `null` for external users → field stays empty
+- `ms7()` only writes if server data differs from cache: `Pj(O.clientDataCache,_)` (deep equal)
+- Since server returns `null` and our cache would be `{quiet_salted_ember:"true"}`, `Pj(null, {...})` is false → **server overwrites our manual write on every bootstrap**
+- Fix requires binary patching `ms7()` to skip the `clientDataCache` write
+
+**Bonus:** `coral_reef_sonnet` uses identical mechanism — gates Sonnet 4.6 extended context (1M tokens).
+Same function: `JZ_()` checks `w_().clientDataCache?.coral_reef_sonnet==="true"`.
+
+---
+
+## F23: System Prompt Assembly Order Confirmed (2026-04-15)
+
+**Phase:** P0 investigation | **Impact:** Confirms prompt cache safety
+
+Binary line 7868 reveals exact prompt assembly:
+```
+[bk5($), Ik5(), xk5(_), uk5(), mk5(w,_), gk5(_), ...xLH()?[HMH]:[], ...D]
+```
+
+- Static sections (bk5 through gk5) → BEFORE boundary
+- `HMH` = `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__`
+- Dynamic array `D` (anti_verbosity, session_guidance, memory, env, etc.) → AFTER boundary
+
+Our prompt overrides replace text within static section functions → always cached.
+wJH-gated sections (Communication Style, numeric anchors) are in dynamic array D → regenerated each turn.
+
+---
+
+## F24: tengu_hive_evidence Absent from v2.1.101 Binary (2026-04-15)
+
+**Phase:** P0 investigation | **Impact:** VERIFICATION_AGENT not activatable
+
+Zero occurrences of `tengu_hive_evidence` in the 12.8M character binary JS.
+`VERIFICATION_AGENT` / `verification_agent` exists only as a `querySource` string
+in the streaming API client (telemetry routing), not as a feature gate.
+
+The leaked source showed this flag, but it was either:
+1. Removed before the v2.1.101 build
+2. Renamed to a different flag name
+3. Not yet shipped in external builds
+
+---
+
 --- OLD FINDINGS FROM CLAUDE.md refactor: ---
 
 - **EMBEDDED_SEARCH_TOOLS**: Single env var activates bfs/ugrep/rg already compiled into

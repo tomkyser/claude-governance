@@ -1,6 +1,6 @@
 # Roadmap — claude-governance
 
-Last updated: 2026-04-14
+Last updated: 2026-04-15
 
 ## Mission
 
@@ -18,9 +18,9 @@ Cross-references: `extracted-prompts/IMPROVEMENT-FRAMEWORK.md` (full analysis), 
 
 | ID | Issue | Category | Fix | Status |
 |----|-------|----------|-----|--------|
-| I-064 | **Verify thinking depth env vars** — Confirm `EFFORT_LEVEL=max` + `DISABLE_ADAPTIVE_THINKING=1` are effective. Largest quality lever (67% thinking depth drop without). | DC-F, DC-M | FX-G | INVESTIGATING |
-| I-040 | **quiet_salted_ember activation** — GrowthBook flag + Opus 4.6 check (`wJH()`) gates 7 prompt improvements already in binary. Find where `clientDataCache` is stored. One flag flip unlocks: communication style, numeric anchors, comment discipline, exploratory protocol, condensed doing-tasks, session guidance. | DC-F | FX-G | INVESTIGATING |
-| I-097 | **Dynamic boundary audit** — Verify our governance prompt overrides land BEFORE `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` marker. If after, our patches break prompt cache every turn. | DC-A | FX-B audit | INVESTIGATING |
+| I-064 | **Verify thinking depth env vars** — VERIFIED. `DISABLE_ADAPTIVE_THINKING` skips `{type:"adaptive"}` thinking. `EFFORT_LEVEL=max` sets max via `_wH()`. Both in settings.json. | DC-F, DC-M | FX-G | CLOSED (working) |
+| I-040 | **quiet_salted_ember activation** — `clientDataCache` in `~/.claude.json` is the target. `wJH()` checks `w_().clientDataCache?.quiet_salted_ember === "true"`. Server bootstrap `ms7()` overwrites on each session — needs binary patch to persist. Bonus: `coral_reef_sonnet` (Sonnet 4.6 1M context) uses same mechanism. | DC-F | FX-B | READY (needs ms7 patch) |
+| I-097 | **Dynamic boundary audit** — SAFE. Overrides in static sections BEFORE `__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__`. wJH sections are dynamic. No cache conflict. | DC-A | — | CLOSED |
 | I-006 | **CLAUDE.md authority** — `prependUserContext` wraps CLAUDE.md in dismissive framing. | DC-P | FX-B | DONE (governance) |
 | I-042 | **REPL/Tungsten injection** — Ant-only tools DCE'd from external binary. | DC-F | FX-B | DONE (governance) |
 
@@ -43,7 +43,7 @@ Cross-references: `extracted-prompts/IMPROVEMENT-FRAMEWORK.md` (full analysis), 
 
 | ID | Issue | Category | Fix | Status |
 |----|-------|----------|-----|--------|
-| I-041 | **VERIFICATION_AGENT activation** — `tengu_hive_evidence` GrowthBook flag gates full sub-agent verification. Implementation exists in binary. | DC-F | FX-G | INVESTIGATING |
+| I-041 | **VERIFICATION_AGENT activation** — `tengu_hive_evidence` has ZERO occurrences in v2.1.101 binary. VERIFICATION_AGENT exists only as `querySource` string (telemetry). No activation path. | DC-F | FX-G | CLOSED (not in binary) |
 | I-090 | **Plan mode authority override** — Plan mode injects "supercedes any other instructions" — overrides CLAUDE.md. | DC-P | FX-O/FX-B | TODO |
 | I-065 | **Silent model downgrade detection** — After 3x 529 errors, model silently downgrades with no notification. | DC-A | FX-H | TODO |
 | I-070 | **GrowthBook flag monitoring** — Flags silently change features server-side. | DC-F | FX-H | TODO |

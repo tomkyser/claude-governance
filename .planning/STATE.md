@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-04-14
+Last updated: 2026-04-15
 
 ## Current Claude Code Version
 - **Installed:** 2.1.101 (native, arm64-darwin)
@@ -106,7 +106,9 @@ and governance-specific `check` command added.
 - **2c-gaps-2:** COMPLETE — Tungsten-first execution posture. PATCH 11 (v2) directive in "Using your tools", tool prompt reframe (complementary layers + lifecycle), SessionStart/Stop lifecycle hooks. 20/20 SOVEREIGN.
 - **M-2 Retro:** COMPLETE — 10 phases evaluated. 13 outstanding gaps catalogued (GAPS.md). Key outcome: GP3 (Ant vs External divergence) defines M-3 scope. Phase 3prelim (codebase reorg) recommended first.
 - **3prelim:** COMPLETE — Codebase reorganization. governance.ts (1184L) → 14 files, index.ts (955L) → 3 orchestration modules, 3 tools → TypeScript with build pipeline. 8 tasks, 7-layer verification. 20/20 SOVEREIGN.
-- **GP3:** COMPLETE — Ant vs External Divergence Research. 3-tier gating system discovered (DCE/GrowthBook/feature-flags). quiet_salted_ember gate mapped. 14 prompt sections extracted. 62 issues registered across 112 findings from 5 data sources. P0: quiet_salted_ember activation, dynamic boundary audit, thinking depth verification.
+- **GP3:** COMPLETE — Ant vs External Divergence Research. 3-tier gating system discovered (DCE/GrowthBook/feature-flags). quiet_salted_ember gate mapped. 14 prompt sections extracted. 62 issues registered across 112 findings from 5 data sources.
+- **P0 Investigations:** COMPLETE — 4/4 investigated. quiet_salted_ember activation path found (clientDataCache in ~/.claude.json, needs ms7() binary patch). Dynamic boundary audit: safe (overrides in static portion). Thinking depth env vars: verified effective. VERIFICATION_AGENT: not in v2.1.101 binary.
+- **PM1:** COMPLETE — Investigation table added to ROADMAP.md (62 issues, P0-P3 tiers). Developer docs created in /docs/ (10 files, 1625 lines, verified against source).
 
 ### Binary Vault (from 2a-gaps)
 - **Module:** `src/binaryVault.ts` — XDG path discovery, GCS download, SHA256 verification, immutable locking
