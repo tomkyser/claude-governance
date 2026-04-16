@@ -535,53 +535,49 @@ fakechat reference implementation [fakechat1]
 - [x] Wire state directory ~/.claude-governance/wire/
 - [x] Verified: 23/23 SOVEREIGN, interactive launch clean, Wire channel active, TOOLS:3 statusline
 
-### Phase 3.5d: Add Complete Message Components Control and Patching to Claude Governance
+## Phase 3.5d: Message Components Control — Complete Override and Patching
+Status: RESEARCH COMPLETE — PLANNING next
 /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages
-- [ ] Needs research Planning
-- [ ] This blocks the rest of phase 3
-- [ ] Notes:
-  - [ ] First investigation, why is REPL tool use not appearing in the TUI
-    - [ ] this previously appeared, now it is gone.
-  - [ ] We want to be able to completely override each message component and patch them.
-  - [ ] Must survive across new CC versions so matching strategy must be extremely resiliant.
-  - [ ] Start with an example of restoring thinking blocks in the UI
-    - [ ] see around line 122: /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages/SystemTextMessage.tsx
-  - [ ] Governance users must be able to edit these components on their own and change them to their liking
-    - [ ] we can offer defaults, but ultimately provide a way for users to do this own their own
 
-### Phase 3.5e: Behavioral Integration — Prompts & Instructions
-- [ ] System prompt overrides teaching the model Wire exists and when to use it
-- [ ] Claude Governance needs halt and catch fire 100% verification that wire is functioning correctly during use
-  - [ ] statusline integration
-- [ ] Agent prompt updates for Wire awareness
-- [ ] MCP server `instructions` field (fakechat pattern)
-- [ ] Coordinator mode recreation at prompt level, instruction level, and claude code tool and system level (COORDINATOR_MODE is DCE'd) -- deeply research.
-- [ ] Model must understand WHEN cross-session collaboration is right, not just HOW
-- [ ] Research: further examples and reference regarding the DCE'd UDP Socket's based comms
-  - [ ] /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/constants/xml.ts
-  - [ ] UDS_INBOX | UserCrossSessionMessage | /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages/UserTextMessage.tsx
+### P0: Tool Visibility (Blocking)
+- [ ] T1: Update tool-injection.ts renderToolUseMessage default to create visible React elements
+- [ ] T2: Capture React/Ink references in tool loader scope for element creation
+- [ ] T3: Implement REPL-specific renderToolUseMessage (show script description + operations)
+- [ ] T4: Implement Tungsten-specific renderToolUseMessage (show action + session)
+- [ ] T5: Binary patch to override empty-userFacingName suppression check
+- [ ] T6: Verify all external tools visible in live TUI session
 
-### Phase 3.5f: /coordinate Skill & Tungsten Orchestration
-- [ ] `/coordinate` skill for user-initiated cross-session collaboration
-- [ ] Tungsten spawns Claude instances with automatic Wire registration
-- [ ] Coordinator session assigns work, collects results
-- [ ] End-to-end: `/coordinate` → sessions spawn → collaborate via Wire → report back
+### P1: Thinking/Reasoning Restoration (Core)
+- [ ] T7: Binary patch SystemTextMessage thinking dispatch (offset 8193543)
+- [ ] T8: Identify ThinkingMessage minified function name in binary
+- [ ] T9: Binary patch streaming thinking auto-hide (30s timeout removal)
+- [ ] T10: Binary patch AssistantThinkingMessage to show full thinking by default
+- [ ] T11: Verify thinking blocks visible in live TUI session
 
-### Phase 3.5g: Hardening, Testing & Documentation
-- [ ] Error handling: server crash, session disconnect, Channels disabled, version change
-- [ ] Reconnection scenarios and TTL edge cases
-- [ ] Version resilience verification
-- [ ] Developer docs in `/docs/`
-- [ ] Gap analysis
-- [ ] Need to retroactively write a spec doc for this
+### P2: Override System (Extended)
+- [ ] T12: Design and implement globalThis.__govMessageOverrides registry
+- [ ] T13: Binary patch override check injection points in SystemTextMessage
+- [ ] T14: Binary patch override check injection in AssistantToolUseMessage
+- [ ] T15: Implement null-rendered attachment visibility toggle
+- [ ] T16: Add override system to verification registry
 
----
-### Milestone 3.5 Retro
-- [ ] Commentary
-- [ ] Gap analysis
-- [ ] Housekeeping
-- [ ] Bootstrap Prompt
----
+### P3: User Customization (Future)
+- [ ] T17: Implement ~/.claude-governance/components/ directory loading
+- [ ] T18: Governance default component overrides in data/components/
+- [ ] T19: Unhide hidden commands patch
+- [ ] T20: Documentation for component override API
+
+### Verification
+- [ ] T21: Add all new patches to VERIFICATION_REGISTRY
+- [ ] T22: Full SOVEREIGN check (target: 23+ signatures)
+- [ ] T23: Interactive TUI verification of all restored UI elements
+
+### Notes
+- Root cause: tool-injection.ts defaults renderToolUseMessage to return null → entire tool hidden
+- 3 tool suppression mechanisms, 5 thinking suppression points found
+- Binary offset 8193543: q.subtype==="thinking")return null
+- 27 null-rendered attachment types catalogued
+- Render-tree.ts patch pattern is closest analog for React component patching
 
 ## Milestone 4: REPL and Tungsten - ReEval and Perfect
 - phases TBD, needs discussion > research > planning
