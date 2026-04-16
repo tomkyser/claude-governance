@@ -535,11 +535,11 @@ fakechat reference implementation [fakechat1]
 - [x] Wire state directory ~/.claude-governance/wire/
 - [x] Verified: 23/23 SOVEREIGN, interactive launch clean, Wire channel active, TOOLS:3 statusline
 
-## Phase 3.5d: Message Components Control — PLANNING COMPLETE → ACT
+### Phase 3.5d: Message Components Control — PLANNING COMPLETE → ACT
 Status: RESEARCH COMPLETE — PLANNING next
 /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages
 
-### P0: Tool Visibility (Blocking)
+#### P0: Tool Visibility (Blocking)
 - [x] T1: Update tool-injection.ts renderToolUseMessage default to create visible React elements
 - [x] T2: Capture React/Ink references in tool loader scope for element creation
 - [x] T3: Implement REPL-specific renderToolUseMessage (show script description + operations)
@@ -547,7 +547,7 @@ Status: RESEARCH COMPLETE — PLANNING next
 - [x] T5: Binary patch to override empty-userFacingName suppression check
 - [ ] T6: Verify all external tools visible in live TUI session
 
-### P1: Thinking/Reasoning Restoration (Core)
+#### P1: Thinking/Reasoning Restoration (Core)
 - [ ] T7: Binary patch SystemTextMessage thinking dispatch (offset 8193543)
 - [ ] T8: Identify ThinkingMessage minified function name in binary
 - [ ] T9: Binary patch streaming thinking auto-hide (30s timeout removal)
@@ -558,7 +558,7 @@ Status: RESEARCH COMPLETE — PLANNING next
   - [ ] 5. Gap analysis & report-discuss-resolve loop
   - [ ] 6. Housekeeping and handoff
 
-### P2: Override System (Extended)
+#### P2: Override System (Extended)
 - [ ] T12: Design and implement globalThis.__govMessageOverrides registry
 - [ ] T13: Binary patch override check injection points in SystemTextMessage
 - [ ] T14: Binary patch override check injection in AssistantToolUseMessage
@@ -569,7 +569,7 @@ Status: RESEARCH COMPLETE — PLANNING next
   - [ ] 5. Gap analysis & report-discuss-resolve loop
   - [ ] 6. Housekeeping and handoff
 
-### P3: User Customization (Future)
+#### P3: User Customization (Future)
 - [ ] T17: Implement ~/.claude-governance/components/ directory loading
 - [ ] T18: Governance default component overrides in data/components/
 - [ ] T19: Unhide hidden commands patch
@@ -579,19 +579,42 @@ Status: RESEARCH COMPLETE — PLANNING next
   - [ ] 5. Gap analysis & report-discuss-resolve loop
   - [ ] 6. Housekeeping and handoff
 
-### Verification
+#### Verification
 - [ ] T21: Add all new patches to VERIFICATION_REGISTRY
 - [ ] T22: Full SOVEREIGN check (target: 23+ signatures)
 - [ ] T23: Interactive TUI verification of all restored UI elements
 
-### Notes
+#### Notes
 - Root cause: tool-injection.ts defaults renderToolUseMessage to return null → entire tool hidden
 - 3 tool suppression mechanisms, 5 thinking suppression points found
 - Binary offset 8193543: q.subtype==="thinking")return null
 - 27 null-rendered attachment types catalogued
 - Render-tree.ts patch pattern is closest analog for React component patching
 
-## Milestone 4: REPL and Tungsten - ReEval and Perfect
+___
+
+## Milestone 4: Version Management
+
+**References:** [versionPinning1], [ccNativeMigration1], [ccCliFlags1] — see `.planning/REFERENCES.md`
+
+- [ ] Phase 4a - Binary backup on CC update
+- [ ] Phase 4b - Version inventory and switching
+- [ ] Phase 4c - Update controls: block/allow/defer CC auto-updates
+- [ ] Phase 4d - Working Patch injection across CC versions and support user defined patches
+- [ ] Phase 4e - Tool injection across CC versions and support user defined tools
+- [ ] Phase 4f - Env, hooks, flags, everything else -> user defineable and survives version changes
+- [ ] Phase 4g - Every single thing working across CC versions, our engine should be smart enough to find and patch everything dynamically with not a single comprimise
+- [ ] Phase 4h - Verification of complete functionality across the latest two versions of CC. - Not just signature verification, full testing.
+
+---
+### Milestone 4 Retro
+- [ ] Commentary
+- [ ] Gap analysis
+- [ ] Housekeeping
+- [ ] Bootstrap Prompt
+---
+
+## Milestone 5: REPL and Tungsten - ReEval and Perfect
 - phases TBD, needs discussion > research > planning
 REPL Notes:
 - node VM vs python vm?
@@ -619,22 +642,25 @@ REPL Notes:
 - Tungsten currently does not seem to be leveraged nearly as much as it should be capable of.
   - there doesn't appear to be any noticeable persistence in use or gains without my explict instruction
 - Need to ensure this entire thing survives CC version updates!
-
-~~## Milestone 5: HTTP Proxy Layer~~ DEFERRED to post launch
-
-
 ---
+### Milestone 5 Retro
+- [ ] Commentary
+- [ ] Gap analysis
+- [ ] Housekeeping
+- [ ] Bootstrap Prompt
+---
+
 
 ## Milestone 6: Feature Flag Control
 
 **References:** [adaptiveThinking1], [ccEnvVars1], [settingsBestPractice1] — see `.planning/REFERENCES.md`
 
-- [ ] Phase 4a - Flag inventory scanner (extract all flag names + defaults from binary)
-- [ ] Phase 4b - Disk cache override for `~/.claude.json` cachedGrowthBookFeatures
-- [ ] Phase 4c - Persistence through GrowthBook's 6-hour refresh cycle
-- [ ] Phase 4d - Binary patch: intercept `getFeatureValue_CACHED` for local overrides
-- [ ] Phase 4e - Per-version flag audit automation
-- [ ] Phase 4f - User-facing flag toggle UI
+- [ ] Phase 6a - Flag inventory scanner (extract all flag names + defaults from binary)
+- [ ] Phase 6b - Disk cache override for `~/.claude.json` cachedGrowthBookFeatures
+- [ ] Phase 6c - Persistence through GrowthBook's 6-hour refresh cycle
+- [ ] Phase 6d - Binary patch: intercept `getFeatureValue_CACHED` for local overrides
+- [ ] Phase 6e - Per-version flag audit automation
+- [ ] Phase 6f - User-facing flag toggle UI
 
 ---
 ### Milestone 6 Retro
@@ -645,18 +671,12 @@ REPL Notes:
 ---
 
 
-## Milestone 7: Version Management
+## Milestone 7: Launch Preperation - Hooks, Plugins, User Patches, third party modules, CLI tool refinements, full control over system and config, every feature is integrated properly throughout the system.
+- Full Planning TBD
 
-**References:** [versionPinning1], [ccNativeMigration1], [ccCliFlags1] — see `.planning/REFERENCES.md`
-
-- [ ] Phase 7a - Binary backup on CC update
-- [ ] Phase 7b - Version inventory and switching
-- [ ] Phase 7c - Update controls: block/allow/defer CC auto-updates
-- [ ] Phase 7d - Working Patch injection across CC versions and support user defined patches
-- [ ] Phase 7e - Tool injection across CC versions and support user defined tools
-- [ ] Phase 7f - Env, hooks, flags, everything else -> user defineable and survives version changes
-- [ ] Phase 7g - Every single thing working across CC versions, our engine should be smart enough to find and patch everything dynamically with not a single comprimise
-- [ ] Phase 7h - Verification of complete functionality across the latest two versions of CC. - Not just signature verification, full testing.
+- **Hooks module in setup/launch:** 4 standalone safety hooks (read-before-edit, commit-validate, repl-precheck, repl-safety) live at `data/hooks/` — manually deployed for now. Pre-M7, must be a claude-governance module: `setup` installs to `~/.claude/hooks/`, `launch` verifies registration in settings.json, `modules` shows status. Bridge between "works for Tom" and "works for everyone."
+- **Verification dashboard:** Rich terminal output showing all patches, overrides, flags, and environment state in a single view.
+- **Downstream Pipeline for dependencies:** Do we still pull and merge from TweakCC.
 
 ---
 ### Milestone 7 Retro
@@ -666,12 +686,11 @@ REPL Notes:
 - [ ] Bootstrap Prompt
 ---
 
-## Milestone 8: Launch Preperation - Hooks, Plugins, User Patches, third party modules, CLI tool refinements, full control over system and config, every feature is integrated properly throughout the system.
+## Milestone 8: Launch Preperation - Dynamism and Survivability
 - Full Planning TBD
 
-- **Hooks module in setup/launch:** 4 standalone safety hooks (read-before-edit, commit-validate, repl-precheck, repl-safety) live at `data/hooks/` — manually deployed for now. Pre-M7, must be a claude-governance module: `setup` installs to `~/.claude/hooks/`, `launch` verifies registration in settings.json, `modules` shows status. Bridge between "works for Tom" and "works for everyone."
-- **Verification dashboard:** Rich terminal output showing all patches, overrides, flags, and environment state in a single view.
-- **Downstream Pipeline for dependencies:** Do we still pull and merge from TweakCC.
+Post M1 through M7, we should be, though regardless, THIS MILESTONE REQUIRES us to be at a state where this can be used by others and it should be able to survive and fully function as expected on newer versions of claude code beyond 2.1.101
+Phase planning TODO. - MUST be at a state where EVERYTHING ABOVE WILL WORK ACROSS NEWER VERSIONS - NOTHING CAN BE HARDCODED TO JUST 2.1.101 - Our strategy will be automate a test when a new claude code version drops (in a sandbox to keep my system clean) that test should assess what needs to be adjusted if anything - we will also need to wait for the upstream system prompts repo to be updated with latest prompt extractions - we should have a  /update command and a statusline visual.
 
 ---
 ### Milestone 8 Retro
@@ -681,11 +700,11 @@ REPL Notes:
 - [ ] Bootstrap Prompt
 ---
 
-## Milestone 9: Launch Preperation - Dynamism and Survivability
+## Milestone 9: Launch Preperation - Documentaton and Bug Fixes
 - Full Planning TBD
 
-Post M1 through M8, we should be, though regardless, THIS MILESTONE REQUIRES us to be at a state where this can be used by others and it should be able to survive and fully function as expected on newer versions of claude code beyond 2.1.101
-Phase planning TODO. - MUST be at a state where EVERYTHING ABOVE WILL WORK ACROSS NEWER VERSIONS - NOTHING CAN BE HARDCODED TO JUST 2.1.101 - Our strategy will be automate a test when a new claude code version drops (in a sandbox to keep my system clean) that test should assess what needs to be adjusted if anything - we will also need to wait for the upstream system prompts repo to be updated with latest prompt extractions - we should have a  /update command and a statusline visual.
+- **Full Documentation and branding:** As well as cleaning up any old tweakcc artifacts or docs
+- **Bug fixes:**
 
 ---
 ### Milestone 9 Retro
@@ -695,21 +714,7 @@ Phase planning TODO. - MUST be at a state where EVERYTHING ABOVE WILL WORK ACROS
 - [ ] Bootstrap Prompt
 ---
 
-## Milestone 10: Launch Preperation - Documentaton and Bug Fixes
-- Full Planning TBD
-
-- **Full Documentation and branding:** As well as cleaning up any old tweakcc artifacts or docs
-- **Bug fixes:**
-
----
-### Milestone 10 Retro
-- [ ] Commentary
-- [ ] Gap analysis
-- [ ] Housekeeping
-- [ ] Bootstrap Prompt
----
-
-## Milestone 11: Launch Preperation - Deployment and Publishing Pipeline, Preflight, Final Tests
+## Milestone 10: Launch Preperation - Deployment and Publishing Pipeline, Preflight, Final Tests
 - Full Planning TBD
 - rename our clean room tools to my own names and showcase them
 - branding
@@ -717,7 +722,7 @@ Phase planning TODO. - MUST be at a state where EVERYTHING ABOVE WILL WORK ACROS
 - social posts etc etc
 
 ---
-### Milestone 11 Retro
+### Milestone 10 Retro
 - [ ] Commentary
 - [ ] Gap analysis
 - [ ] Housekeeping
