@@ -1,72 +1,130 @@
-# Milestone 3.5 Bootstrap — Wire Inter-Session Communication
+# Milestone 3.5 Bootstrap — Pattern Migration for esbuild CJS Output
 
 ---
 
-**Status:** BLOCKED — Repack crash. Fix path identified: ESM→CJS transform via esbuild.
-**Baseline:** 24/24 SOVEREIGN working, 27/27 SOVEREIGN patched-but-broken
-**Blocking Issue:** npm cli.js is ESM; Bun binary requires CJS wrapper; need ESM→CJS bundling
+**Status:** ACTIVE — Repack pipeline working. Pattern migration needed for 13 governance patches.
+**Baseline:** 16/29 SOVEREIGN (binary runs: `2.1.101 (Claude Code)`)
+**Next Task:** P1.5 — Migrate governance patch regexes to match esbuild-bundled CJS output
 
 ## CRITICAL: Read This First
 
-
-1. `claude-governance/src/patches/index.ts` — Main apply pipeline (needs fetchNpmSource + detection)
-2. `claude-governance/src/nativeInstallation.ts` — rebuildBunData + repackMachO (needs clearBytecode + raw overwrite)
+1. `.planning/journals/session-2026-04-16-g.md` — **Complete fix documentation + verification**
+2. `.planning/FINDINGS.md` → F31 — **Bun binary format, esbuild transform, LIEF bug**
+3. `.planning/milestones/M-3.5/3.5d-message-components/TASKS.md` — **Current task list**
+4. `claude-governance/src/patches/governance/` — **14 per-patch files with regex patterns**
 
 ## Current State
 
-- **Binary**: Unpatched 2.1.101 (restored from backup)
-- **Shim**: Bypassed — `~/.claude-governance/bin/claude.bak`
-- **Code**: HEAD at f5e0c7f, clean working tree
-- **Thinking patches**: 27/27 SOVEREIGN verified against extracted JS, repack blocked
+- **Binary**: Patched 2.1.101, runs cleanly (`--version` → `2.1.101 (Claude Code)`)
+- **Backup**: Clean binary at `~/.claude-governance/native-binary.backup` (201MB)
+- **Shim**: Bypassed (`~/.claude-governance/bin/claude.bak`) — restore after pattern migration
+- **Code**: HEAD at 7e540a9, clean working tree
+- **Build**: Clean at committed HEAD
+- **esbuild output**: `~/.claude-governance/native-claudejs-patched.js` (17.1M chars, 334k lines)
+- **Original bytecode stubs**: `~/.claude-governance/native-claudejs-orig.js`
 
-## The Problem (Three Layers)
+## The Pipeline (How It Works Now)
 
-1. **Bun bytecode**: Binary stores `cli.js` as bytecode stubs, not readable JS. Can't interpret after repack.
-2. **npm source is ESM**: `cli.js` has 753 static imports, 67 default imports, 12 import.meta, 6 top-level await
-3. **CJS wrapper required**: Bun binary format needs `(function(exports, require, module, __filename, __dirname){...})` — ESM syntax invalid inside
+1. `applyCustomization()` extracts binary JS, detects `// @bun @bytecode` prefix
+2. `fetchNpmSource()` downloads npm package, runs esbuild ESM→CJS transform
+3. esbuild's empty `var import_meta = {};` is replaced with URL polyfill
+4. CJS content wrapped in `(function(exports, require, module, __filename, __dirname) {...})`
+5. Governance patches applied to the CJS-wrapped content (regex match/replace)
+6. `repackNativeInstallation()` repacks with `clearBytecode=true`
+7. `rebuildBunData()` zeros bytecode, sets `encoding=0`
+8. `repackMachO()` raw-overwrites section content (bypasses LIEF bug)
+9. Binary re-signed with ad-hoc codesign
 
-## The Fix: ESM → CJS via esbuild
+## The Problem: 13 Pattern Mismatches
 
-### Implementation Plan (3 files, ~60 lines of new code)
+The governance patches in `src/patches/governance/` use regex patterns derived from
+Bun's minified output (the bytecode stubs). The esbuild-bundled CJS output has:
 
-#### File 1: `claude-governance/src/patches/index.ts`
-1. Add `import { execFileSync } from 'node:child_process'`
-2. Add `fetchNpmSource(version)` function (downloads npm package, extracts cli.js, **runs esbuild to convert ESM→CJS**, returns CJS buffer)
-3. Add `let clearBytecode = false` after `let content: string`
-4. After extraction: detect `// @bun @bytecode` prefix → call fetchNpmSource → strip shebang → CJS-wrap → set clearBytecode=true
-5. Pass `clearBytecode` to `repackNativeInstallation()`
+- **Different variable names**: esbuild generates its own identifiers
+- **Different statement ordering**: `require()` calls at module top, not inline
+- **Different code structure**: esbuild's CJS wrapper patterns differ from Bun's minifier
+- **Expanded code**: Less aggressive minification → more whitespace and named vars
 
-The esbuild transform goes inside fetchNpmSource:
-```bash
-npx esbuild cli.js --bundle --format=cjs --platform=node --outfile=cli.cjs
-```
+### The 13 Failing Patches
 
-#### File 2: `claude-governance/src/nativeInstallation.ts`
-1. Add `clearBytecode: boolean` param to `rebuildBunData()`
-2. When clearBytecode + claude module: set `bytecodeBytes = Buffer.alloc(0)`, `encoding = 0`
-3. Add `clearBytecode = false` param to `repackNativeInstallation()`, thread to rebuildBunData
-4. Add raw overwrite path in `repackMachO()` for when new data ≤ original section size (18MB << 128MB)
+| # | Patch | File | Notes |
+|---|-------|------|-------|
+| 1 | Tool Registry Injection | toolInjection.ts | Injects tools into CC's registry |
+| 2 | REPL Tool Guidance | toolInjection.ts | Adds REPL description to system prompt |
+| 3 | Tungsten bashProvider | toolInjection.ts | Activates tmux for bash tool |
+| 4 | Tungsten Live Panel | toolInjection.ts | Adds panel to TUI |
+| 5 | Tungsten Tool Guidance | toolInjection.ts | Adds Tungsten description |
+| 6 | Channel Dialog Bypass | channelDialogBypass.ts | Auto-accepts dev channel |
+| 7 | Tool Visibility Patch | toolVisibility.ts | Shows hidden tool use |
+| 8 | Client Data Cache | clientDataCache.ts | Preserves flag values |
+| 9 | Thinking Dispatch | thinkingDispatch.ts | Dispatches thinking to TUI |
+| 10 | Thinking Full Show | thinkingFullShow.ts | Shows full thinking blocks |
+| 11 | Thinking Assistant Guard | thinkingAssistantGuard.ts | Removes assistant type filter |
+| 12 | Glob/Grep Exclusion | (check registry) | Removes .gitignore exclusions |
+| 13 | Explore override | (check registry) | Prompt override for explore mode |
 
-#### File 3: `claude-governance/src/nativeInstallationLoader.ts`
-1. Add `clearBytecode = false` param to `repackNativeInstallation()` wrapper, thread to module call
+### Migration Strategy
 
-### Key Technical Notes
-- **LIEF bug**: `bunSection.content = newData` is silently ignored without `extendSegment()`. Use raw overwrite.
-- **Raw overwrite**: Read binary, `newSectionData.copy(binaryData, segmentFileOffset)`, zero-fill remaining, write+resign
-- **esbuild handles**: static imports → require(), import.meta.url → __filename equiv, top-level await
-- **Encoding=0**: Tell Bun to interpret source, not look for bytecode
-- **Only module 0** (cli.js) has bytecode (111MB). Other 10 modules have bcLen=0.
+For each patch:
+1. **Find the equivalent code in esbuild output** — Search for string literals, API calls,
+   or structural patterns that uniquely identify the target code
+2. **Write a new regex** that matches the esbuild structure
+3. **Make it resilient** — Match on stable features (string constants, method names, API
+   patterns) rather than variable identifiers that esbuild might rename
+4. **Test** — Apply + check + verify binary runs
+
+### Key Files for Pattern Work
+
+- `claude-governance/src/patches/governance/` — 14 per-patch files
+- `claude-governance/src/patches/index.ts` — Apply pipeline
+- `~/.claude-governance/native-claudejs-patched.js` — Current esbuild output (inspect patterns)
+- `~/.claude-governance/native-claudejs-orig.js` — Original bytecode stubs (for reference)
+
+### How to Find Patterns in esbuild Output
+
+The esbuild CJS output at `~/.claude-governance/native-claudejs-patched.js` is 17M chars.
+Use grep/search for:
+
+- **String literals** (most stable): `"tengu_harbor"`, `"clientDataCache"`, `"thinkingMessage"`
+- **API calls**: `createRequire`, `getClaudeAIOAuthTokens`, `isChannelsEnabled`
+- **Function signatures**: Parameter patterns that are structurally unique
+- **The existing patch replacement text**: If the patch injects text, search for where
+  the injection point's surrounding code appears in the esbuild output
 
 ## Build & Verify
+
 ```bash
 cd claude-governance && pnpm build
 /bin/cp ~/.claude-governance/native-binary.backup ~/.local/share/claude/versions/2.1.101
 node claude-governance/dist/index.mjs -a
 ~/.local/share/claude/versions/2.1.101 --version   # Must show "2.1.101 (Claude Code)"
-node claude-governance/dist/index.mjs check         # Target: 25/27+ SOVEREIGN
+node claude-governance/dist/index.mjs check         # Target: 27/29+ SOVEREIGN
 ```
 
-## After Fix, Continue P1
-- T11: Interactive TUI verification of thinking blocks
-- Gap analysis for P1
-- Housekeeping + bootstrap for P2
+## After Pattern Migration
+
+1. T11: Verify thinking blocks visible in live TUI
+2. SOVEREIGN check (target 27/29+)
+3. Gap analysis for P1/P1.5
+4. Restore governance shim: `mv ~/.claude-governance/bin/claude.bak ~/.claude-governance/bin/claude`
+5. Housekeeping + bootstrap for P2
+
+## Technical Reference
+
+### esbuild Transform Details
+- esbuild v0.28.0, flags: `--bundle --format=cjs --platform=node`
+- Input: 13.5MB ESM cli.js from npm
+- Output: ~17MB CJS (esbuild adds require() wrappers, helper functions)
+- `var import_meta = {};` → replaced with `{ url: require("url").pathToFileURL(__filename).href }`
+- Top-level await handled by esbuild's async wrapper
+
+### Bun Module Format
+- encoding: 0=source, 1=bytecode. clearBytecode sets to 0.
+- moduleFormat: 0=CJS, 2=ESM. We keep existing value.
+- Only module 0 (cli.js) has bytecode. Other 10 modules unaffected.
+
+### Raw Overwrite Path
+- Triggered when `sizeDiff <= 0` (new data fits in original section)
+- Reads full binary, overwrites at `bunSection.offset`, zero-fills remainder
+- LIEF Mach-O section header still says 128MB — `hasBunTrailerAt()` handles this
+- Bypasses LIEF's broken `section.content =` assignment for Mach-O

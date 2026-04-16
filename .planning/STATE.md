@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-04-16
+Last updated: 2026-04-16 (session g)
 
 ## Current Claude Code Version
 - **Installed:** 2.1.101 (native, arm64-darwin)
@@ -20,6 +20,10 @@ and governance-specific `check` command added.
 - **Apply:** `node dist/index.mjs --apply` (or just `node dist/index.mjs`)
 - **Verify:** `node dist/index.mjs check`
 - **Restore:** `node dist/index.mjs --restore`
+- **Repack pipeline:** esbuild ESM→CJS transform (bytecode→CJS→raw overwrite)
+- **SOVEREIGN:** 16/29 passing (13 need pattern migration for esbuild CJS output)
+- **Binary status:** Patched, runs cleanly (`2.1.101 (Claude Code)`)
+- **Shim:** Bypassed (`~/.claude-governance/bin/claude.bak`) — needs restoration after pattern migration
 - **Source structure (post-3prelim):**
   - `src/patches/governance/` — 14 per-patch files (was governance.ts monolith)
   - `src/patches/orchestration/` — 3 orchestration modules (was index.ts monolith)

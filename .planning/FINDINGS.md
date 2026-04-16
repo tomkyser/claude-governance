@@ -603,3 +603,72 @@ The dev channel loading path: `if(!isChannelsEnabled() || !getClaudeAIOAuthToken
 Unique match. Verified in interactive session — no dialog, Wire channel active.
 
 **Lesson:** Never trust "works on my machine" when the gate involves auth state that varies across users.
+
+## F31: Bun Binary Bytecode Compilation and ESM→CJS Transformation (2026-04-16)
+
+**Phase:** 3.5d P1 | **Impact:** CRITICAL — foundational for ALL native binary patching
+
+Claude Code 2.1.101's Bun v1.3.12 binary compiles `cli.js` to bytecode. The source text
+stored in the binary starts with `// @bun @bytecode @bun-cjs` and function bodies are
+compiled stubs — not readable JavaScript. This prevents direct text-based patching of the
+binary's embedded JS.
+
+### Binary Structure (Verified)
+
+| Component | Value |
+|-----------|-------|
+| Binary size | 201,445,232 bytes (191MB Mach-O) |
+| `__BUN` segment | fileOffset=70,762,496, fileSize=128,876,544 |
+| Section header | u64 (8 bytes) containing bun data size |
+| Module count | 11 (6 JS + 5 native .node) |
+| cli.js bytecode | 111,477,040 bytes (111MB) |
+| cli.js source | 12,791,987 bytes (bytecode stubs, not interpretable) |
+
+### Module Struct (52 bytes = SIZEOF_MODULE_NEW)
+```
+name:               {offset: u32, length: u32}  (StringPointer)
+contents:           {offset: u32, length: u32}
+sourcemap:          {offset: u32, length: u32}
+bytecode:           {offset: u32, length: u32}
+moduleInfo:         {offset: u32, length: u32}
+bytecodeOriginPath: {offset: u32, length: u32}
+encoding:           u8  (0=source, 1=bytecode)
+loader:             u8  (1=JS, 10=native)
+moduleFormat:       u8  (0=CJS, 2=ESM)
+side:               u8  (0=main, 1=side-loaded)
+```
+
+### Three-Layer Incompatibility
+
+1. **Bytecode stubs** are not interpretable JS — clearing bytecode + encoding=0 crashes
+2. **npm cli.js is ESM** — 753 static imports, 67 default imports, 12 import.meta, 6 TLA
+3. **ESM ↔ CJS** — ESM import/export is top-level-only syntax, invalid in function bodies
+
+### Solution: esbuild ESM→CJS + Raw Overwrite
+
+`npx esbuild cli.js --bundle --format=cjs --platform=node` converts all ESM syntax to
+CJS `require()` calls. The output is wrapped in Bun's CJS function wrapper and repacked.
+esbuild's empty `var import_meta = {};` stub is replaced with a proper URL polyfill.
+LIEF's Mach-O `section.content =` is silently ignored — raw binary overwrite at the known
+file offset bypasses this bug.
+
+### Critical Notes for Future Sessions
+
+- **Pattern migration required**: esbuild-bundled CJS has fundamentally different variable
+  names, statement ordering, and structure from Bun's minified output. Every regex pattern
+  must be re-derived against the new code.
+- **esbuild version sensitivity**: Variable names in esbuild output may change between
+  versions. Patterns should match structural features (function signatures, string literals,
+  API calls) rather than generated identifiers.
+- **npm package availability**: This approach requires the npm package for the exact CC
+  version to be available on the npm registry. If Anthropic stops publishing to npm, an
+  alternative source is needed.
+- **Section header preserved**: The Mach-O section metadata still says 128MB after raw
+  overwrite. The `hasBunTrailerAt()` validation function handles zero-padded sections.
+
+### LIEF Mach-O Writer Bug
+
+`bunSection.content = newData` is silently ignored for Mach-O binaries unless
+`extendSegment()` is called first (even if the data is shrinking). This is a confirmed
+LIEF bug. The raw overwrite path (`readFileSync` → buffer copy → `writeFileSync`)
+bypasses LIEF's writer entirely and is reliable for both shrinking and same-size data.

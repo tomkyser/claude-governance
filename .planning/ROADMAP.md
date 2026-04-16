@@ -535,7 +535,7 @@ fakechat reference implementation [fakechat1]
 - [x] Wire state directory ~/.claude-governance/wire/
 - [x] Verified: 23/23 SOVEREIGN, interactive launch clean, Wire channel active, TOOLS:3 statusline
 
-### Phase 3.5d: Message Components Control — PLANNING COMPLETE → ACT
+### Phase 3.5d: Message Components Control — IN PROGRESS (repack fixed, patterns next)
 Status: RESEARCH COMPLETE — PLANNING next
 /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages
 
@@ -548,15 +548,30 @@ Status: RESEARCH COMPLETE — PLANNING next
 - [ ] T6: Verify all external tools visible in live TUI session
 
 #### P1: Thinking/Reasoning Restoration (Core)
-- [ ] T7: Binary patch SystemTextMessage thinking dispatch (offset 8193543)
-- [ ] T8: Identify ThinkingMessage minified function name in binary
-- [ ] T9: Binary patch streaming thinking auto-hide (30s timeout removal)
-- [ ] T10: Binary patch AssistantThinkingMessage to show full thinking by default
-- [ ] T11: Verify thinking blocks visible in live TUI session
+- [x] T7: Binary patch SystemTextMessage thinking dispatch (offset 8193543)
+- [x] T8: Identify ThinkingMessage minified function name in binary
+- [x] T9: Binary patch streaming thinking auto-hide (30s timeout removal)
+- [x] T10: Binary patch AssistantThinkingMessage to show full thinking by default
+- [ ] T11: (BLOCKED on pattern migration) Verify thinking blocks visible in live TUI session
 - [ ] STOP - Prepare for new session with bootstrap! - THEN: Phase steps 4-6 (/.planning/project-management/phase-steps/{step_number}.md)
   - [ ] 4. Verify all new and existing functionality in live TUI session
   - [ ] 5. Gap analysis & report-discuss-resolve loop
   - [ ] 6. Housekeeping and handoff
+
+#### P1.5: Binary Patch Pattern Migration (Blocking — inserted 2026-04-16)
+Repack pipeline now uses esbuild ESM→CJS transform. The 13 governance patch regexes
+were written against Bun's minified output and must be re-derived against esbuild's CJS.
+Patterns must anticipate future esbuild version changes and variable name variations.
+- [ ] T25: Research esbuild CJS output structure — map variable names and code patterns
+- [ ] T26: Migrate Tool Registry Injection pattern to esbuild output
+- [ ] T27: Migrate REPL/Tungsten guidance patterns (3 patches)
+- [ ] T28: Migrate Channel Dialog Bypass pattern
+- [ ] T29: Migrate Tool Visibility + Client Data Cache patterns
+- [ ] T30: Migrate Thinking patches (Dispatch, FullShow, AssistantGuard)
+- [ ] T31: Migrate Glob/Grep Exclusion + Explore override patterns
+- [ ] T32: Full SOVEREIGN check — target 27/29+
+- [ ] T11: Verify thinking blocks visible in live TUI (unblocked)
+- [ ] STOP - Phase steps 4-6
 
 #### P2: Override System (Extended)
 - [ ] T12: Design and implement globalThis.__govMessageOverrides registry
