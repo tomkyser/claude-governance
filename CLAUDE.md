@@ -1,5 +1,11 @@
 # claude-governance — Project Instructions
 
+- Root directory: the parent of this file.
+- Do not reference or create any .planning docs in the claude-governance directory.
+- .planning within the root is the sole planning directory
+- docs directory within root only
+- ignore claude-governance/*.md or claude-governance/*/*.md docs
+
 ## What This Project Is
 
 A public toolkit to restore user authority over Claude Code. Anthropic ships software
