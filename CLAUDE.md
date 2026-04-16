@@ -13,10 +13,10 @@ hardware. Every patch is transparent, reversible, and documented.
 ## Developer Documentation -- keep updated!
 Comprehensive verified docs covering architecture, binary patching, prompt overrides,
 tool injection, verification engine, hooks, configuration, CLI, and env flags:
-@docs/README.md
+docs/README.md
 
 ## Architecture -- keep updated!
-@.planning/project-managment/architecture.md
+.planning/project-managment/architecture.md
 
 ## Key Principles
 
@@ -43,19 +43,19 @@ tool injection, verification engine, hooks, configuration, CLI, and env flags:
 These checks prevent the kind of compounding errors that waste entire sessions.
 
 ### On Session Start (Before Any Work)
-@.planning/project-managment/session-start.md
+.planning/project-managment/session-start.md
 
 ### Work and Decision Guidance
-@.planning/project-managment/making-decisions.md
+.planning/project-managment/making-decisions.md
 
 ### Before Completing Work
-@.planning/project-managment/before-completing-work.md
+.planning/project-managment/before-completing-work.md
 
 ### Before Claiming Something Is Done
-@.planning/project-managment/before-done.md
+.planning/project-managment/before-done.md
 
 ### When Corrected
-@.planning/project-managment/when-corrected.md
+.planning/project-managment/when-corrected.md
 
 ## Anti-Patterns — Do NOT Do These
 
@@ -85,20 +85,20 @@ These checks prevent the kind of compounding errors that waste entire sessions.
 You don't need to load and read each of these every turn, just when relevant to what you are doing based on the current state and conversation context.
 
 ### .planning directory structure:
-@.planning/project-managment/pm-structure.md
+.planning/project-managment/pm-structure.md
 
 ### Phase Lifecycle (No Exceptions)
 
 Every phase follows this sequence. Steps are not optional.
-**1. Research** @.planning/project-managment/phase-steps/1.md
-**2. Planning** @.planning/project-managment/phase-steps/2.md
-**3. Act** @.planning/project-managment/phase-steps/3.md
-**4. Verify** @.planning/project-managment/phase-steps/4.md
-**5. Gap Analysis** @.planning/project-managment/phase-steps/5.md
-**6. Housekeeping & Bootstrap** @.planning/project-managment/phase-steps/6.md
+**1. Research** .planning/project-managment/phase-steps/1.md
+**2. Planning** .planning/project-managment/phase-steps/2.md
+**3. Act** .planning/project-managment/phase-steps/3.md
+**4. Verify** .planning/project-managment/phase-steps/4.md
+**5. Gap Analysis** .planning/project-managment/phase-steps/5.md
+**6. Housekeeping & Bootstrap** .planning/project-managment/phase-steps/6.md
 
 ### Milestone Lifecycle
-@.planning/project-managment/milestone-steps/milestone-process.md
+.planning/project-managment/milestone-steps/milestone-process.md
 
 ### Reference Citation Protocol
 
@@ -145,7 +145,7 @@ Every patch and hook must have a verification path:
 - All verification hooks write state to `~/.claude-governance/` for statusline
 
 ## What We've Discovered
-@.planning/FINDINGS.md
+.planning/FINDINGS.md
 
 ## External References
 
