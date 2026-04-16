@@ -101,6 +101,52 @@ export const deployUiComponents = async (): Promise<number> => {
 // Prompt Override Deployment (G5)
 // =============================================================================
 
+// =============================================================================
+// Override Deployment
+// =============================================================================
+
+const OVERRIDES_DIR = path.join(CONFIG_DIR, 'overrides');
+export { OVERRIDES_DIR };
+
+export const deployOverrides = async (): Promise<number> => {
+  const srcDir = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '..',
+    'data',
+    'overrides'
+  );
+
+  if (!fsSync.existsSync(srcDir)) {
+    debug(`deployOverrides: source dir not found at ${srcDir}`);
+    return 0;
+  }
+
+  await fs.mkdir(OVERRIDES_DIR, { recursive: true });
+
+  const files = fsSync.readdirSync(srcDir).filter(f => f.endsWith('.js'));
+  let deployed = 0;
+
+  for (const file of files) {
+    const srcPath = path.join(srcDir, file);
+    const dstPath = path.join(OVERRIDES_DIR, file);
+    const srcContent = fsSync.readFileSync(srcPath, 'utf8');
+
+    let needsCopy = true;
+    if (fsSync.existsSync(dstPath)) {
+      const dstContent = fsSync.readFileSync(dstPath, 'utf8');
+      if (srcContent === dstContent) needsCopy = false;
+    }
+
+    if (needsCopy) {
+      await fs.writeFile(dstPath, srcContent, 'utf8');
+      deployed++;
+      debug(`deployOverrides: deployed ${file}`);
+    }
+  }
+
+  return deployed;
+};
+
 export const deployPromptOverrides = async (): Promise<number> => {
   const overridesDir = path.resolve(
     path.dirname(new URL(import.meta.url).pathname),

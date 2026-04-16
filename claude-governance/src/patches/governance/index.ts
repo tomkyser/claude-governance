@@ -27,3 +27,7 @@ export {
   writeThinkingFullShowPatch,
   writeThinkingAssistantGuardPatch,
 } from './thinking-restoration';
+export {
+  writeMessageOverridePatch,
+  writeContentOverridePatch,
+} from './message-override';

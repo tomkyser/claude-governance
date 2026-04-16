@@ -36,6 +36,8 @@ import {
   writeThinkingDispatchPatch,
   writeThinkingFullShowPatch,
   writeThinkingAssistantGuardPatch,
+  writeMessageOverridePatch,
+  writeContentOverridePatch,
   GOVERNANCE_DEFAULTS,
   isContentPatched,
 } from './governance';
@@ -61,6 +63,7 @@ import {
   deployTools,
   deployUiComponents,
   deployPromptOverrides,
+  deployOverrides,
 } from './orchestration/deploy';
 
 // =============================================================================
@@ -348,9 +351,14 @@ export const applyCustomization = async (
     debug(`Deployed ${uiDeployed} UI component(s)`);
   }
 
-  const overridesDeployed = await deployPromptOverrides();
+  const overridesDeployed = await deployOverrides();
   if (overridesDeployed > 0) {
-    debug(`Deployed ${overridesDeployed} prompt override(s)`);
+    debug(`Deployed ${overridesDeployed} override file(s)`);
+  }
+
+  const promptOverridesDeployed = await deployPromptOverrides();
+  if (promptOverridesDeployed > 0) {
+    debug(`Deployed ${promptOverridesDeployed} prompt override(s)`);
   }
 
   const systemPromptsResult = await applySystemPrompts(
@@ -474,6 +482,14 @@ export const applyCustomization = async (
     'client-data-cache': {
       fn: c => writeClientDataCachePatch(c),
       signature: '__cdc_preserved__',
+    },
+    'message-override': {
+      fn: c => writeMessageOverridePatch(c),
+      signature: '__gov_msg_override__',
+    },
+    'content-override': {
+      fn: c => writeContentOverridePatch(c),
+      signature: '__gov_content_override__',
     },
   };
 

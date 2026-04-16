@@ -129,6 +129,20 @@ export const PATCH_DEFINITIONS = [
     description:
       'Patches ms7() bootstrap to preserve clientDataCache values (quiet_salted_ember, coral_reef_sonnet)',
   },
+  {
+    id: 'message-override',
+    group: PatchGroup.GOVERNANCE,
+    name: 'Message Override System',
+    description:
+      'Injects globalThis.__govMessageOverrides check before message type switch in oOY()',
+  },
+  {
+    id: 'content-override',
+    group: PatchGroup.GOVERNANCE,
+    name: 'Content Override System',
+    description:
+      'Injects globalThis.__govContentOverrides check before content type switch in sOY()',
+  },
 ] as const;
 
 export type PatchId = (typeof PATCH_DEFINITIONS)[number]['id'];

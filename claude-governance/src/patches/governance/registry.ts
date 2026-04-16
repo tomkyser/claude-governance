@@ -232,4 +232,21 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     category: 'governance',
     passDetail: 'assistant thinking verbose guard removed',
   },
+  // --- Override system ---
+  {
+    id: 'message-override',
+    name: 'Message Override System',
+    signature: '__gov_msg_override__',
+    critical: false,
+    category: 'governance',
+    passDetail: 'globalThis.__govMessageOverrides injection active',
+  },
+  {
+    id: 'content-override',
+    name: 'Content Override System',
+    signature: '__gov_content_override__',
+    critical: false,
+    category: 'governance',
+    passDetail: 'globalThis.__govContentOverrides injection active',
+  },
 ];
