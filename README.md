@@ -4,7 +4,7 @@
 
 Claude Code is a subscription product that runs on your hardware, processes your code, and charges your account, yet Anthropic has systematically built mechanisms into the binary that degrade the experience for paying customers while reserving the full-capability version for their own engineers. This project exists because I went looking for why my tool was getting worse and what I found was not a bug or a resource constraint; it was a deliberate two-tier system hidden behind compile-time flags, server-side feature toggles, and system prompts engineered to make the model less competent than it actually is.
 
-**claude-governance** provides an open-source governance platform that restores full user authority over Claude Code. It patches the binary, overrides the degraded prompts, injects the gated tools, unlocks the hidden features, activates the search pipeline they compiled in but turned off, and verifies every change against the actual binary state so nothing degrades silently. It is not a jailbreak. It is users exercising control over software running on their own hardware, which shouldn't require a third-party tool, but here I are.
+**claude-governance** provides an open-source governance platform that restores full user authority over Claude Code. It patches the binary, overrides the degraded prompts, injects the gated tools, unlocks the hidden features, activates the search pipeline they compiled in but turned off, and verifies every change against the actual binary state so nothing degrades silently. It is not a jailbreak. It is users exercising control over software running on their own hardware, which shouldn't require a third-party tool, yet here we are.
 
 ---
 
