@@ -34,6 +34,7 @@ planning docs instead of raw URLs. Grouped by category, sorted by relevance.
 | sessionViewer1 | https://github.com/d-kimuson/claude-code-viewer | CC session viewer. |
 | usageTracker1 | https://github.com/phuryn/claude-usage | CC usage tracking. |
 | ralphCC1 | https://github.com/frankbria/ralph-claude-code | CC enhancement tool. |
+| claude-dev-tools | https://github.com/matt1398/claude-devtools | CC session viewer. |
 
 ## Cache, Performance & Configuration
 

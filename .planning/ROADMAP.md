@@ -608,8 +608,8 @@ REPL Notes:
   - Wire (M-4.5) inter-session communication for agent coordination
 - we need deep system prompt support
 - Tungsten currently does not seem to be leveraged nearly as much as it should be capable of.
-  - there doesn't appear to be any noticeable persistence in use or gains without my explict instruction.
-  - 
+  - there doesn't appear to be any noticeable persistence in use or gains without my explict instruction
+- Need to ensure this entire thing survives CC version updates!
 
 ~~## Milestone 5: HTTP Proxy Layer~~ DEFERRED to post launch
 
