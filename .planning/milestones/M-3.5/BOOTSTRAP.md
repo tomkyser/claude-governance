@@ -2,63 +2,75 @@
 
 ---
 
-**Status:** Phase 3.5a COMPLETE, Phase 3.5b next
+**Status:** Phase 3.5b — Research + Planning COMPLETE, Act phase next
 **Baseline:** 22/22 SOVEREIGN on CC 2.1.101
 **Previous milestone:** M-3 (System Prompt Control) — COMPLETE
 
 ## Read These Files (In This Order)
 
-1. `.planning/VISION.md` — Ground yourself in the project intent
-2. `.planning/STATE.md` — Current project state
-3. `.planning/ROADMAP.md` — M-3.5 section has all 6 phases
-4. `.planning/milestones/M-3.5/3.5a-wire-mcp-server/HANDOFF.md` — **What 3.5a delivered**
-5. `.planning/milestones/M-3.5/RESEARCH.md` — Milestone-level research (7 findings)
-6. `.planning/REFERENCES.md` — [channelsRef1], [fakechat1], [dynamoWire]
-7. `code.claude.com/docs/en/channels-reference` — **Official channels docs** (read via WebFetch)
+1. `.planning/milestones/M-3.5/3.5b-session-registry/PLANNING.md` — **THE PLAN. Architecture, waves, file map.**
+2. `.planning/milestones/M-3.5/3.5b-session-registry/TASKS.md` — **Task breakdown (T1-T9), 5 waves**
+3. `.planning/milestones/M-3.5/3.5b-session-registry/CONTEXT.md` — Shared state, dynamo source mapping
+4. `.planning/milestones/M-3.5/3.5b-session-registry/RESEARCH.md` — 12 findings (R-1 through R-12)
+5. `.planning/milestones/M-3.5/3.5a-wire-mcp-server/HANDOFF.md` — What 3.5a delivered (the MCP server you're extending)
+6. Read the existing Wire source: `claude-governance/src/wire/{types.ts, protocol.ts, server.ts}`
+7. `.planning/ROADMAP.md` — M-3.5 section (scan only — PLANNING.md has the detail)
 
-## What M-3.5 Is
+## What You're Building
 
-Wire adds inter-session communication to claude-governance. Multiple Claude Code sessions
-can discover each other, send typed messages, and collaborate on tasks. Built on CC's
-native Channels API — no binary patching needed for the transport itself.
+Cross-session message routing for Wire. Session A calls `wire_send(to=B)` → message
+routes through a shared HTTP relay → Session B receives as `<channel>` notification.
 
-## What 3.5a Delivered
+### Architecture (from PLANNING.md)
 
-A standalone MCP server (`data/wire/wire-server.cjs`) that:
-- Declares `claude/channel` capability → CC registers notification listener
-- Exposes `wire_send` and `wire_status` tools → Claude can send messages
-- Uses typed envelopes (from/to/type/urgency/payload/correlationId)
-- Emits `notifications/claude/channel` with proper meta keys
-- Bundles MCP SDK v1.29.0 inline (self-contained CJS)
-- Integrated as governance module (`src/modules/wire.ts`)
+```
+Session A                           Session B
+┌─────────────┐                     ┌─────────────┐
+│ Claude Code  │                     │ Claude Code  │
+│   ↕ stdio    │                     │   ↕ stdio    │
+│ Wire MCP Srv │──── HTTP ────┐  ┌───│ Wire MCP Srv │
+│  (poll loop) │              │  │   │  (poll loop) │
+└─────────────┘              ↓  ↓   └─────────────┘
+                     ┌──────────────┐
+                     │  Wire Relay  │
+                     │  (HTTP srv)  │
+                     │  port 9876   │
+                     └──────────────┘
+```
 
-**Tested:** MCP protocol fully verified. Live CC shows server connected with both tools.
+### Execution Waves
 
-## Starting Phase 3.5b — Session Registry & Cross-Session Routing
+| Wave | Tasks | Files |
+|------|-------|-------|
+| 1 | T1: types, T2: registry, T3: queue | `types.ts` (mod), `registry.ts` (new), `queue.ts` (new) |
+| 2 | T4: relay server | `relay-server.ts` (new) |
+| 3 | T5: relay client, T6: lifecycle | `relay-client.ts` (new), `relay-lifecycle.ts` (new) |
+| 4 | T7: server integration | `server.ts` (mod) |
+| 5 | T8: build pipeline, T9: verify | `tsdown.wire.config.ts` (mod) |
 
-### What 3.5b Needs to Do
-1. **Session registry** — how sessions register, discover, and look up each other
-2. **Cross-session routing** — how a message from session A reaches session B
-3. **Priority queue** — urgency-based delivery ordering
-4. **Disconnect buffering** — hold messages during session absence
+### Key Architecture Decisions (already made)
+- D-01: HTTP relay (node:http, no external deps)
+- D-02: Long-polling for delivery (25s timeout)
+- D-03: Relay auto-started by first MCP server as detached child
+- D-04: File coordination: `~/.claude-governance/wire/{relay.pid, relay.port}`
+- D-05: Port 9876 default, fallback 9877-9886
+- D-06: In-memory messages only
+- D-07: New `wire_discover` tool for peer discovery
 
-### Key Constraint
-Each CC session runs its own Wire MCP server instance. There's no shared daemon.
-Routing between sessions needs a relay mechanism — either a shared relay server
-process, filesystem coordination, or network-based discovery.
+### Dynamo Source Location (port-from reference)
+`/Users/tom.kyser/Library/Mobile Documents/com~apple~CloudDocs/dev/dynamo/core/services/wire/`
+- `registry.cjs` (238 lines) → `src/wire/registry.ts`
+- `queue.cjs` (141 lines) → `src/wire/queue.ts`
+- `relay-server.cjs` (315 lines) → `src/wire/relay-server.ts`
+- `transports/relay-transport.cjs` (209 lines) → `src/wire/relay-client.ts`
 
-### Source Material
-- dynamo `registry.cjs` — registration/discovery patterns
-- dynamo `queue.cjs` — priority queue with urgency ordering
-- dynamo `relay-server.cjs` — relay server for cross-session routing
-- dynamo `transport-router.cjs` — transport abstraction layer
+### Build
+- `pnpm build:wire` → produces `data/wire/wire-server.cjs` + `data/wire/wire-relay.cjs`
+- `pnpm build` → full project build (typecheck + all artifacts)
+- `pnpm lint` → typecheck
 
-### Key Decisions for 3.5b
-- Relay transport: local HTTP? Unix sockets? Filesystem? (dynamo uses HTTP relay)
-- Registry persistence: file-based? In-memory with heartbeat? (dynamo uses in-memory + TTL)
-- Discovery: how does session A learn session B exists?
+## Begin Execution
 
-## Interstitial Work (Available This Session)
-- REPL `allowAllModules`: `repl.allowAllModules: true` in config unlocks all Node.js modules
-- `process` in REPL VM sandbox
-- Tungsten guidance in CLAUDE.md (persistent shell, agent inheritance, session spawning)
+Start with Wave 1 (T1, T2, T3). Read the dynamo source files listed above before
+porting — they are the reference implementations. Check task status via TaskList
+to see what's already done (in case work started before compaction).

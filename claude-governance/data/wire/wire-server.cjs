@@ -1,35 +1,13 @@
-//#region rolldown:runtime
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJSMin = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
-var __copyProps = (to, from, except, desc) => {
-	if (from && typeof from === "object" || typeof from === "function") {
-		for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
-			key = keys[i];
-			if (!__hasOwnProp.call(to, key) && key !== except) {
-				__defProp(to, key, {
-					get: ((k) => from[k]).bind(null, key),
-					enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-				});
-			}
-		}
-	}
-	return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
-	value: mod,
-	enumerable: true
-}) : target, mod));
-
-//#endregion
+const require_protocol = require('./protocol-CXWKtyVA.cjs');
 let node_process = require("node:process");
-node_process = __toESM(node_process);
-let node_crypto = require("node:crypto");
-node_crypto = __toESM(node_crypto);
+node_process = require_protocol.__toESM(node_process);
+let node_path = require("node:path");
+node_path = require_protocol.__toESM(node_path);
+let node_fs = require("node:fs");
+node_fs = require_protocol.__toESM(node_fs);
+let node_os = require("node:os");
+node_os = require_protocol.__toESM(node_os);
+let node_child_process = require("node:child_process");
 
 //#region node_modules/.pnpm/zod@4.3.6/node_modules/zod/v4/core/core.js
 /** A special constant with type `never` */
@@ -6285,7 +6263,7 @@ function mergeCapabilities(base, additional) {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/codegen/code.js
-var require_code$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_code$1 = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.regexpCode = exports.getEsmExportName = exports.getProperty = exports.safeStringify = exports.stringify = exports.strConcat = exports.addCodeArg = exports.str = exports._ = exports.nil = exports._Code = exports.Name = exports.IDENTIFIER = exports._CodeOrName = void 0;
 	var _CodeOrName = class {};
@@ -6421,7 +6399,7 @@ var require_code$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/codegen/scope.js
-var require_scope = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_scope = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.ValueScope = exports.ValueScopeName = exports.Scope = exports.varKinds = exports.UsedValueState = void 0;
 	const code_1 = require_code$1();
@@ -6559,7 +6537,7 @@ var require_scope = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/codegen/index.js
-var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_codegen = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.or = exports.and = exports.not = exports.CodeGen = exports.operators = exports.varKinds = exports.ValueScopeName = exports.ValueScope = exports.Scope = exports.Name = exports.regexpCode = exports.stringify = exports.getProperty = exports.nil = exports.strConcat = exports.str = exports._ = void 0;
 	const code_1 = require_code$1();
@@ -7229,7 +7207,7 @@ var require_codegen = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/util.js
-var require_util = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_util = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.checkStrictMode = exports.getErrorPath = exports.Type = exports.useFunc = exports.setEvaluated = exports.evaluatedPropsToName = exports.mergeEvaluated = exports.eachItem = exports.unescapeJsonPointer = exports.escapeJsonPointer = exports.escapeFragment = exports.unescapeFragment = exports.schemaRefOrVal = exports.schemaHasRulesButRef = exports.schemaHasRules = exports.checkUnknownRules = exports.alwaysValidSchema = exports.toHash = void 0;
 	const codegen_1 = require_codegen();
@@ -7371,7 +7349,7 @@ var require_util = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/names.js
-var require_names = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_names = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const names = {
@@ -7397,7 +7375,7 @@ var require_names = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/errors.js
-var require_errors = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_errors = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.extendErrors = exports.resetErrorsCount = exports.reportExtraError = exports.reportError = exports.keyword$DataError = exports.keywordError = void 0;
 	const codegen_1 = require_codegen();
@@ -7494,7 +7472,7 @@ var require_errors = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/boolSchema.js
-var require_boolSchema = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_boolSchema = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.boolOrEmptySchema = exports.topBoolOrEmptySchema = void 0;
 	const errors_1 = require_errors();
@@ -7537,7 +7515,7 @@ var require_boolSchema = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/rules.js
-var require_rules = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_rules = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getRules = exports.isJSONType = void 0;
 	const jsonTypes = new Set([
@@ -7596,7 +7574,7 @@ var require_rules = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/applicability.js
-var require_applicability = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_applicability = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.shouldUseRule = exports.shouldUseGroup = exports.schemaHasRulesForType = void 0;
 	function schemaHasRulesForType({ schema, self }, type) {
@@ -7617,7 +7595,7 @@ var require_applicability = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/dataType.js
-var require_dataType = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_dataType = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.reportTypeError = exports.checkDataTypes = exports.checkDataType = exports.coerceAndCheckDataType = exports.getJSONTypes = exports.getSchemaTypes = exports.DataType = void 0;
 	const rules_1 = require_rules();
@@ -7782,7 +7760,7 @@ var require_dataType = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/defaults.js
-var require_defaults = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_defaults = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.assignDefaults = void 0;
 	const codegen_1 = require_codegen();
@@ -7809,7 +7787,7 @@ var require_defaults = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/code.js
-var require_code = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_code = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.validateUnion = exports.validateArray = exports.usePattern = exports.callValidateCode = exports.schemaProperties = exports.allSchemaProperties = exports.noPropertyInData = exports.propertyInData = exports.isOwnProperty = exports.hasPropFunc = exports.reportMissingProp = exports.checkMissingProp = exports.checkReportMissingProp = void 0;
 	const codegen_1 = require_codegen();
@@ -7934,7 +7912,7 @@ var require_code = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/keyword.js
-var require_keyword = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_keyword = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.validateKeywordUsage = exports.validSchemaType = exports.funcKeywordCode = exports.macroKeywordCode = void 0;
 	const codegen_1 = require_codegen();
@@ -8041,7 +8019,7 @@ var require_keyword = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/subschema.js
-var require_subschema = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_subschema = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.extendSubschemaMode = exports.extendSubschemaData = exports.getSubschema = void 0;
 	const codegen_1 = require_codegen();
@@ -8109,7 +8087,7 @@ var require_subschema = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/fast-deep-equal@3.1.3/node_modules/fast-deep-equal/index.js
-var require_fast_deep_equal = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_fast_deep_equal = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	module.exports = function equal(a, b) {
 		if (a === b) return true;
 		if (a && b && typeof a == "object" && typeof b == "object") {
@@ -8140,7 +8118,7 @@ var require_fast_deep_equal = /* @__PURE__ */ __commonJSMin(((exports, module) =
 
 //#endregion
 //#region node_modules/.pnpm/json-schema-traverse@1.0.0/node_modules/json-schema-traverse/index.js
-var require_json_schema_traverse = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_json_schema_traverse = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	var traverse = module.exports = function(schema, opts, cb) {
 		if (typeof opts == "function") {
 			cb = opts;
@@ -8216,7 +8194,7 @@ var require_json_schema_traverse = /* @__PURE__ */ __commonJSMin(((exports, modu
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/resolve.js
-var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_resolve = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getSchemaRefs = exports.resolveUrl = exports.normalizeId = exports._getFullPath = exports.getFullPath = exports.inlineRef = void 0;
 	const util_1 = require_util();
@@ -8344,7 +8322,7 @@ var require_resolve = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/validate/index.js
-var require_validate = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_validate = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.getData = exports.KeywordCxt = exports.validateFunctionCode = void 0;
 	const boolSchema_1 = require_boolSchema();
@@ -8764,7 +8742,7 @@ var require_validate = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/runtime/validation_error.js
-var require_validation_error = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_validation_error = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	var ValidationError = class extends Error {
 		constructor(errors) {
@@ -8778,7 +8756,7 @@ var require_validation_error = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/ref_error.js
-var require_ref_error = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_ref_error = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const resolve_1 = require_resolve();
 	var MissingRefError = class extends Error {
@@ -8793,7 +8771,7 @@ var require_ref_error = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/compile/index.js
-var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_compile = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.resolveSchema = exports.getCompilingSchema = exports.resolveRef = exports.compileSchema = exports.SchemaEnv = void 0;
 	const codegen_1 = require_codegen();
@@ -9008,7 +8986,7 @@ var require_compile = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/refs/data.json
-var require_data = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_data = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	module.exports = {
 		"$id": "https://raw.githubusercontent.com/ajv-validator/ajv/master/lib/refs/data.json#",
 		"description": "Meta-schema for $data reference (JSON AnySchema extension proposal)",
@@ -9024,7 +9002,7 @@ var require_data = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 
 //#endregion
 //#region node_modules/.pnpm/fast-uri@3.1.0/node_modules/fast-uri/lib/utils.js
-var require_utils = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_utils = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	/** @type {(value: string) => boolean} */
 	const isUUID = RegExp.prototype.test.bind(/^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/iu);
 	/** @type {(value: string) => boolean} */
@@ -9304,7 +9282,7 @@ var require_utils = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 
 //#endregion
 //#region node_modules/.pnpm/fast-uri@3.1.0/node_modules/fast-uri/lib/schemes.js
-var require_schemes = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_schemes = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	const { isUUID } = require_utils();
 	const URN_REG = /([\da-z][\d\-a-z]{0,31}):((?:[\w!$'()*+,\-.:;=@]|%[\da-f]{2})+)/iu;
 	const supportedSchemeNames = [
@@ -9491,7 +9469,7 @@ var require_schemes = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 
 //#endregion
 //#region node_modules/.pnpm/fast-uri@3.1.0/node_modules/fast-uri/index.js
-var require_fast_uri = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_fast_uri = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	const { normalizeIPv6, removeDotSegments, recomposeAuthority, normalizeComponentEncoding, isIPv4, nonSimpleDomain } = require_utils();
 	const { SCHEMES, getSchemeHandler } = require_schemes();
 	/**
@@ -9723,7 +9701,7 @@ var require_fast_uri = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/runtime/uri.js
-var require_uri = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_uri = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const uri = require_fast_uri();
 	uri.code = "require(\"ajv/dist/runtime/uri\").default";
@@ -9732,7 +9710,7 @@ var require_uri = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/core.js
-var require_core$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_core$1 = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = void 0;
 	var validate_1 = require_validate();
@@ -10302,7 +10280,7 @@ var require_core$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/core/id.js
-var require_id = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_id = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const def = {
 		keyword: "id",
@@ -10315,7 +10293,7 @@ var require_id = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/core/ref.js
-var require_ref = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_ref = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.callRef = exports.getValidate = void 0;
 	const ref_error_1 = require_ref_error();
@@ -10419,7 +10397,7 @@ var require_ref = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/core/index.js
-var require_core = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_core = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const id_1 = require_id();
 	const ref_1 = require_ref();
@@ -10438,7 +10416,7 @@ var require_core = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/limitNumber.js
-var require_limitNumber = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_limitNumber = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const ops = codegen_1.operators;
@@ -10483,7 +10461,7 @@ var require_limitNumber = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/multipleOf.js
-var require_multipleOf = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_multipleOf = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const def = {
@@ -10508,7 +10486,7 @@ var require_multipleOf = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/runtime/ucs2length.js
-var require_ucs2length = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_ucs2length = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	function ucs2length(str) {
 		const len = str.length;
@@ -10531,7 +10509,7 @@ var require_ucs2length = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/limitLength.js
-var require_limitLength = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_limitLength = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -10560,7 +10538,7 @@ var require_limitLength = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/pattern.js
-var require_pattern = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_pattern = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const code_1 = require_code();
 	const util_1 = require_util();
@@ -10594,7 +10572,7 @@ var require_pattern = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/limitProperties.js
-var require_limitProperties = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_limitProperties = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const def = {
@@ -10620,7 +10598,7 @@ var require_limitProperties = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/required.js
-var require_required = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_required = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const code_1 = require_code();
 	const codegen_1 = require_codegen();
@@ -10688,7 +10666,7 @@ var require_required = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/limitItems.js
-var require_limitItems = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_limitItems = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const def = {
@@ -10714,7 +10692,7 @@ var require_limitItems = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/runtime/equal.js
-var require_equal = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_equal = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const equal = require_fast_deep_equal();
 	equal.code = "require(\"ajv/dist/runtime/equal\").default";
@@ -10723,7 +10701,7 @@ var require_equal = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/uniqueItems.js
-var require_uniqueItems = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_uniqueItems = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const dataType_1 = require_dataType();
 	const codegen_1 = require_codegen();
@@ -10788,7 +10766,7 @@ var require_uniqueItems = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/const.js
-var require_const = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_const = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -10811,7 +10789,7 @@ var require_const = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/enum.js
-var require_enum = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_enum = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -10856,7 +10834,7 @@ var require_enum = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/validation/index.js
-var require_validation = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_validation = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const limitNumber_1 = require_limitNumber();
 	const multipleOf_1 = require_multipleOf();
@@ -10893,7 +10871,7 @@ var require_validation = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/additionalItems.js
-var require_additionalItems = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_additionalItems = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.validateAdditionalItems = void 0;
 	const codegen_1 = require_codegen();
@@ -10946,7 +10924,7 @@ var require_additionalItems = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/items.js
-var require_items = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_items = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.validateTuple = void 0;
 	const codegen_1 = require_codegen();
@@ -11000,7 +10978,7 @@ var require_items = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/prefixItems.js
-var require_prefixItems = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_prefixItems = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const items_1 = require_items();
 	const def = {
@@ -11015,7 +10993,7 @@ var require_prefixItems = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/items2020.js
-var require_items2020 = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_items2020 = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -11044,7 +11022,7 @@ var require_items2020 = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/contains.js
-var require_contains = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_contains = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -11130,7 +11108,7 @@ var require_contains = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/dependencies.js
-var require_dependencies = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_dependencies = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.validateSchemaDeps = exports.validatePropertyDeps = exports.error = void 0;
 	const codegen_1 = require_codegen();
@@ -11212,7 +11190,7 @@ var require_dependencies = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/propertyNames.js
-var require_propertyNames = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_propertyNames = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -11250,7 +11228,7 @@ var require_propertyNames = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/additionalProperties.js
-var require_additionalProperties = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_additionalProperties = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const code_1 = require_code();
 	const codegen_1 = require_codegen();
@@ -11341,7 +11319,7 @@ var require_additionalProperties = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/properties.js
-var require_properties = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_properties = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const validate_1 = require_validate();
 	const code_1 = require_code();
@@ -11388,7 +11366,7 @@ var require_properties = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/patternProperties.js
-var require_patternProperties = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_patternProperties = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const code_1 = require_code();
 	const codegen_1 = require_codegen();
@@ -11445,7 +11423,7 @@ var require_patternProperties = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/not.js
-var require_not = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_not = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const util_1 = require_util();
 	const def = {
@@ -11474,7 +11452,7 @@ var require_not = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/anyOf.js
-var require_anyOf = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_anyOf = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const def = {
 		keyword: "anyOf",
@@ -11488,7 +11466,7 @@ var require_anyOf = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/oneOf.js
-var require_oneOf = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_oneOf = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -11536,7 +11514,7 @@ var require_oneOf = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/allOf.js
-var require_allOf = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_allOf = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const util_1 = require_util();
 	const def = {
@@ -11563,7 +11541,7 @@ var require_allOf = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/if.js
-var require_if = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_if = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const util_1 = require_util();
@@ -11621,7 +11599,7 @@ var require_if = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/thenElse.js
-var require_thenElse = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_thenElse = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const util_1 = require_util();
 	const def = {
@@ -11636,7 +11614,7 @@ var require_thenElse = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/applicator/index.js
-var require_applicator = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_applicator = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const additionalItems_1 = require_additionalItems();
 	const prefixItems_1 = require_prefixItems();
@@ -11678,7 +11656,7 @@ var require_applicator = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/format/format.js
-var require_format$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_format$1 = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const def = {
@@ -11768,7 +11746,7 @@ var require_format$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/format/index.js
-var require_format = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_format = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const format = [require_format$1().default];
 	exports.default = format;
@@ -11776,7 +11754,7 @@ var require_format = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/metadata.js
-var require_metadata = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_metadata = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.contentVocabulary = exports.metadataVocabulary = void 0;
 	exports.metadataVocabulary = [
@@ -11797,7 +11775,7 @@ var require_metadata = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/draft7.js
-var require_draft7 = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_draft7 = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const core_1 = require_core();
 	const validation_1 = require_validation();
@@ -11817,7 +11795,7 @@ var require_draft7 = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/discriminator/types.js
-var require_types = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_types = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.DiscrError = void 0;
 	var DiscrError;
@@ -11829,7 +11807,7 @@ var require_types = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/vocabularies/discriminator/index.js
-var require_discriminator = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_discriminator = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const codegen_1 = require_codegen();
 	const types_1 = require_types();
@@ -11924,7 +11902,7 @@ var require_discriminator = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/refs/json-schema-draft-07.json
-var require_json_schema_draft_07 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_json_schema_draft_07 = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	module.exports = {
 		"$schema": "http://json-schema.org/draft-07/schema#",
 		"$id": "http://json-schema.org/draft-07/schema#",
@@ -12063,7 +12041,7 @@ var require_json_schema_draft_07 = /* @__PURE__ */ __commonJSMin(((exports, modu
 
 //#endregion
 //#region node_modules/.pnpm/ajv@8.18.0/node_modules/ajv/dist/ajv.js
-var require_ajv = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_ajv = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.MissingRefError = exports.ValidationError = exports.CodeGen = exports.Name = exports.nil = exports.stringify = exports.str = exports._ = exports.KeywordCxt = exports.Ajv = void 0;
 	const core_1 = require_core$1();
@@ -12156,7 +12134,7 @@ var require_ajv = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.18.0/node_modules/ajv-formats/dist/formats.js
-var require_formats = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_formats = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.formatNames = exports.fastFormats = exports.fullFormats = void 0;
 	function fmtDef(validate, compare) {
@@ -12345,7 +12323,7 @@ var require_formats = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.18.0/node_modules/ajv-formats/dist/limit.js
-var require_limit = /* @__PURE__ */ __commonJSMin(((exports) => {
+var require_limit = /* @__PURE__ */ require_protocol.__commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.formatLimitDefinition = void 0;
 	const ajv_1 = require_ajv();
@@ -12425,7 +12403,7 @@ var require_limit = /* @__PURE__ */ __commonJSMin(((exports) => {
 
 //#endregion
 //#region node_modules/.pnpm/ajv-formats@3.0.1_ajv@8.18.0/node_modules/ajv-formats/dist/index.js
-var require_dist = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+var require_dist = /* @__PURE__ */ require_protocol.__commonJSMin(((exports, module) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	const formats_1 = require_formats();
 	const limit_1 = require_limit();
@@ -12460,8 +12438,8 @@ var require_dist = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 
 //#endregion
 //#region node_modules/.pnpm/@modelcontextprotocol+sdk@1.29.0_zod@4.3.6/node_modules/@modelcontextprotocol/sdk/dist/esm/validation/ajv-provider.js
-var import_ajv = /* @__PURE__ */ __toESM(require_ajv(), 1);
-var import_dist = /* @__PURE__ */ __toESM(require_dist(), 1);
+var import_ajv = /* @__PURE__ */ require_protocol.__toESM(require_ajv(), 1);
+var import_dist = /* @__PURE__ */ require_protocol.__toESM(require_dist(), 1);
 function createDefaultAjvInstance() {
 	const ajv = new import_ajv.default({
 		strict: false,
@@ -13234,92 +13212,242 @@ var StdioServerTransport = class {
 };
 
 //#endregion
-//#region src/wire/types.ts
-const MESSAGE_TYPES = {
-	TEXT: "text",
-	REQUEST: "request",
-	RESPONSE: "response",
-	HEARTBEAT: "heartbeat",
-	STATUS: "status"
-};
-const URGENCY_LEVELS = {
-	URGENT: "urgent",
-	DIRECTIVE: "directive",
-	ACTIVE: "active",
-	BACKGROUND: "background"
-};
-const URGENCY_PRIORITY = {
-	[URGENCY_LEVELS.URGENT]: 0,
-	[URGENCY_LEVELS.DIRECTIVE]: 1,
-	[URGENCY_LEVELS.ACTIVE]: 2,
-	[URGENCY_LEVELS.BACKGROUND]: 3
-};
+//#region src/wire/relay-client.ts
+function createRelayClient(config$1) {
+	const baseUrl = config$1.baseUrl;
+	const pollTimeoutMs = config$1.pollTimeoutMs || 25e3;
+	let connected = false;
+	let polling = false;
+	let pollAbort = null;
+	async function register(sessionId, identity, capabilities) {
+		try {
+			const response = await fetch(`${baseUrl}/register`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					sessionId,
+					identity,
+					capabilities
+				})
+			});
+			connected = response.ok;
+			return response.ok;
+		} catch {
+			connected = false;
+			return false;
+		}
+	}
+	async function unregister(sessionId) {
+		connected = false;
+		polling = false;
+		if (pollAbort) {
+			pollAbort.abort();
+			pollAbort = null;
+		}
+		try {
+			return (await fetch(`${baseUrl}/unregister`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ sessionId })
+			})).ok;
+		} catch {
+			return false;
+		}
+	}
+	async function send(envelope) {
+		try {
+			const response = await fetch(`${baseUrl}/send`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(envelope)
+			});
+			if (!response.ok) return { delivered: false };
+			return { delivered: (await response.json()).delivered };
+		} catch {
+			return { delivered: false };
+		}
+	}
+	async function poll(sessionId, timeout) {
+		try {
+			const t = timeout || pollTimeoutMs;
+			const abort = new AbortController();
+			pollAbort = abort;
+			const response = await fetch(`${baseUrl}/poll?sessionId=${encodeURIComponent(sessionId)}&timeout=${t}`, { signal: abort.signal });
+			if (!response.ok) return { messages: [] };
+			return await response.json();
+		} catch {
+			return { messages: [] };
+		}
+	}
+	async function discover() {
+		try {
+			const response = await fetch(`${baseUrl}/sessions`);
+			if (!response.ok) return { sessions: [] };
+			return await response.json();
+		} catch {
+			return { sessions: [] };
+		}
+	}
+	async function health() {
+		try {
+			const response = await fetch(`${baseUrl}/health`);
+			if (!response.ok) return {
+				status: "error",
+				sessions: 0,
+				uptime: 0
+			};
+			return await response.json();
+		} catch {
+			return {
+				status: "unreachable",
+				sessions: 0,
+				uptime: 0
+			};
+		}
+	}
+	function startPollLoop(sessionId, onMessage) {
+		polling = true;
+		(async () => {
+			let backoff = 1e3;
+			while (polling && connected) try {
+				pollAbort = new AbortController();
+				const response = await fetch(`${baseUrl}/poll?sessionId=${encodeURIComponent(sessionId)}&timeout=${pollTimeoutMs}`, { signal: pollAbort.signal });
+				if (!response.ok) {
+					await new Promise((r) => setTimeout(r, backoff));
+					backoff = Math.min(backoff * 2, 3e4);
+					continue;
+				}
+				backoff = 1e3;
+				const data = await response.json();
+				for (const msg of data.messages) onMessage(msg);
+			} catch (e) {
+				if (e.name === "AbortError") break;
+				await new Promise((r) => setTimeout(r, backoff));
+				backoff = Math.min(backoff * 2, 3e4);
+			}
+		})();
+	}
+	function stopPollLoop() {
+		polling = false;
+		if (pollAbort) {
+			pollAbort.abort();
+			pollAbort = null;
+		}
+	}
+	function isConnected() {
+		return connected;
+	}
+	return {
+		register,
+		unregister,
+		send,
+		poll,
+		discover,
+		health,
+		startPollLoop,
+		stopPollLoop,
+		isConnected
+	};
+}
 
 //#endregion
-//#region src/wire/protocol.ts
-const META_KEY_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
-const VALID_TYPES = new Set(Object.values(MESSAGE_TYPES));
-const VALID_URGENCIES = new Set(Object.values(URGENCY_LEVELS));
-function createEnvelope(input) {
-	if (!input.from) return {
-		ok: false,
-		error: "Missing required field: from"
-	};
-	if (!input.to) return {
-		ok: false,
-		error: "Missing required field: to"
-	};
-	if (!input.type) return {
-		ok: false,
-		error: "Missing required field: type"
-	};
-	if (!VALID_TYPES.has(input.type)) return {
-		ok: false,
-		error: `Invalid message type: ${input.type}`
-	};
-	const urgency = input.urgency || URGENCY_LEVELS.ACTIVE;
-	if (!VALID_URGENCIES.has(urgency)) return {
-		ok: false,
-		error: `Invalid urgency level: ${input.urgency}`
-	};
-	return {
-		ok: true,
-		value: {
-			id: node_crypto.randomUUID(),
-			from: input.from,
-			to: input.to,
-			type: input.type,
-			urgency,
-			payload: input.payload,
-			timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-			correlationId: input.correlationId ?? null
+//#region src/wire/relay-lifecycle.ts
+const WIRE_DIR = node_path.join(node_os.homedir(), ".claude-governance", "wire");
+const PID_FILE = node_path.join(WIRE_DIR, "relay.pid");
+const PORT_FILE = node_path.join(WIRE_DIR, "relay.port");
+function isRelayRunning() {
+	try {
+		const pid = parseInt(node_fs.readFileSync(PID_FILE, "utf8").trim(), 10);
+		if (isNaN(pid)) return false;
+		process.kill(pid, 0);
+		return true;
+	} catch (err) {
+		if (err.code === "EPERM") return true;
+		return false;
+	}
+}
+function getRelayPort() {
+	try {
+		const port = parseInt(node_fs.readFileSync(PORT_FILE, "utf8").trim(), 10);
+		return isNaN(port) ? null : port;
+	} catch {
+		return null;
+	}
+}
+function cleanStaleState() {
+	if (isRelayRunning()) return;
+	try {
+		node_fs.unlinkSync(PID_FILE);
+	} catch {}
+	try {
+		node_fs.unlinkSync(PORT_FILE);
+	} catch {}
+}
+function startRelay(relayScript) {
+	return new Promise((resolve, reject) => {
+		node_fs.mkdirSync(WIRE_DIR, { recursive: true });
+		(0, node_child_process.spawn)("node", [relayScript], {
+			detached: true,
+			stdio: "ignore",
+			env: { ...process.env }
+		}).unref();
+		const maxWait = 1e4;
+		const interval = 100;
+		let elapsed = 0;
+		const check = setInterval(() => {
+			elapsed += interval;
+			const port = getRelayPort();
+			if (port !== null) {
+				clearInterval(check);
+				resolve(port);
+				return;
+			}
+			if (elapsed >= maxWait) {
+				clearInterval(check);
+				reject(/* @__PURE__ */ new Error("Relay failed to start within 10s"));
+			}
+		}, interval);
+	});
+}
+async function ensureRelay(relayScript) {
+	if (isRelayRunning()) {
+		const port = getRelayPort();
+		if (port !== null) try {
+			if ((await fetch(`http://127.0.0.1:${port}/health`)).ok) return port;
+		} catch {}
+	}
+	cleanStaleState();
+	try {
+		return await startRelay(relayScript);
+	} catch (err) {
+		if (isRelayRunning()) {
+			const port = getRelayPort();
+			if (port !== null) return port;
 		}
-	};
-}
-function filterMetaKeys(meta$2) {
-	const filtered = {};
-	for (const [key, value] of Object.entries(meta$2)) if (META_KEY_REGEX.test(key)) filtered[key] = value;
-	return filtered;
-}
-function envelopeToMeta(envelope) {
-	const meta$2 = {
-		envelope_id: envelope.id,
-		message_type: envelope.type,
-		urgency: envelope.urgency,
-		sender: envelope.from
-	};
-	if (envelope.correlationId) meta$2.correlation_id = envelope.correlationId;
-	return filterMetaKeys(meta$2);
+		throw err;
+	}
 }
 
 //#endregion
 //#region src/wire/server.ts
-const SESSION_ID = `wire-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function resolveSessionId() {
+	if (process.env.WIRE_SESSION_NAME) return process.env.WIRE_SESSION_NAME;
+	return `${node_path.basename(process.cwd())}-${Math.random().toString(36).slice(2, 6)}`;
+}
+function resolveRelayScript() {
+	const serverScript = process.argv[1];
+	if (serverScript) return node_path.join(node_path.dirname(node_path.resolve(serverScript)), "wire-relay.cjs");
+	return "wire-relay.cjs";
+}
+const SESSION_ID = resolveSessionId();
+const RELAY_SCRIPT = resolveRelayScript();
 const startTime = Date.now();
 const messageLog = [];
+let relayClient = null;
+let relayPort = null;
 const server = new Server({
 	name: "wire",
-	version: "0.1.0"
+	version: "0.2.0"
 }, {
 	capabilities: {
 		tools: {},
@@ -13330,58 +13458,71 @@ const server = new Server({
 		"Messages from other sessions arrive as <channel source=\"wire\" ...> in your conversation.",
 		"To send a message to another session, use the wire_send tool.",
 		"To check Wire connection status, use the wire_status tool.",
+		"To discover other connected sessions, use the wire_discover tool.",
 		"Your session ID is available via wire_status — share it so others can message you.",
 		"Wire messages have urgency levels: urgent (immediate), directive, active (default), background.",
 		"Messages have types: text (general), request (expects response), response, heartbeat, status.",
 		"When you receive a request-type message, respond using wire_send with type \"response\" and the correlation_id from the original."
 	].join("\n")
 });
-const TOOLS = [{
-	name: "wire_send",
-	description: "Send a message to another Claude Code session via Wire.",
-	inputSchema: {
-		type: "object",
-		properties: {
-			to: {
-				type: "string",
-				description: "Recipient session ID, or \"broadcast\" to send to all connected sessions."
+const TOOLS = [
+	{
+		name: "wire_send",
+		description: "Send a message to another Claude Code session via Wire.",
+		inputSchema: {
+			type: "object",
+			properties: {
+				to: {
+					type: "string",
+					description: "Recipient session ID, or \"broadcast\" to send to all connected sessions."
+				},
+				message: {
+					type: "string",
+					description: "The message content to send."
+				},
+				type: {
+					type: "string",
+					enum: Object.values(require_protocol.MESSAGE_TYPES),
+					description: "Message type. Defaults to \"text\"."
+				},
+				urgency: {
+					type: "string",
+					enum: Object.values(require_protocol.URGENCY_LEVELS),
+					description: "Urgency level. Defaults to \"active\"."
+				},
+				correlation_id: {
+					type: "string",
+					description: "For response-type messages, the envelope_id of the message being replied to."
+				}
 			},
-			message: {
-				type: "string",
-				description: "The message content to send."
-			},
-			type: {
-				type: "string",
-				enum: Object.values(MESSAGE_TYPES),
-				description: `Message type. Defaults to "text".`
-			},
-			urgency: {
-				type: "string",
-				enum: Object.values(URGENCY_LEVELS),
-				description: `Urgency level. Defaults to "active".`
-			},
-			correlation_id: {
-				type: "string",
-				description: "For response-type messages, the envelope_id of the message being replied to."
-			}
-		},
-		required: ["to", "message"]
+			required: ["to", "message"]
+		}
+	},
+	{
+		name: "wire_discover",
+		description: "Discover other Claude Code sessions connected to Wire.",
+		inputSchema: {
+			type: "object",
+			properties: {}
+		}
+	},
+	{
+		name: "wire_status",
+		description: "Check Wire connection status, session ID, relay health, and message history.",
+		inputSchema: {
+			type: "object",
+			properties: { include_log: {
+				type: "boolean",
+				description: "Include recent message log in the response. Defaults to false."
+			} }
+		}
 	}
-}, {
-	name: "wire_status",
-	description: "Check Wire connection status, session ID, and message history.",
-	inputSchema: {
-		type: "object",
-		properties: { include_log: {
-			type: "boolean",
-			description: "Include recent message log in the response. Defaults to false."
-		} }
-	}
-}];
+];
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	const { name, arguments: args } = request.params;
 	if (name === "wire_send") return handleWireSend(args);
+	if (name === "wire_discover") return handleWireDiscover();
 	if (name === "wire_status") return handleWireStatus(args);
 	return {
 		content: [{
@@ -13392,11 +13533,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	};
 });
 async function handleWireSend(args) {
-	const result = createEnvelope({
+	const result = require_protocol.createEnvelope({
 		from: SESSION_ID,
 		to: args.to,
-		type: args.type || MESSAGE_TYPES.TEXT,
-		urgency: args.urgency || URGENCY_LEVELS.ACTIVE,
+		type: args.type || require_protocol.MESSAGE_TYPES.TEXT,
+		urgency: args.urgency || require_protocol.URGENCY_LEVELS.ACTIVE,
 		payload: args.message,
 		correlationId: args.correlation_id
 	});
@@ -13409,7 +13550,14 @@ async function handleWireSend(args) {
 	};
 	const envelope = result.value;
 	messageLog.push(envelope);
-	const meta$2 = envelopeToMeta(envelope);
+	if (relayClient?.isConnected()) {
+		const sendResult = await relayClient.send(envelope);
+		return { content: [{
+			type: "text",
+			text: `Sent (${envelope.id}) to ${envelope.to} [${envelope.type}/${envelope.urgency}] — ${sendResult.delivered ? "delivered" : "queued"}`
+		}] };
+	}
+	const meta$2 = require_protocol.envelopeToMeta(envelope);
 	try {
 		await server.notification({
 			method: "notifications/claude/channel",
@@ -13421,33 +13569,97 @@ async function handleWireSend(args) {
 	} catch {}
 	return { content: [{
 		type: "text",
-		text: `Sent (${envelope.id}) to ${envelope.to} [${envelope.type}/${envelope.urgency}]`
+		text: `Sent (${envelope.id}) to ${envelope.to} [${envelope.type}/${envelope.urgency}] — local only (no relay)`
 	}] };
 }
-async function handleWireStatus(args) {
-	const uptimeMs = Date.now() - startTime;
-	const uptimeMin = Math.floor(uptimeMs / 6e4);
-	const uptimeSec = Math.floor(uptimeMs % 6e4 / 1e3);
-	const lines = [
-		`Session ID: ${SESSION_ID}`,
-		`Uptime: ${uptimeMin}m ${uptimeSec}s`,
-		`Messages sent: ${messageLog.length}`,
-		`Server version: 0.1.0`,
-		`Protocol: MCP channel (notifications/claude/channel)`
-	];
-	if (args.include_log && messageLog.length > 0) {
-		lines.push("", "Recent messages:");
-		const recent = messageLog.slice(-10);
-		for (const env of recent) lines.push(`  ${env.timestamp} [${env.type}/${env.urgency}] → ${env.to}: ${String(env.payload).substring(0, 80)}`);
+async function handleWireDiscover() {
+	if (!relayClient?.isConnected()) return { content: [{
+		type: "text",
+		text: "Wire relay not connected. No peers discoverable."
+	}] };
+	const result = await relayClient.discover();
+	if (result.sessions.length === 0) return { content: [{
+		type: "text",
+		text: "No sessions connected to Wire relay."
+	}] };
+	const lines = [`Connected sessions (${result.sessions.length}):`];
+	for (const s of result.sessions) {
+		const tag = s.sessionId === SESSION_ID ? " (you)" : "";
+		lines.push(`  ${s.sessionId}${tag} — ${s.identity} [${s.status}]`);
 	}
 	return { content: [{
 		type: "text",
 		text: lines.join("\n")
 	}] };
 }
+async function handleWireStatus(args) {
+	const uptimeMs = Date.now() - startTime;
+	const uptimeMin = Math.floor(uptimeMs / 6e4);
+	const uptimeSec = Math.floor(uptimeMs % 6e4 / 1e3);
+	const connected = relayClient?.isConnected() ?? false;
+	const lines = [
+		`Session ID: ${SESSION_ID}`,
+		`Uptime: ${uptimeMin}m ${uptimeSec}s`,
+		`Messages: ${messageLog.length}`,
+		`Relay: ${connected ? `connected (port ${relayPort})` : "disconnected"}`,
+		"Server version: 0.2.0"
+	];
+	if (connected && relayClient) {
+		const health = await relayClient.health();
+		lines.push(`Relay peers: ${health.sessions}`);
+		lines.push(`Relay uptime: ${health.uptime}s`);
+	}
+	if (args.include_log && messageLog.length > 0) {
+		lines.push("", "Recent messages:");
+		const recent = messageLog.slice(-10);
+		for (const env of recent) {
+			const dir = env.from === SESSION_ID ? "→" : "←";
+			const peer = env.from === SESSION_ID ? env.to : env.from;
+			lines.push(`  ${env.timestamp} [${env.type}/${env.urgency}] ${dir} ${peer}: ${String(env.payload).substring(0, 80)}`);
+		}
+	}
+	return { content: [{
+		type: "text",
+		text: lines.join("\n")
+	}] };
+}
+function handleIncomingMessage(envelope) {
+	messageLog.push(envelope);
+	const meta$2 = require_protocol.envelopeToMeta(envelope);
+	server.notification({
+		method: "notifications/claude/channel",
+		params: {
+			content: `[Wire from ${envelope.from}] ${String(envelope.payload)}`,
+			meta: meta$2
+		}
+	}).catch(() => {});
+}
+async function connectToRelay() {
+	try {
+		relayPort = await ensureRelay(RELAY_SCRIPT);
+		relayClient = createRelayClient({ baseUrl: `http://127.0.0.1:${relayPort}` });
+		if (await relayClient.register(SESSION_ID, SESSION_ID, ["send", "receive"])) relayClient.startPollLoop(SESSION_ID, handleIncomingMessage);
+	} catch {}
+}
+async function disconnectFromRelay() {
+	if (relayClient) {
+		relayClient.stopPollLoop();
+		await relayClient.unregister(SESSION_ID);
+		relayClient = null;
+	}
+}
 async function main() {
 	const transport = new StdioServerTransport();
 	await server.connect(transport);
+	await connectToRelay();
+	process.on("SIGTERM", async () => {
+		await disconnectFromRelay();
+		process.exit(0);
+	});
+	process.on("SIGINT", async () => {
+		await disconnectFromRelay();
+		process.exit(0);
+	});
 }
 main().catch((err) => {
 	process.stderr.write(`Wire server fatal: ${err}\n`);

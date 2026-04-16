@@ -48,3 +48,46 @@ export interface EnvelopeInput {
 export type Result<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
+
+export interface RegistryEntry {
+  identity: string;
+  capabilities: string[];
+  connectedAt: number;
+  lastSeen: number;
+  status: 'active' | 'disconnected';
+}
+
+export interface RelayConfig {
+  port: number;
+  host: string;
+  pidFile: string;
+  portFile: string;
+  logFile: string;
+  idleTimeoutMs: number;
+  pollTimeoutMs: number;
+  maxSessions: number;
+}
+
+export interface RegisterRequest {
+  sessionId: string;
+  identity: string;
+  capabilities: string[];
+}
+
+export interface UnregisterRequest {
+  sessionId: string;
+}
+
+export interface PollResponse {
+  messages: Envelope[];
+}
+
+export interface DiscoverResult {
+  sessions: Array<RegistryEntry & { sessionId: string }>;
+}
+
+export interface RelayHealthResponse {
+  status: string;
+  sessions: number;
+  uptime: number;
+}

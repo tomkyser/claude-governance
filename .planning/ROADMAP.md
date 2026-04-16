@@ -514,16 +514,21 @@ fakechat reference implementation [fakechat1]
 - [x] Test end-to-end with `--dangerously-load-development-channels`
 - [x] Verify: send message in → Claude sees `<channel>` tag → Claude replies via tool
 
-### Phase 3.5b: Session Registry & Cross-Session Routing
-- [ ] Port registry from dynamo (register, unregister, lookup, disconnect/reconnect with TTL)
-- [ ] Session discovery mechanism (how does session A find session B?)
-- [ ] Cross-session message routing between Wire MCP servers
-- [ ] Priority queue with urgency-based delivery (from dynamo queue.cjs)
-- [ ] Disconnect buffering — messages held during session absence, delivered on reconnect
+### Phase 3.5b: Session Registry & Cross-Session Routing ✅ COMPLETE
+- [x] Port registry from dynamo (register, unregister, lookup, disconnect/reconnect with TTL)
+- [x] Port priority queue from dynamo (4-tier urgency, configurable depth limits)
+- [x] HTTP relay server (7 endpoints, long-poll, broadcast, port fallback, auto-shutdown)
+- [x] Relay client (fetch-based, poll loop with backoff)
+- [x] Relay lifecycle manager (auto-start, PID coordination, health check)
+- [x] Server integration (relay routing, wire_discover tool, enhanced wire_status)
+- [x] Dual-artifact build (wire-server.cjs + wire-relay.cjs)
+- [x] Integration verified: all endpoints, typecheck, build
+- [x] Disconnect buffering — messages held during session absence, delivered on reconnect
 
 ### Phase 3.5c: Governance Integration
 - [ ] Wire as a claude-governance module
 - [ ] Shim/launch auto-starts Wire MCP server, passes `--dangerously-load-development-channels` flag
+- [ ] Remove user approval checks in interactive session with patch (claude code still heavily gates the channels feature - investigate first)
 - [ ] Verification entries for Wire health in registry.ts
 - [ ] SessionStart hook: Wire readiness check
 - [ ] SessionStop hook: Wire cleanup
@@ -557,9 +562,9 @@ fakechat reference implementation [fakechat1]
 - [ ] Bootstrap Prompt
 ---
 
-## Milestone 4: REPL - ReEval and Perfect
+## Milestone 4: REPL and Tungsten - ReEval and Perfect
 - phases TBD, needs discussion > research > planning
-Notes:
+REPL Notes:
 - node VM vs python vm?
 - the goal is to force PTC (Programmatic Tool Calling)
   - Claude needs to always plan and orchestrate to achieve as much as possible in as few tool calls as possible
@@ -582,6 +587,9 @@ Notes:
       - [ptcDocs1], [advancedToolUse1], [advancedToolUsePost1], [replScratchpad1] — see `.planning/REFERENCES.md`
   - Wire (M-4.5) inter-session communication for agent coordination
 - we need deep system prompt support
+- Tungsten currently does not seem to be leveraged nearly as much as it should be capable of.
+  - there doesn't appear to be any noticeable persistence in use or gains without my explict instruction.
+  - 
 
 
 
@@ -647,10 +655,14 @@ Phase planning TODO
 
 **References:** [versionPinning1], [ccNativeMigration1], [ccCliFlags1] — see `.planning/REFERENCES.md`
 
-- [ ] Phase 6a - Binary backup on CC update
-- [ ] Phase 6b - Version inventory and switching
-- [ ] Phase 6c - Update controls: block/allow/defer CC auto-updates
-- [ ] Phase 6d - Patch compatibility matrix per version
+- [ ] Phase 7a - Binary backup on CC update
+- [ ] Phase 7b - Version inventory and switching
+- [ ] Phase 7c - Update controls: block/allow/defer CC auto-updates
+- [ ] Phase 7d - Working Patch injection across CC versions and support user defined patches
+- [ ] Phase 7e - Tool injection across CC versions and support user defined tools
+- [ ] Phase 7f - Env, hooks, flags, everything else -> user defineable and survives version changes
+- [ ] Phase 7g - Every single thing working across CC versions, our engine should be smart enough to find and patch everything dynamically with not a single comprimise
+- [ ] Phase 7h - Verification of complete functionality across the latest two versions of CC. - Not just signature verification, full testing.
 
 ---
 ### Milestone 7 Retro

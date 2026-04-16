@@ -1,7 +1,10 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: { 'wire-server': 'src/wire/server.ts' },
+  entry: {
+    'wire-server': 'src/wire/server.ts',
+    'wire-relay': 'src/wire/relay-server.ts',
+  },
   format: 'cjs',
   outDir: 'data/wire',
   clean: false,

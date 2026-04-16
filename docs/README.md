@@ -19,7 +19,7 @@ Every claim in these docs is verified against the actual codebase at the stated 
 | [CLI Reference](cli-reference.md) | All commands: apply, check, restore, launch, setup, modules, unpack, repack |
 | [Env Flags](env-flags.md) | The 6 recommended CC environment variables and what they unlock |
 
-## Quick Start
+## Quick Start (WRONG! THIS NEEDS TO REFLECT OUR CURRENT DEVELOPMENT -- NOT NPM WHICH WE DO NOT HAVE CONFIGURED YET -- CLAUDE FIX!)
 
 ```bash
 # Install
