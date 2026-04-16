@@ -822,7 +822,7 @@ function rebuildBunData(
       bytecodeOriginPath: bytecodeOriginPathBytes,
       encoding: isPatchedModule ? 0 : module.encoding,
       loader: module.loader,
-      moduleFormat: isPatchedModule ? 0 : module.moduleFormat,
+      moduleFormat: module.moduleFormat,
       side: module.side,
     });
 

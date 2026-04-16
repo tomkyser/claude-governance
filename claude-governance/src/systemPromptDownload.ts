@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import type { StringsFile } from './systemPromptSync';
 import { PROMPT_CACHE_DIR } from './config';
+import { fileURLToPath } from 'node:url';
 
 /**
  * Downloads the strings file for a given CC version from GitHub
@@ -20,6 +21,22 @@ export async function downloadStringsFile(
     return cached;
   } catch {
     // Cache miss or invalid - proceed to download
+  }
+
+  // Check bundled data directory (ships with claude-governance)
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  const bundledFilePath = path.join(moduleDir, '..', 'data', 'prompts', `prompts-${version}.json`);
+  try {
+    const bundledContent = await fs.readFile(bundledFilePath, 'utf-8');
+    const bundled = JSON.parse(bundledContent) as StringsFile;
+    // Cache the bundled data for next time
+    try {
+      await fs.mkdir(PROMPT_CACHE_DIR, { recursive: true });
+      await fs.writeFile(cacheFilePath, bundledContent, 'utf-8');
+    } catch {}
+    return bundled;
+  } catch {
+    // No bundled data - proceed to download
   }
 
   // Construct the GitHub raw URL
