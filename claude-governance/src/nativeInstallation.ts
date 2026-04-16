@@ -413,6 +413,12 @@ function parseBunDataBlob(bunDataContent: Buffer): {
  * Size is the length of the Bun blob (which itself is [data][OFFSETS][TRAILER]).
  * We detect which format by checking if (headerSize + size) matches the section length.
  */
+function hasBunTrailerAt(sectionData: Buffer, headerSize: number, bunDataSize: number): boolean {
+  const trailerStart = headerSize + bunDataSize - BUN_TRAILER.length;
+  if (trailerStart < 0 || trailerStart + BUN_TRAILER.length > sectionData.length) return false;
+  return sectionData.slice(trailerStart, trailerStart + BUN_TRAILER.length).equals(BUN_TRAILER);
+}
+
 function extractBunDataFromSection(sectionData: Buffer): BunData {
   if (sectionData.length < 4) {
     throw new Error('Section data too small');
@@ -443,7 +449,7 @@ function extractBunDataFromSection(sectionData: Buffer): BunData {
   if (
     sectionData.length >= 8 &&
     expectedLengthU64 <= sectionData.length &&
-    expectedLengthU64 >= sectionData.length - 4096
+    hasBunTrailerAt(sectionData, 8, bunDataSizeU64)
   ) {
     // u64 format matches
     headerSize = 8;
@@ -453,7 +459,7 @@ function extractBunDataFromSection(sectionData: Buffer): BunData {
     );
   } else if (
     expectedLengthU32 <= sectionData.length &&
-    expectedLengthU32 >= sectionData.length - 4096
+    hasBunTrailerAt(sectionData, 4, bunDataSizeU32)
   ) {
     // u32 format matches
     headerSize = 4;
@@ -763,7 +769,8 @@ function rebuildBunData(
   bunData: Buffer,
   bunOffsets: BunOffsets,
   modifiedClaudeJs: Buffer | null,
-  moduleStructSize: number
+  moduleStructSize: number,
+  clearBytecode = false
 ): Buffer {
   // Phase 1: Collect all string data
   const stringsData: Buffer[] = [];
@@ -786,20 +793,26 @@ function rebuildBunData(
 
     // Check if this is claude.js and we have modified contents
     let contentsBytes: Buffer;
+    let bytecodeBytes: Buffer;
     if (modifiedClaudeJs && isClaudeModule(moduleName)) {
       contentsBytes = modifiedClaudeJs;
+      bytecodeBytes = clearBytecode
+        ? Buffer.alloc(0)
+        : getStringPointerContent(bunData, module.bytecode);
     } else {
       contentsBytes = getStringPointerContent(bunData, module.contents);
+      bytecodeBytes = getStringPointerContent(bunData, module.bytecode);
     }
 
     const sourcemapBytes = getStringPointerContent(bunData, module.sourcemap);
-    const bytecodeBytes = getStringPointerContent(bunData, module.bytecode);
     const moduleInfoBytes = getStringPointerContent(bunData, module.moduleInfo);
     const bytecodeOriginPathBytes = getStringPointerContent(
       bunData,
       module.bytecodeOriginPath
     );
 
+    const isPatchedModule =
+      clearBytecode && modifiedClaudeJs && isClaudeModule(moduleName);
     modulesMetadata.push({
       name: nameBytes,
       contents: contentsBytes,
@@ -807,7 +820,7 @@ function rebuildBunData(
       bytecode: bytecodeBytes,
       moduleInfo: moduleInfoBytes,
       bytecodeOriginPath: bytecodeOriginPathBytes,
-      encoding: module.encoding,
+      encoding: isPatchedModule ? 0 : module.encoding,
       loader: module.loader,
       moduleFormat: module.moduleFormat,
       side: module.side,
@@ -1128,14 +1141,36 @@ function repackMachO(
       );
     }
 
-    // Update section content
-    bunSection.content = newSectionData;
-    bunSection.size = BigInt(newSectionData.length);
+    if (sizeDiff <= 0) {
+      debug('repackMachO: New data fits in original section, using raw overwrite');
+      const sectionFileOffset = Number(bunSection.offset);
+      const originalSectionSize = Number(bunSection.size);
+      const binaryData = fs.readFileSync(binPath);
 
-    debug(`repackMachO: Final section size: ${bunSection.size}`);
-    debug(`repackMachO: Writing modified binary to ${outputPath}...`);
+      newSectionData.copy(binaryData, sectionFileOffset);
+      const remaining = originalSectionSize - newSectionData.length;
+      if (remaining > 0) {
+        binaryData.fill(
+          0,
+          sectionFileOffset + newSectionData.length,
+          sectionFileOffset + originalSectionSize
+        );
+      }
 
-    atomicWriteBinary(machoBinary, outputPath, binPath);
+      const tempPath = outputPath + '.tmp';
+      fs.writeFileSync(tempPath, binaryData);
+      const origStat = fs.statSync(binPath);
+      fs.chmodSync(tempPath, origStat.mode);
+      fs.renameSync(tempPath, outputPath);
+    } else {
+      bunSection.content = newSectionData;
+      bunSection.size = BigInt(newSectionData.length);
+
+      debug(`repackMachO: Final section size: ${bunSection.size}`);
+      debug(`repackMachO: Writing modified binary to ${outputPath}...`);
+
+      atomicWriteBinary(machoBinary, outputPath, binPath);
+    }
 
     // Re-sign the binary with an ad-hoc signature
     try {
@@ -1392,7 +1427,8 @@ function repackELFOverlay(
 export function repackNativeInstallation(
   binPath: string,
   modifiedClaudeJs: Buffer,
-  outputPath: string
+  outputPath: string,
+  clearBytecode = false
 ): void {
   LIEF.logging.disable();
   const binary = LIEF.parse(binPath);
@@ -1404,7 +1440,8 @@ export function repackNativeInstallation(
     bunData,
     bunOffsets,
     modifiedClaudeJs,
-    moduleStructSize
+    moduleStructSize,
+    clearBytecode
   );
 
   switch (binary.format) {

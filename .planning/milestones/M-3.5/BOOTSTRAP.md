@@ -8,10 +8,9 @@
 
 ## CRITICAL: Read This First
 
-1. `.planning/journals/session-2026-04-16-f.md` — **COMPLETE root cause analysis + fix spec + verified working components**
-2. `.planning/journals/session-2026-04-16-e.md` — Earlier investigation (bytecode discovery)
-3. `claude-governance/src/patches/index.ts` — Main apply pipeline (needs fetchNpmSource + detection)
-4. `claude-governance/src/nativeInstallation.ts` — rebuildBunData + repackMachO (needs clearBytecode + raw overwrite)
+
+1. `claude-governance/src/patches/index.ts` — Main apply pipeline (needs fetchNpmSource + detection)
+2. `claude-governance/src/nativeInstallation.ts` — rebuildBunData + repackMachO (needs clearBytecode + raw overwrite)
 
 ## Current State
 

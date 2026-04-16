@@ -71,7 +71,8 @@ export async function extractClaudeJsFromNativeInstallation(
 export async function repackNativeInstallation(
   binPath: string,
   modifiedClaudeJs: Buffer,
-  outputPath: string
+  outputPath: string,
+  clearBytecode = false
 ): Promise<void> {
   // The module should already be cached from a prior extractClaudeJsFromNativeInstallation() call
   const mod = await tryLoadNativeInstallationModule();
@@ -81,7 +82,7 @@ export async function repackNativeInstallation(
         'This is unexpected - `extractClaudeJsFromNativeInstallation()` should have been called first.'
     );
   }
-  mod.repackNativeInstallation(binPath, modifiedClaudeJs, outputPath);
+  mod.repackNativeInstallation(binPath, modifiedClaudeJs, outputPath, clearBytecode);
 }
 
 /**

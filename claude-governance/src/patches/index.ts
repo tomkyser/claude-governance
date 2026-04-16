@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import chalk from 'chalk';
 
 import {
@@ -135,6 +136,70 @@ export const escapeIdent = (ident: string): string => {
   return ident.replace(/\$/g, '\\$');
 };
 
+function fetchNpmSource(version: string): Buffer | null {
+  const tmpDir = fsSync.mkdtempSync(path.join(os.tmpdir(), 'claude-gov-npm-'));
+  try {
+    debug(`fetchNpmSource: Downloading @anthropic-ai/claude-code@${version}`);
+    execFileSync(
+      'npm',
+      [
+        'pack',
+        `@anthropic-ai/claude-code@${version}`,
+        '--pack-destination',
+        tmpDir,
+      ],
+      { stdio: 'pipe', timeout: 60_000, cwd: tmpDir }
+    );
+
+    const tgz = fsSync
+      .readdirSync(tmpDir)
+      .find((f: string) => f.endsWith('.tgz'));
+    if (!tgz) return null;
+
+    execFileSync(
+      'tar',
+      ['xzf', path.join(tmpDir, tgz), 'package/cli.js'],
+      { stdio: 'pipe', timeout: 30_000, cwd: tmpDir }
+    );
+
+    const esmPath = path.join(tmpDir, 'package', 'cli.js');
+    if (!fsSync.existsSync(esmPath)) return null;
+
+    const cjsPath = path.join(tmpDir, 'cli.cjs');
+    debug('fetchNpmSource: Transforming ESM to CJS via esbuild');
+    execFileSync(
+      'npx',
+      [
+        'esbuild',
+        esmPath,
+        '--bundle',
+        '--format=cjs',
+        '--platform=node',
+        `--outfile=${cjsPath}`,
+      ],
+      { stdio: 'pipe', timeout: 120_000, cwd: tmpDir }
+    );
+
+    if (!fsSync.existsSync(cjsPath)) {
+      debug('fetchNpmSource: esbuild output not found');
+      return null;
+    }
+
+    const cjsSource = fsSync.readFileSync(cjsPath);
+    debug(`fetchNpmSource: CJS output size: ${cjsSource.length} bytes`);
+    return cjsSource;
+  } catch (error) {
+    debug(
+      `fetchNpmSource: Failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+    return null;
+  } finally {
+    try {
+      fsSync.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {}
+  }
+}
+
 // =============================================================================
 // Main Apply Function
 // =============================================================================
@@ -145,6 +210,7 @@ export const applyCustomization = async (
   patchFilter?: string[] | null
 ): Promise<ApplyCustomizationResult> => {
   let content: string;
+  let clearBytecode = false;
 
   if (ccInstInfo.nativeInstallationPath) {
     let backupExists = false;
@@ -230,6 +296,36 @@ export const applyCustomization = async (
     debug(`Saved original extracted JS from native to: ${origPath}`);
 
     content = claudeJsBuffer.toString('utf8');
+
+    if (content.startsWith('// @bun @bytecode')) {
+      debug(
+        'Detected bytecode-compiled binary, fetching npm source + esbuild transform'
+      );
+      const npmSource = fetchNpmSource(ccInstInfo.version);
+      if (!npmSource) {
+        throw new Error(
+          `Failed to fetch/transform npm source for v${ccInstInfo.version}. ` +
+            'Ensure npm and esbuild are available.'
+        );
+      }
+
+      let cjsContent = npmSource.toString('utf8');
+      if (cjsContent.startsWith('#!')) {
+        cjsContent = cjsContent.replace(/^#![^\n]*\n/, '');
+      }
+      cjsContent = cjsContent.replace(
+        'var import_meta = {};',
+        'var import_meta = { url: require("url").pathToFileURL(__filename).href };'
+      );
+      content =
+        '(function(exports, require, module, __filename, __dirname) {\n' +
+        cjsContent +
+        '\n})';
+      clearBytecode = true;
+      debug(
+        `Bytecode replacement: CJS-wrapped content length = ${content.length}`
+      );
+    }
   } else {
     await restoreClijsFromBackup(ccInstInfo);
 
@@ -399,7 +495,8 @@ export const applyCustomization = async (
     await repackNativeInstallation(
       ccInstInfo.nativeInstallationPath,
       modifiedBuffer,
-      ccInstInfo.nativeInstallationPath
+      ccInstInfo.nativeInstallationPath,
+      clearBytecode
     );
   } else {
     if (!ccInstInfo.cliPath) {
