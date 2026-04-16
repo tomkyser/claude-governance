@@ -490,24 +490,64 @@ do not use the fetch() tool for web sources, fetch tool returns only AI summarie
 ---
 
 ## Milestone 3.5: Wire — Inter-Session Communication
-- Needs planning
-Replaces original UDS Sockets (DCE'd no actual source available only references) plan (https://ccleaks.com/#feature-5) with Wire,
-a superior implementation already built in dynamo (`/Users/tom.kyser/Library/Mobile Documents/com~apple~CloudDocs/dev/dynamo/core/services/wire/`).
 
-Wire uses CC's native Channels API (`notifications/claude/channel`) for inbound message
-delivery — no binary patching needed. Typed envelopes with urgency routing, session
-registry with capabilities/permissions, disconnect buffering with TTL reconnect,
-dual transport (Channels for low-latency, HTTP relay for bulk). Architecturally
-superior to Anthropic's UDS Inbox: networkable, resilient, typed, permissioned.
+Wire replaces Anthropic's DCE'd UDS Inbox with inter-session communication built on
+CC's live Channels API (`notifications/claude/channel`). Bidirectional by design: MCP
+servers send notifications inbound, expose tools for outbound. No binary patching needed
+for the transport — the infrastructure is live and `tengu_harbor` is enabled.
 
-**Integration with Tungsten:** Spawn Claude instances in Tungsten sessions, register
-with Wire, communicate via structured messages instead of screen scraping. Combined
-with REPL and tool injection, this completes the distributed agent platform.
+**Source:** dynamo Wire service [dynamoWire] (2526 lines, 10 files) + Anthropic's
+fakechat reference implementation [fakechat1]
 
-**Integration with Claude Code as a platform:** This will require recreating from scratch, the system wide instructions to not only inform claude of this baseline capability, but to also recreate the features such as coordinator mod, and generally enabling the user to initiate cross session collaboration. Building the fully functional communication layer is NOT enough, claude code must be patched at every layer of depth offered to ensure the LLM uses this. Hooks, tool prompts, system prompts, agent prompts, etc etc, anything and everything. we'll need a /coordinate skill too. 
+**Key research findings (RESEARCH.md):**
+- Channels API confirmed live in v2.1.101 with 6-layer gate (all passable)
+- UDS Inbox fully DCE'd (`feature('UDS_INBOX')`, `ListPeers`, `COORDINATOR_MODE` — all gone)
+- Bidirectional messaging via MCP: notifications inbound, exposed tools outbound
+- `tengu_harbor` already True in cachedGrowthBookFeatures
+- Teammate mailbox (file-based, live) provides patterns for fallback
 
-**Source:** dynamo Wire service (7 files: wire, protocol, registry, transport, relay-server, channel-server, channels-transport)
-**Approach:** Port/adapt from dynamo into claude-governance module system — TBD in phase planning
+### Phase 3.5a: Wire MCP Server — Channel Contract
+- [ ] Build MCP server implementing `claude/channel` capability
+- [ ] Bidirectional: `notifications/claude/channel` inbound, reply/send tools outbound
+- [ ] Typed message protocol with metadata (adapted from dynamo protocol.cjs)
+- [ ] Plugin packaging (`.mcp.json`, server `instructions` field)
+- [ ] Test end-to-end with `--dangerously-load-development-channels`
+- [ ] Verify: send message in → Claude sees `<channel>` tag → Claude replies via tool
+
+### Phase 3.5b: Session Registry & Cross-Session Routing
+- [ ] Port registry from dynamo (register, unregister, lookup, disconnect/reconnect with TTL)
+- [ ] Session discovery mechanism (how does session A find session B?)
+- [ ] Cross-session message routing between Wire MCP servers
+- [ ] Priority queue with urgency-based delivery (from dynamo queue.cjs)
+- [ ] Disconnect buffering — messages held during session absence, delivered on reconnect
+
+### Phase 3.5c: Governance Integration
+- [ ] Wire as a claude-governance module
+- [ ] Shim/launch auto-starts Wire MCP server, passes `--channels` transparently
+- [ ] Verification entries for Wire health in registry.ts
+- [ ] SessionStart hook: Wire readiness check
+- [ ] SessionStop hook: Wire cleanup
+- [ ] Configuration in `~/.claude-governance/`
+
+### Phase 3.5d: Behavioral Integration — Prompts & Instructions
+- [ ] System prompt overrides teaching the model Wire exists and when to use it
+- [ ] Agent prompt updates for Wire awareness
+- [ ] MCP server `instructions` field (fakechat pattern)
+- [ ] Coordinator mode recreation at prompt level (COORDINATOR_MODE is DCE'd)
+- [ ] Model must understand WHEN cross-session collaboration is right, not just HOW
+
+### Phase 3.5e: /coordinate Skill & Tungsten Orchestration
+- [ ] `/coordinate` skill for user-initiated cross-session collaboration
+- [ ] Tungsten spawns Claude instances with automatic Wire registration
+- [ ] Coordinator session assigns work, collects results
+- [ ] End-to-end: `/coordinate` → sessions spawn → collaborate via Wire → report back
+
+### Phase 3.5f: Hardening, Testing & Documentation
+- [ ] Error handling: server crash, session disconnect, Channels disabled, version change
+- [ ] Reconnection scenarios and TTL edge cases
+- [ ] Version resilience verification
+- [ ] Developer docs in `/docs/`
+- [ ] Gap analysis
 
 ---
 ### Milestone 3.5 Retro
