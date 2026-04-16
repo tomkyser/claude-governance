@@ -534,24 +534,39 @@ fakechat reference implementation [fakechat1]
 - [ ] SessionStop hook: Wire cleanup
 - [ ] Configuration in `~/.claude-governance/`
 
-### Phase 3.5d: Behavioral Integration — Prompts & Instructions
+### Phase 3.5d: Add Complete Message Components Control and Patching to Claude Governance
+/Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages
+- [ ] Needs research Planning
+- [ ] This blocks the rest of phase 3
+- [ ] Notes:
+  - [ ] First investigation, why is REPL tool use not appearing in the TUI
+    - [ ] this previously appeared, now it is gone.
+  - [ ] We want to be able to completely override each message component and patch them.
+  - [ ] Must survive across new CC versions so matching strategy must be extremely resiliant.
+  - [ ] Start with an example of restoring thinking blocks in the UI
+    - [ ] see around line 122: /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages/SystemTextMessage.tsx
+  - [ ] Governance users must be able to edit these components on their own and change them to their liking
+    - [ ] we can offer defaults, but ultimately provide a way for users to do this own their own
+
+### Phase 3.5e: Behavioral Integration — Prompts & Instructions
 - [ ] System prompt overrides teaching the model Wire exists and when to use it
+- [ ] Claude Governance needs halt and catch fire 100% verification that wire is functioning correctly during use
+  - [ ] statusline integration
 - [ ] Agent prompt updates for Wire awareness
 - [ ] MCP server `instructions` field (fakechat pattern)
-- [ ] Coordinator mode recreation at prompt level (COORDINATOR_MODE is DCE'd)
+- [ ] Coordinator mode recreation at prompt level, instruction level, and claude code tool and system level (COORDINATOR_MODE is DCE'd) -- deeply research.
 - [ ] Model must understand WHEN cross-session collaboration is right, not just HOW
-- [ ] Research: UI display and further examples and reference regarding the DCE'd UDP Socket's based comms
+- [ ] Research: further examples and reference regarding the DCE'd UDP Socket's based comms
   - [ ] /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/constants/xml.ts
   - [ ] UDS_INBOX | UserCrossSessionMessage | /Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/claude-code-source-code/src/components/messages/UserTextMessage.tsx
-  - [ ] 
 
-### Phase 3.5e: /coordinate Skill & Tungsten Orchestration
+### Phase 3.5f: /coordinate Skill & Tungsten Orchestration
 - [ ] `/coordinate` skill for user-initiated cross-session collaboration
 - [ ] Tungsten spawns Claude instances with automatic Wire registration
 - [ ] Coordinator session assigns work, collects results
 - [ ] End-to-end: `/coordinate` → sessions spawn → collaborate via Wire → report back
 
-### Phase 3.5f: Hardening, Testing & Documentation
+### Phase 3.5g: Hardening, Testing & Documentation
 - [ ] Error handling: server crash, session disconnect, Channels disabled, version change
 - [ ] Reconnection scenarios and TTL edge cases
 - [ ] Version resilience verification
@@ -595,27 +610,9 @@ REPL Notes:
   - there doesn't appear to be any noticeable persistence in use or gains without my explict instruction.
   - 
 
-## Milestone 5: HTTP Proxy Layer
+~~## Milestone 5: HTTP Proxy Layer~~ DEFERRED to post launch
 
-**References:** [billingProxy1], [cliProxy1], [promptCaching1], [cacheFix1], [cacheFixTool1], [usageTracker1], [sessionViewer1] — see `.planning/REFERENCES.md`
 
-- [ ] Phase 5a - Transparent proxy setup (CC → proxy → Anthropic)
-- [ ] Phase 5b - Request/response logging
-- [ ] Phase 5c - Cache TTL visibility and control
-- [ ] Phase 5d - Static prompt extraction from requests
-- [ ] Phase 5e - Usage monitoring (tokens, cost, effort level, model)
-- [ ] Phase 5f - Context Snipping Tool
-  - [ ] Design spec (clean-room)
-  - [ ] Selective context removal — user or agent marks conversation segments for eviction
-  - [ ] Survives compaction (snipped content stays gone, not re-summarized)
-  - [ ] Integration with tool injection mechanism (2a)
-
----
-### Milestone 5 Retro
-- [ ] Commentary
-- [ ] Gap analysis
-- [ ] Housekeeping
-- [ ] Bootstrap Prompt
 ---
 
 ## Milestone 6: Feature Flag Control
@@ -789,6 +786,30 @@ Phase planning TODO
 
 ---
 ### 1.3.0 Retro
+- [ ] Commentary
+- [ ] Gap analysis
+- [ ] Housekeeping
+- [ ] Bootstrap Prompt
+---
+
+
+## 1.4.0: HTTP Proxy Layer
+
+**References:** [billingProxy1], [cliProxy1], [promptCaching1], [cacheFix1], [cacheFixTool1], [usageTracker1], [sessionViewer1] — see `.planning/REFERENCES.md`
+
+- [ ] Phase 5a - Transparent proxy setup (CC → proxy → Anthropic)
+- [ ] Phase 5b - Request/response logging
+- [ ] Phase 5c - Cache TTL visibility and control
+- [ ] Phase 5d - Static prompt extraction from requests
+- [ ] Phase 5e - Usage monitoring (tokens, cost, effort level, model)
+- [ ] Phase 5f - Context Snipping Tool
+  - [ ] Design spec (clean-room)
+  - [ ] Selective context removal — user or agent marks conversation segments for eviction
+  - [ ] Survives compaction (snipped content stays gone, not re-summarized)
+  - [ ] Integration with tool injection mechanism (2a)
+
+---
+### 1.4.0 Retro
 - [ ] Commentary
 - [ ] Gap analysis
 - [ ] Housekeeping
