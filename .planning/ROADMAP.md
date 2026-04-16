@@ -573,6 +573,7 @@ fakechat reference implementation [fakechat1]
 - [ ] Version resilience verification
 - [ ] Developer docs in `/docs/`
 - [ ] Gap analysis
+- [ ] Need to retroactively write a spec doc for this
 
 ---
 ### Milestone 3.5 Retro
