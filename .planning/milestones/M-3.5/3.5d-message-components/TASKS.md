@@ -1,6 +1,6 @@
 # Phase 3.5d Tasks — Message Components Control
 
-Status: ACT IN PROGRESS — P0 VERIFIED, P1 COMPLETE (27/27 SOVEREIGN)
+Status: BLOCKED — P1 patches correct (27/27 SOVEREIGN) but repack crashes binary. Fix needed in nativeInstallation.ts rebuildBunData().
 
 ---
 

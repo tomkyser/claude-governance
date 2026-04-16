@@ -2,7 +2,7 @@
 
 Last updated: 2026-04-16
 
-## Status: Phases 3.5a-c COMPLETE — Phase 3.5d ACT IN PROGRESS (P0+P1 complete, 27/27 SOVEREIGN)
+## Status: Phases 3.5a-c COMPLETE — Phase 3.5d BLOCKED (repack crash, fix needed in nativeInstallation.ts)
 
 ## Key Discoveries
 

@@ -2,64 +2,53 @@
 
 ---
 
-**Status:** Phases 3.5a-c COMPLETE — Phase 3.5d P0+P1 COMPLETE (27/27 SOVEREIGN)
-**Baseline:** 27/27 SOVEREIGN on CC 2.1.101
-**Previous milestone:** M-3 (System Prompt Control) — COMPLETE
+**Status:** BLOCKED — Repack crash. P1 patches correct (27/27 SOVEREIGN) but binary crashes after repack.
+**Baseline:** 24/24 SOVEREIGN working, 27/27 SOVEREIGN patched-but-broken
+**Blocking Issue:** `rebuildBunData()` in nativeInstallation.ts reorders module strings, breaking Bun bytecode validation
 
-## Read These Files (In This Order)
+## CRITICAL: Read This First
 
-1. `.planning/milestones/M-3.5/3.5d-message-components/TASKS.md` — **P0+P1 complete, T11 verify next**
-2. `.planning/milestones/M-3.5/3.5d-message-components/PLANNING.md` — Approach per deliverable
-3. `.planning/milestones/M-3.5/3.5d-message-components/CONTEXT.md` — Phase context + decisions
-4. `.planning/milestones/M-3.5/CONTEXT.md` — Milestone-level shared state
+1. `.planning/journals/session-2026-04-16-d.md` — **Full root cause analysis and fix plan**
+2. `.planning/milestones/M-3.5/3.5d-message-components/TASKS.md` — Task status
+3. `claude-governance/src/nativeInstallation.ts` — File that needs fixing (rebuildBunData ~line 786)
 
-## What Was Built
+## Current State
 
-### P0: Tool Visibility (PATCH 14, T1-T6 verified)
-- Default `renderToolUseMessage` returns visible React element (cyan text)
-- `globalThis.__govReactRefs` captures React/Ink refs in tool loader scope
-- REPL/Tungsten per-tool renderers
-- Binary patch removes empty-name suppression
+- **Binary**: Unpatched 2.1.101 (restored via manual cp from backup)
+- **Shim**: ENABLED — will auto-reapply broken patches on next `claude` invocation!
+  - To bypass: `mv ~/.claude-governance/bin/claude ~/.claude-governance/bin/claude.bak`
+  - To restore: `mv ~/.claude-governance/bin/claude.bak ~/.claude-governance/bin/claude`
+- **Code**: HEAD at commit 3d374e6 with thinking patches
+- **Thinking patches**: Implementation correct, 27/27 SOVEREIGN verified against extracted JS
+- **Repack**: Broken — produces binary that Bun rejects
 
-### P1: Thinking Restoration (PATCHES 15-17, T7-T10b complete)
-- **PATCH 15 (T7)**: SystemTextMessage thinking dispatch — inline renderer replaces null return
-  - Uses r6/m/L from local scope (ql_ not accessible cross-module)
-  - Shows "∴ Thinking…" header + first 500 chars of content
-  - Anchor: `q.subtype==="thinking")return null;if(q.subtype==="bridge_status")` (unique)
-- **PATCH 16 (T10)**: AssistantThinkingMessage fullshow — dead-codes `if(!(O||T))` guard
-  - Stub branch ("∴ Thinking" + Ctrl+O hint) never executes
-  - Full thinking content always rendered via Markdown component
-- **PATCH 17 (T10b)**: Assistant message thinking dispatch guard removal
-  - Removes `if(!j&&!$)return null` so thinking always passes to ql_
-- **T8**: ThinkingMessage identified as `ql_` (AssistantThinkingMessage)
-- **T9**: CLOSED — 30s streaming timeout does not exist. thinkingClearLatched (1hr) affects API only.
+## The Fix
 
-### Key Implementation Details
-- Three separate thinking suppression points patched:
-  1. SystemTextMessage subtype dispatch → null (PATCH 15)
-  2. AssistantMessage case dispatch → null when !verbose && !transcript (PATCH 17)
-  3. ql_ component → shows stub when !verbose && !transcript (PATCH 16)
-- Inline renderer needed for SystemTextMessage because ql_ is in a different module scope
-- `r6` = React, `m` = Box, `L` = Text in SystemTextMessage scope
+### Root Cause
+`rebuildBunData()` writes module strings in a fixed order: name, contents, sourcemap, bytecode.
+The ORIGINAL binary has bytecode BEFORE contents (offset 120 vs 111,477,232).
+This reordering breaks Bun's bytecode-to-source position validation.
+At 24/24 (7.1KB added) Bun tolerates it. At 27/27 (7.5KB) it doesn't.
 
-## What's Next — P1 Verify Phase
+### Fix: Preserve Original String Ordering
+Modify `rebuildBunData()` to sort strings by their ORIGINAL offsets before writing.
+This preserves the bytecode→content layout that Bun expects.
 
-### Step 4: Verify
-- T11: Interactive TUI verification — trigger thinking and confirm blocks render visually
-- Test: use "think hard about" or effort:max to trigger thinking blocks
-- Verify full content shown (not just stub)
+See journal for full implementation plan (Option A).
 
-### Step 5: Gap Analysis
-- Check: does thinking render correctly during streaming?
-- Check: does thinking content truncation (500 chars in SystemTextMessage) work?
-- Edge cases: redacted_thinking blocks, error states
+### After Fix
+1. Build: `cd claude-governance && pnpm build`
+2. Restore binary: `/bin/cp ~/.claude-governance/native-binary.backup ~/.local/share/claude/versions/2.1.101`
+3. Apply: `node claude-governance/dist/index.mjs -a`
+4. Verify: `/Users/tom.kyser/.local/share/claude/versions/2.1.101 --version` should output `2.1.101 (Claude Code)`
+5. Full check: `node claude-governance/dist/index.mjs check` → 27/27 SOVEREIGN
 
-### Step 6: Housekeeping
-- Update all tracking docs
-- Commit and push
-- Bootstrap for P2 (Override System) or next milestone phase
+### Then Continue P1 Verify
+- T11: Interactive TUI verification of thinking blocks
+- Gap analysis for P1
+- Housekeeping + bootstrap for P2
 
-### Build
+## Build
 - `cd claude-governance && pnpm build` → full project build
 - `node claude-governance/dist/index.mjs -a` → apply patches
-- `node claude-governance/dist/index.mjs check` → 27/27 SOVEREIGN
+- `node claude-governance/dist/index.mjs check` → SOVEREIGN check

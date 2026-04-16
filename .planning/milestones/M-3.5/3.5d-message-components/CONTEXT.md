@@ -1,7 +1,7 @@
 # Phase 3.5d Context — Message Components Control
 
 Date: 2026-04-16
-Status: ACT IN PROGRESS — P0+P1 COMPLETE (27/27 SOVEREIGN), P1 verify+housekeeping next
+Status: BLOCKED — P1 correct but repack broken. Fix rebuildBunData() string ordering in nativeInstallation.ts
 Previous: 3.5c (Governance Integration)
 
 ## Scope
