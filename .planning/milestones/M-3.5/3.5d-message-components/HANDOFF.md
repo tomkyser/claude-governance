@@ -1,6 +1,6 @@
 # Phase 3.5d Handoff — Message Components Control
 
-**Status**: P3 INCOMPLETE — two gap phases required
+**Status**: P3-GAP-REPL COMPLETE — two gap phases required
 **SOVEREIGN**: 30/30
 **Commit**: HEAD on master (post-gap-planning)
 **Date**: 2026-04-17
@@ -19,7 +19,7 @@
 - T23: Full TUI verification — REPL invisible, components untested
 
 ## Gap Phase 1: P3-GAP-REPL (REPL TUI Visibility)
-REPL tool calls are invisible in TUI. Three mechanisms:
+COMPLETE. Two binary patches: repl-visibility.ts + repl-transcript.ts.
 1. isAbsorbedSilently=true in collapseReadSearch — REPL absorbed silently
 2. isReplModeEnabled() returns false — handled by env flag CLAUDE_CODE_REPL=1
 3. transformMessagesForExternalTranscript strips REPL pairs from saved transcripts

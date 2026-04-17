@@ -22,16 +22,16 @@ SOVEREIGN: 30/30 (patches work, but component system untested, REPL invisible)
 - [x] T21: Verification registry entry for unhide-commands
 
 ## P3-GAP-REPL: REPL Tool TUI Visibility
-> Gap phase. REPL tool calls are invisible in TUI despite working functionally.
+> Gap phase. REPL tool calls were invisible in TUI. COMPLETE — 2 patches, TUI + resume verified.
 > Root cause: collapseReadSearch sets isAbsorbedSilently=true for REPL.
 > Env flag CLAUDE_CODE_REPL=1 enables REPL mode but does NOT fix TUI visibility.
 > Source: sessionStorage.ts:4372-4448, collapseReadSearch.ts
 
-- [ ] T-REPL-1: Patch isAbsorbedSilently for REPL from true→false in zJ6()
+- [x] T-REPL-1: Patch isAbsorbedSilently for REPL from true→false in zJ6()
 - [~] T-REPL-2: SKIPPED — env flag CLAUDE_CODE_REPL=1 handles isReplModeEnabled
-- [ ] T-REPL-3: Patch transformMessagesForExternalTranscript to preserve REPL calls
-- [ ] T-REPL-4: Verify REPL tool call renders visibly in TUI
-- [ ] T-REPL-5: Verify REPL calls persist in transcript on --resume
+- [x] T-REPL-3: Patch D_8() to bypass REPL stripping from external transcripts
+- [x] T-REPL-4: Verify REPL tool call renders visibly in TUI
+- [x] T-REPL-5: Verify REPL calls persist in transcript on --resume
 
 ## P3-GAP: Component Override Verification
 > Gap phase. T18/T20 were rubber-stamped without behavioral verification.

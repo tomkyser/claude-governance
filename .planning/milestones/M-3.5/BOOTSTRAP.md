@@ -7,10 +7,26 @@
 **Next:** P3-GAP-REPL (REPL TUI visibility), then P3-GAP (component overrides)
 
 ## Read First
+`.planning/VISION.md`
+`.planning/ROADMAP.md (492 - 641)`
+
+THEN
 1. `.planning/milestones/M-3.5/3.5d-message-components/HANDOFF.md`
 2. `.planning/milestones/M-3.5/3.5d-message-components/CONTEXT.md`
 3. `.planning/milestones/M-3.5/3.5d-message-components/TASKS.md`
 4. `.planning/STATE.md`
+
+5. `.planning/milestones/M-2/RETROSPECTIVE.md`
+6. `.planning/milestones/M-3.5/FINDINGS.md`
+7. `.planning/milestones/M-3.5/3.5d-message-components/P3-RESEARCH.md`
+8. `.planning/project-managment/phase-steps/3.md`
+9. `.planning/project-managment/phase-steps/5.md`
+
+
+## DO NOT MAKE ASSUMPTIONS - Resources to read on demand (not now! but remember that you can!):
+`.planning/REFERENCES.md`
+`docs/*` (Careful, verify anything you read, may be wrong or outdated)
+`.planning/journals/*`
 
 ## Why Gap Phases Exist
 P3 tasks T18 (default component overrides) and T20 (API docs) were rubber-stamped
@@ -30,7 +46,7 @@ due to Anthropic's collapseReadSearch absorption mechanism.
    - Ship verified defaults, correct docs
 
 ## Key Findings
-- CLAUDE_CODE_REPL=1 env flag enables REPL mode but does NOT fix TUI visibility
+- CLAUDE_CODE_REPL=1 env flag enables sets isReplModeEnabled() to true (see: `/Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/original-source-code/src/tools/REPLTool/constants.ts`) but does NOT fix TUI visibility
 - CC source components (389 files) are too coupled for extract-and-edit approach
 - Override system architecture is correct — intercept at renderer dispatch level
 - isAbsorbedSilently is the root cause of REPL invisibility in TUI

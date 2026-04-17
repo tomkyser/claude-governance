@@ -1,7 +1,7 @@
 # Phase 3.5d Context — Message Components Control
 
 Date: 2026-04-17
-Status: P3 INCOMPLETE — two gap phases blocking closure
+Status: P3-GAP-REPL COMPLETE — two gap phases blocking closure
 Previous: P3 partial (T17/T19/T21 done, T18/T20 marked in error)
 SOVEREIGN: 30/30
 

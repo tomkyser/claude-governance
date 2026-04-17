@@ -1,6 +1,6 @@
 # Phase 3.5d Tracker — Message Components Control
 
-## Status: P3 INCOMPLETE — 2 gap phases blocking completion
+## Status: P3-GAP-REPL COMPLETE — 1 gap phase remaining (P3-GAP)
 
 ## Phase Progress
 - [x] Research — CC source analysis, binary patterns, rendering pipeline
@@ -17,6 +17,6 @@
 - T18/T20 were marked complete without behavioral verification — corrected
 
 ## Blockers
-- REPL tool calls invisible in TUI (isAbsorbedSilently=true in collapseReadSearch)
+- ~~REPL tool calls invisible in TUI~~ RESOLVED: repl-visibility.ts + repl-transcript.ts
 - Component override system never tested end-to-end
 - Handler signature in docs unverified against binary injection

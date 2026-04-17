@@ -257,4 +257,20 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     category: 'governance',
     passDetail: 'All slash commands visible in typeahead and help panel',
   },
+  {
+    id: 'repl-visibility',
+    name: 'REPL TUI Visibility',
+    signature: '__repl_visibility_patched__',
+    critical: false,
+    category: 'governance',
+    passDetail: 'REPL tool calls visible in TUI (not absorbed silently)',
+  },
+  {
+    id: 'repl-transcript',
+    name: 'REPL Transcript Preservation',
+    signature: '__repl_transcript_patched__',
+    critical: false,
+    category: 'governance',
+    passDetail: 'REPL calls preserved in external transcripts for --resume',
+  },
 ];

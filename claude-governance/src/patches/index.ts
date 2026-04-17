@@ -39,6 +39,8 @@ import {
   writeThinkingAssistantGuardPatch,
   writeMessageOverridePatch,
   writeContentOverridePatch,
+  writeReplVisibilityPatch,
+  writeReplTranscriptPatch,
   GOVERNANCE_DEFAULTS,
   isContentPatched,
 } from './governance';
@@ -497,7 +499,15 @@ export const applyCustomization = async (
   'unhide-commands': {
       fn: c => writeUnhideCommandsPatch(c),
       signature: '__gov_unhide_cmds__',
-    }
+    },
+    'repl-visibility': {
+      fn: c => writeReplVisibilityPatch(c),
+      signature: '__repl_visibility_patched__',
+    },
+    'repl-transcript': {
+      fn: c => writeReplTranscriptPatch(c),
+      signature: '__repl_transcript_patched__',
+    },
   };
 
   const { content: patchedContent, results: patchResults } =

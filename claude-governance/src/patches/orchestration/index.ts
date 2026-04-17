@@ -148,7 +148,19 @@ export const PATCH_DEFINITIONS = [
     name: 'Unhide Commands',
     group: PatchGroup.GOVERNANCE,
     description: 'Makes all hidden slash commands visible in typeahead and help',
-  }
+  },
+  {
+    id: 'repl-visibility' as const,
+    name: 'REPL TUI Visibility',
+    group: PatchGroup.GOVERNANCE,
+    description: 'Makes REPL tool calls visible in TUI instead of silently absorbed',
+  },
+  {
+    id: 'repl-transcript' as const,
+    name: 'REPL Transcript Preservation',
+    group: PatchGroup.GOVERNANCE,
+    description: 'Preserves REPL calls in external transcripts for --resume',
+  },
 ] as const;
 
 export type PatchId = (typeof PATCH_DEFINITIONS)[number]['id'];

@@ -31,3 +31,6 @@ export {
   writeMessageOverridePatch,
   writeContentOverridePatch,
 } from './message-override';
+export { writeUnhideCommandsPatch } from './unhide-commands';
+export { writeReplVisibilityPatch } from './repl-visibility';
+export { writeReplTranscriptPatch } from './repl-transcript';
