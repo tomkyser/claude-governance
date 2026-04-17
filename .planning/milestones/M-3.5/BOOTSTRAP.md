@@ -1,10 +1,10 @@
-# Milestone 3.5 Bootstrap — P3 Gap Phases Active
+# Milestone 3.5 Bootstrap — P3-GAP (Component Override Verification)
 
 ---
 
-**Status:** P3 INCOMPLETE — two gap phases blocking closure
+**Status:** P3-GAP-REPL COMPLETE — one gap phase remaining (P3-GAP)
 **SOVEREIGN:** 32/32
-**Next:** P3-GAP-REPL (REPL TUI visibility), then P3-GAP (component overrides)
+**Next:** P3-GAP (component override verification — 6 tasks)
 
 ## Read First
 `.planning/VISION.md`
@@ -28,33 +28,35 @@ THEN
 `docs/*` (Careful, verify anything you read, may be wrong or outdated)
 `.planning/journals/*`
 
-## Why Gap Phases Exist
-P3 tasks T18 (default component overrides) and T20 (API docs) were rubber-stamped
-as complete without behavioral verification. The component override system was built
-but never tested end-to-end. Additionally, REPL tool calls are invisible in the TUI
-due to Anthropic's collapseReadSearch absorption mechanism.
+## What's Done
+- **P3-GAP-REPL** — COMPLETE. Two binary patches:
+  - repl-visibility.ts: isAbsorbedSilently false in zJ6() — REPL visible in collapsed groups
+  - repl-transcript.ts: D_8() bypass — REPL preserved in --resume transcripts
+  - TUI verified, resume verified, 32/32 SOVEREIGN
 
-## Priority Order
-1. **P3-GAP-REPL** — Fix REPL visibility first (higher impact, user-reported)
-   - Patch isAbsorbedSilently in zJ6() from true→false for REPL
-   - T-REPL-2 SKIPPED: env flag CLAUDE_CODE_REPL=1 handles isReplModeEnabled
-   - Patch transcript transform to preserve REPL calls
-   - TUI verify + resume verify
-2. **P3-GAP** — Component override verification (6 tasks)
-   - Verify handler signature matches binary injection
-   - Write and test a real override end-to-end in TUI
-   - Ship verified defaults, correct docs
+## What's Next: P3-GAP (Component Override Verification)
+> This gap phase exists because T18/T20 were rubber-stamped without behavioral verification.
+> No component override has EVER rendered in the TUI.
 
-## Key Findings
-- CLAUDE_CODE_REPL=1 env flag enables sets isReplModeEnabled() to true (see: `/Users/tom.kyser/dev/cc-source/collection-claude-code-source-code/original-source-code/src/tools/REPLTool/constants.ts`) but does NOT fix TUI visibility
-- CC source components (389 files) are too coupled for extract-and-edit approach
-- Override system architecture is correct — intercept at renderer dispatch level
-- isAbsorbedSilently is the root cause of REPL invisibility in TUI
+- T-GAP-1: Verify handler signature matches binary injection code (oOY/sOY)
+- T-GAP-2: Write a real component override (e.g., thinking block custom render)
+- T-GAP-3: Test override end-to-end in TUI
+- T-GAP-4: Ship verified default overrides in data/components/
+- T-GAP-5: Correct docs/README.md to match verified handler signature
+- T-GAP-6: Document update resilience (what survives CC updates, what doesn't)
+
+## Key Context for P3-GAP
+- Override system: `globalThis.__govMessageOverrides` / `__govContentOverrides` registries
+- Binary injection points: oOY() (message renderer), sOY() (content block renderer)
+- User JS in `~/.claude-governance/components/` gets React refs + message data
+- defaults.js is currently an empty IIFE returning empty override registries
+- Handler signature in docs/README.md is UNVERIFIED against actual binary injection
+- CC source components (389 files, 9.3MB) too coupled for extract-and-edit
 
 ## Build & Verify
 ```bash
 cd claude-governance && pnpm build
 /bin/cp ~/.claude-governance/native-binary.backup ~/.local/share/claude/versions/2.1.101
 node claude-governance/dist/index.mjs -a
-node claude-governance/dist/index.mjs check   # Target: 30+/30+ SOVEREIGN
+node claude-governance/dist/index.mjs check   # Target: 32/32 SOVEREIGN
 ```
