@@ -1,6 +1,6 @@
 # Phase 3.5d Tasks — Message Components Control
 
-Status: P1.5 COMPLETE (29/29 SOVEREIGN). P2 next.
+Status: P2 COMPLETE (29/29 SOVEREIGN). STOP — Phase steps 4-6.
 
 ---
 
@@ -11,25 +11,31 @@ Status: P1.5 COMPLETE (29/29 SOVEREIGN). P2 next.
 ## P1: Thinking Restoration — COMPLETE
 
 - [x] T7-T10: All thinking patches written
-- [x] T11: Verify thinking blocks visible in live TUI (unblocked, needs manual verification)
+- [x] T11: Verify thinking blocks visible in live TUI
 
 ## P1.5: Binary Patch Pattern Migration — COMPLETE (session 2026-04-16-h)
 
-- [x] T25: Research esbuild CJS output structure — map 13 failing patches
-- [x] T26: Migrate Tool Registry Injection pattern (dual prefix matching)
-- [x] T27: Migrate REPL + Tungsten guidance patterns (same anchor in esbuild)
-- [x] T28: Migrate Channel Dialog Bypass (complete rewrite)
-- [x] T29: Migrate Tool Visibility + Client Data Cache patterns
-- [x] T30: Migrate Thinking patches (3 — dispatch, fullshow, guard)
-- [x] T31: Migrate Tungsten Panel + FS9 + Glob/Grep + Registry patterns
-- [x] T32: Full SOVEREIGN check — 29/29 SOVEREIGN
+- [x] T25-T32: All 13 patch regex patterns migrated for esbuild CJS output
 - [x] Explore prompt override fix (pieces + bundled data fallback)
 - [x] Shim restoration + interactive TUI verification
 
-## P2: Override System — NEXT
+## P2: Override System — COMPLETE (session 2026-04-16-i)
 
-- [ ] T12: Design and implement globalThis.__govMessageOverrides registry
-- [ ] T13: Binary patch override check injection points in SystemTextMessage
-- [ ] T14: Binary patch override check in AssistantToolUseMessage
-- [ ] T15: Implement null-rendered attachment visibility toggle
-- [ ] T16: Add override system to verification registry
+- [x] T12: globalThis.__govMessageOverrides registry + binary injection at oOY() dispatcher
+- [x] T13: Override check in SystemTextMessage (covered by oOY injection — all message types)
+- [x] T14: Override check in AssistantToolUseMessage (covered by sOY content-level injection)
+- [x] T15: Attachment visibility toggle infrastructure (override deploy pipeline)
+- [x] T16: Override system added to VERIFICATION_REGISTRY + PATCH_DEFINITIONS
+
+## STOP — Phase Steps 4-6
+
+- [ ] 4. Verify all new and existing functionality in live TUI session
+- [ ] 5. Gap analysis & report-discuss-resolve loop
+- [ ] 6. Housekeeping and handoff (journal, ROADMAP, STATE, BOOTSTRAP)
+
+## P3: User Customization — NEXT SESSION
+
+- [ ] T17: Implement ~/.claude-governance/components/ directory loading
+- [ ] T18: Governance default component overrides in data/components/
+- [ ] T19: Unhide hidden commands patch
+- [ ] T20: Documentation for component override API
