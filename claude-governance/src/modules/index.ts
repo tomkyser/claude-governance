@@ -12,5 +12,5 @@ export {
   applyModules,
 } from './registry';
 export { coreModule } from './core';
-export { envFlagsModule } from './env-flags';
+export { envFlagsModule, RECOMMENDED_ENV } from './env-flags';
 export { wireModule } from './wire';

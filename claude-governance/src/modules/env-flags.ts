@@ -9,9 +9,11 @@ export const RECOMMENDED_ENV: Record<string, string> = {
   CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING: '1',
   MAX_THINKING_TOKENS: '128000',
   CLAUDE_CODE_EFFORT_LEVEL: 'max',
+  CLAUDE_CODE_ALWAYS_ENABLE_EFFORT: '1',
   DISABLE_AUTOUPDATER: '1',
   ENABLE_LSP_TOOL: '1',
   EMBEDDED_SEARCH_TOOLS: '1',
+  CLAUDE_CODE_REPL: '1',
 };
 
 const SETTINGS_PATH_CANDIDATES = [
@@ -92,7 +94,7 @@ export const envFlagsModule: GovernanceModule = {
     await fs.writeFile(
       settings.path,
       JSON.stringify(settings.data, null, 2) + '\n',
-      'utf8',
+      'utf8'
     );
 
     return {
@@ -105,7 +107,11 @@ export const envFlagsModule: GovernanceModule = {
   async getStatus(_context: ModuleContext): Promise<ModuleStatus> {
     const settings = await readSettings();
     if (!settings) {
-      return { enabled: true, healthy: false, details: 'settings.json not found' };
+      return {
+        enabled: true,
+        healthy: false,
+        details: 'settings.json not found',
+      };
     }
 
     const env = (settings.data.env as Record<string, unknown>) ?? {};

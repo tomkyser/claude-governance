@@ -4,6 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import chalk from 'chalk';
 import { CONFIG_DIR } from './config';
+import { RECOMMENDED_ENV } from './modules/env-flags';
 
 const SHIM_DIR = path.join(CONFIG_DIR, 'bin');
 const SHIM_PATH = path.join(SHIM_DIR, 'claude');
@@ -34,6 +35,9 @@ export const GOVERNANCE_FAIL_EXIT = 111;
 
 function generateShimScript(): string {
   const govBin = getGovernanceBin();
+  const envExports = Object.entries(RECOMMENDED_ENV)
+    .map(([key, value]) => `export ${key}="${value}"`)
+    .join('\n');
   return `#!/bin/sh
 # claude-governance shim — transparent governance pre-flight for Claude Code
 # Installed by: claude-governance setup
@@ -41,6 +45,9 @@ function generateShimScript(): string {
 #
 # FAILSAFE: If governance fails before launching CC (exit 111 or 127),
 # fall through and launch CC directly. Never block the user.
+
+# Mandatory env vars — process-level export, not settings.json
+${envExports}
 
 # Find the real claude binary by searching PATH without our shim dir
 find_real_claude() {

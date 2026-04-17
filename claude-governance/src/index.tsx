@@ -61,6 +61,7 @@ import {
   getEnabledModules,
   getAllModules,
   applyModules,
+  RECOMMENDED_ENV,
   type ModulesConfig,
   type ModuleContext,
 } from './modules';
@@ -997,8 +998,11 @@ async function handleLaunch(
     console.log(chalk.green(`  Tools: ${launchToolCheck.toolNames.join(', ')}`));
   }
 
-  // Build environment — merge config env overrides
-  const launchEnv = { ...process.env };
+  // Build environment — RECOMMENDED_ENV base layer, then config overrides on top
+  const launchEnv: Record<string, string | undefined> = { ...process.env };
+  for (const [key, value] of Object.entries(RECOMMENDED_ENV)) {
+    launchEnv[key] = value;
+  }
   try {
     const config = await readConfigFile();
     const govConfig = (config.settings as unknown as { governance?: { env?: Record<string, string> } })
