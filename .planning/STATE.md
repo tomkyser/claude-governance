@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-04-17 (M-3.5 COMPLETE — retrospective written, 32/32 SOVEREIGN)
+Last updated: 2026-04-17 (M-3.5 CLOSED — next: M-3.75 RALPH)
 
 ## Current Claude Code Version
 - **Installed:** 2.1.101 (native, arm64-darwin)
