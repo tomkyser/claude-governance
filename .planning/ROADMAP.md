@@ -624,7 +624,7 @@ Patterns must anticipate future esbuild version changes and variable name variat
 - [ ] T18c: Test end-to-end: drop .js in ~/.claude-governance/components/, launch TUI, verify render
 - [ ] T18d: Ship verified default overrides in data/components/ (replaces skeleton)
 - [ ] T20a: Verify and correct docs/README.md Component Override API section against tested behavior
-- [ ] T20b: Document update resilience — what survives CC updates, what needs re-apply
+~~- [ ] T20b: Document update resilience — what survives CC updates, what needs re-apply~~ *DEFERRED TO MILESTONE 4*
 - [ ] STOP - Phase steps 4-6 (/.planning/project-management/phase-steps/{step_number}.md)
   - [ ] 4. Verify all new and existing functionality in live TUI session
   - [ ] 5. Gap analysis & report-discuss-resolve loop
@@ -644,10 +644,53 @@ Patterns must anticipate future esbuild version changes and variable name variat
 
 ___
 
+## Milestone 3.75: RALPH — Reasoning-Anchored Loop for Planning and Hypothesizing
+
+**Status:** NOT STARTED
+**References:** `.planning/research/2026-04-17-ralph-framework-design.md`, `.planning/research/2026-04-17-ralph-implementation-plan.md`
+
+> Cognitive redirect framework implemented via CC hooks (UserPromptSubmit + PreToolUse).
+> Interrupts default forward-chaining, enforces backward reasoning from end state,
+> classifies gap (not request), resolves unknowns via scoped agents before execution.
+> Origin: observed failures during FP WordPress FM-to-ACF migration — forward-chaining
+> missed critical data flows that backward reasoning would have caught.
+
+- [ ] Phase 1: UserPromptSubmit Hook — Layer 0 Cognitive Redirect (HALT → END → HERE → DELTA)
+  - [ ] 1A: Hook registration in settings.json
+  - [ ] 1B: Layer 0 prompt injection (cognitive redirect scaffold)
+  - [ ] 1C: Adaptive depth — trivial request bypass (Tier 1 fast path)
+  - [ ] 1D: Acceptance testing
+- [ ] Phase 2: PreToolUse Hook — RALPH Enforcement for REPL
+  - [ ] 2A: Hook registration (toolName: REPL)
+  - [ ] 2B: RALPH checkpoint prompt (R → A → L → P → H)
+  - [ ] 2C: Acceptance testing — Tier routing, H→preflight traceability
+- [ ] Phase 3: Agent Dispatch Patterns for Unknown Resolution
+  - [ ] 3A: Research agent template (scoped, read-only, structured return)
+  - [ ] 3B: Agent scoping rules and timeout awareness
+  - [ ] 3C: Acceptance testing
+- [ ] Phase 4: Execution Pattern Library
+  - [ ] 4A: Execution scaffold (preflight → read → transform → verify → report)
+  - [ ] 4B: Acceptance testing — atomicity, self-verification, fail-fast
+- [ ] Phase 5: Integration Testing
+  - [ ] 5A: End-to-end test cases across all tiers
+  - [ ] 5B: Metrics validation (Tier 1 overhead <5s, >90% unknown detection, >85% first-pass success)
+
+---
+### Milestone 3.75 Retro
+- [ ] Commentary
+- [ ] Gap analysis
+- [ ] Housekeeping
+- [ ] Bootstrap Prompt
+---
+
 ## Milestone 4: Version Management
 
 **References:** [versionPinning1], [ccNativeMigration1], [ccCliFlags1] — see `.planning/REFERENCES.md`
 
+- [ ] 4Prelim: defensive and thorough predictive pass at current code to attempt to survive a CC update with graceful fallback to past working version with full governance.
+  - [ ] A: Research and planning
+  - [ ] B: Execute
+  - [ ] T20b: Document update resilience — what survives CC updates, what needs re-apply
 - [ ] Phase 4a - Binary backup on CC update
 - [ ] Phase 4b - Version inventory and switching
 - [ ] Phase 4c - Update controls: block/allow/defer CC auto-updates

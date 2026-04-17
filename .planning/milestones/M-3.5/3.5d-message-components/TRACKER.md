@@ -1,6 +1,6 @@
 # Phase 3.5d Tracker — Message Components Control
 
-## Status: P3-GAP-REPL COMPLETE — 1 gap phase remaining (P3-GAP)
+## Status: P3-GAP-ENV COMPLETE — component override verification remaining (P3-GAP)
 
 ## Phase Progress
 - [x] Research — CC source analysis, binary patterns, rendering pipeline
@@ -20,3 +20,9 @@
 - ~~REPL tool calls invisible in TUI~~ RESOLVED: repl-visibility.ts + repl-transcript.ts
 - Component override system never tested end-to-end
 - Handler signature in docs unverified against binary injection
+
+## Decisions (P3-GAP-ENV)
+- Env vars exported at 3 layers: settings.json, spawn env (launchEnv), shell exports (shim)
+- RECOMMENDED_ENV is the single source of truth — shim generates exports dynamically
+- CLAUDE_CODE_REPL=1 added to RECOMMENDED_ENV
+- All 7 vars verified present in running CC process via live TUI

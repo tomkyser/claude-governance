@@ -1,7 +1,7 @@
 # Phase 3.5d Tasks — Message Components Control
 
-Status: P3 INCOMPLETE — two gap phases required before phase can close
-SOVEREIGN: 32/32 (patches work, but component system untested, REPL invisible)
+Status: P3-GAP-ENV COMPLETE — component override verification remaining
+SOVEREIGN: 32/32
 
 ---
 
@@ -55,7 +55,7 @@ SOVEREIGN: 32/32 (patches work, but component system untested, REPL invisible)
 > The shim must export mandatory env vars at the OS process level before exec.
 > Include CLAUDE_CODE_REPL=1 (was T-REPL-2, skipped because settings.json was "enough").
 
-- [ ] T-GAP-7: Export mandatory env vars in shim shell script (both governance launch path AND failsafe path)
-- [ ] T-GAP-8: Add CLAUDE_CODE_REPL=1 to RECOMMENDED_ENV + shim exports
-- [ ] T-GAP-9: Merge RECOMMENDED_ENV into launch command's launchEnv (currently reads config.governance.env only)
-- [ ] T-GAP-10: Verify env vars present in running CC process (check from within a session)
+- [x] T-GAP-7: Export mandatory env vars in shim shell script (both governance launch path AND failsafe path)
+- [x] T-GAP-8: Add CLAUDE_CODE_REPL=1 to RECOMMENDED_ENV + shim exports
+- [x] T-GAP-9: Merge RECOMMENDED_ENV into launch command's launchEnv (currently reads config.governance.env only)
+- [x] T-GAP-10: Verify env vars present in running CC process (check from within a session)
