@@ -672,3 +672,12 @@ file offset bypasses this bug.
 `extendSegment()` is called first (even if the data is shrinking). This is a confirmed
 LIEF bug. The raw overwrite path (`readFileSync` → buffer copy → `writeFileSync`)
 bypasses LIEF's writer entirely and is reliable for both shrinking and same-size data.
+
+
+### F33: Tool userFacingName empty string (2026-04-16, session i)
+CC assigns `userFacingName: () => ""` as default for custom tools. Loader fallback
+`if(!_t.userFacingName)` doesn't trigger. Must set explicitly on each tool.
+
+### F34: React refs .default resolution for esbuild CJS (2026-04-16, session i)
+`require("react")` in esbuild CJS returns module object, not React namespace.
+`createElement` is at `.default.createElement`. Fix: `_govR.default || _govR`.
