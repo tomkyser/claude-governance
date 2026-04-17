@@ -249,4 +249,12 @@ export const VERIFICATION_REGISTRY: VerificationEntry[] = [
     category: 'governance',
     passDetail: 'globalThis.__govContentOverrides injection active',
   },
+  {
+    id: 'unhide-commands',
+    name: 'Unhide Commands',
+    signature: '__gov_unhide_cmds__',
+    critical: false,
+    category: 'governance',
+    passDetail: 'All slash commands visible in typeahead and help panel',
+  },
 ];

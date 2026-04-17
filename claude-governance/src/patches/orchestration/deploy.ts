@@ -98,6 +98,52 @@ export const deployUiComponents = async (): Promise<number> => {
 };
 
 // =============================================================================
+// =============================================================================
+// Component Override Deployment
+// =============================================================================
+
+const COMPONENTS_DIR = path.join(CONFIG_DIR, 'components');
+export { COMPONENTS_DIR };
+
+export const deployComponents = async (): Promise<number> => {
+  const srcDir = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    '..',
+    'data',
+    'components'
+  );
+
+  if (!fsSync.existsSync(srcDir)) {
+    debug(`deployComponents: source dir not found at ${srcDir}`);
+    return 0;
+  }
+
+  await fs.mkdir(COMPONENTS_DIR, { recursive: true });
+
+  const files = fsSync.readdirSync(srcDir).filter(f => f.endsWith('.js'));
+  let deployed = 0;
+
+  for (const file of files) {
+    const srcPath = path.join(srcDir, file);
+    const dstPath = path.join(COMPONENTS_DIR, file);
+    const srcContent = fsSync.readFileSync(srcPath, 'utf8');
+
+    let needsCopy = true;
+    if (fsSync.existsSync(dstPath)) {
+      const dstContent = fsSync.readFileSync(dstPath, 'utf8');
+      if (srcContent === dstContent) needsCopy = false;
+    }
+
+    if (needsCopy) {
+      await fs.writeFile(dstPath, srcContent, 'utf8');
+      deployed++;
+      debug(`deployComponents: deployed ${file}`);
+    }
+  }
+
+  return deployed;
+};
+
 // Prompt Override Deployment (G5)
 // =============================================================================
 

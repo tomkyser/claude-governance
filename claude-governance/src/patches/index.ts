@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import { writeUnhideCommandsPatch } from './governance/unhide-commands';
 import * as fsSync from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -63,6 +64,7 @@ import {
   deployTools,
   deployUiComponents,
   deployPromptOverrides,
+  deployComponents,
   deployOverrides,
 } from './orchestration/deploy';
 
@@ -352,6 +354,7 @@ export const applyCustomization = async (
   }
 
   const overridesDeployed = await deployOverrides();
+  const componentsDeployed = await deployComponents();
   if (overridesDeployed > 0) {
     debug(`Deployed ${overridesDeployed} override file(s)`);
   }
@@ -491,6 +494,10 @@ export const applyCustomization = async (
       fn: c => writeContentOverridePatch(c),
       signature: '__gov_content_override__',
     },
+  'unhide-commands': {
+      fn: c => writeUnhideCommandsPatch(c),
+      signature: '__gov_unhide_cmds__',
+    }
   };
 
   const { content: patchedContent, results: patchResults } =

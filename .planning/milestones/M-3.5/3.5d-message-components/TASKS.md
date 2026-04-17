@@ -25,8 +25,9 @@ Status: P2 COMPLETE + bugfixes (29/29 SOVEREIGN). Phase steps 4-6 done. P3 next 
 - [x] Replace mode verified working (primitives filtered, REPL-only)
 - [x] REPL tool call renders visibly in TUI (user confirmed)
 
-## P3: User Customization — NEXT SESSION
-- [ ] T17: ~/.claude-governance/components/ directory loading
-- [ ] T18: Default component overrides in data/components/
-- [ ] T19: Unhide hidden commands patch
-- [ ] T20: Documentation for component override API
+## P3: User Customization — COMPLETE
+- [x] T17: Component directory loading (~/.claude-governance/components/)
+- [x] T18: Default component overrides in data/components/
+- [x] T19: Unhide hidden commands patch (30/30 SOVEREIGN)
+- [x] T20: Documentation for component override API
+- [x] T21: Unhide Commands added to verification registry

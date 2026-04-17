@@ -143,6 +143,12 @@ export const PATCH_DEFINITIONS = [
     description:
       'Injects globalThis.__govContentOverrides check before content type switch in sOY()',
   },
+  {
+    id: 'unhide-commands' as const,
+    name: 'Unhide Commands',
+    group: PatchGroup.GOVERNANCE,
+    description: 'Makes all hidden slash commands visible in typeahead and help',
+  }
 ] as const;
 
 export type PatchId = (typeof PATCH_DEFINITIONS)[number]['id'];

@@ -1,40 +1,31 @@
 # Phase 3.5d Context — Message Components Control
 
 Date: 2026-04-16
-Status: BLOCKED — P1 correct but repack broken. Fix rebuildBunData() string ordering in nativeInstallation.ts
-Previous: 3.5c (Governance Integration)
+Status: P3 Active — User Customization (T17-T20)
+Previous: P2 Override System COMPLETE (29/29 SOVEREIGN)
 
 ## Scope
-Complete message component override and patching capability for claude-governance.
-Every tool call visible, thinking blocks restored, user-customizable component overrides.
+Complete user-facing customization layer for message component overrides.
 
-## Deliverables (9)
-1. P0: Fix external tool rendering (REPL/Tungsten/Ping visible in TUI)
-2. P0: Full tool visibility (override empty-name suppression)
-3. P1: Restore thinking blocks (SystemTextMessage dispatch patch)
-4. P1: Disable thinking auto-hide (remove 30s streaming timeout)
-5. P1: Show full thinking by default (skip Ctrl+O stub)
-6. P2: Expose null-rendered attachments (user-configurable)
-7. P2: Build override registry (globalThis component overrides)
-8. P3: User customization (~/.claude-governance/components/)
-9. P3: Unhide hidden commands
+## P3 Deliverables
+1. T17: Component directory loading (~/.claude-governance/components/)
+2. T18: Default component overrides shipped in data/components/
+3. T19: Unhide hidden commands patch
+4. T20: Documentation for component override API
 
-## Key Binary Offsets (v2.1.101)
-- thinking null-return: 8193543
-- isTransparentWrapper: 8131112, 8131136, 8131405
-- SystemTextMessage region: ~8192000-8195000
+## Architecture
+- Override system: globalThis.__govMessageOverrides + __govContentOverrides (P2)
+- Deploy pipeline: deploy.ts — deployTools/deployUiComponents/deployOverrides pattern
+- Binary patch loads defaults.js lazily on first render
+- defaults.js must be extended to scan and require components/ directory
+- Handler signature: (message/block, props, React) → element | null
 
-## Key Source Files
-- CC source messages: /Users/tom.kyser/dev/cc-source/.../src/components/messages/
-- Tool interface: /Users/tom.kyser/dev/cc-source/.../src/Tool.ts (lines 529-793)
-- nullRenderingAttachments: /Users/tom.kyser/dev/cc-source/.../src/components/messages/nullRenderingAttachments.ts
-- Our tool injection: src/patches/governance/tool-injection.ts
-- Our render tree patch: src/patches/governance/render-tree.ts (closest analog)
+## Key Binary Locations (v2.1.101 esbuild)
+- isHidden filters: idx 13610517, 15735658, 15738415, 15739461
+- Message override injection: oOY() switch statement
+- Content override injection: sOY() switch statement
 
 ## Decisions
-- D-01: Full tool visibility is a P0 deliverable — nothing hidden from governance users
-- D-02: 9 deliverables across P0-P3 priority tiers
-- D-03: T9 (30s streaming timeout) closed — mechanism does not exist as described
-- D-04: Three thinking patches cover all hiding points: SystemTextMessage, AssistantMessage, ql_ component
-- D-05: Inline renderer for SystemTextMessage uses r6/m/L (React/Box/Text) from local scope since ql_ inaccessible
-
+- D-01 through D-05 from P2 carry forward
+- D-06: Components loaded from defaults.js (already in binary require chain)
+- D-07: isHidden patch targets filter predicates, not command objects
