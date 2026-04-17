@@ -3,6 +3,7 @@
 
 export default {
   name: 'Ping',
+  userFacingName() { return 'Ping'; },
   inputJSONSchema: {
     type: 'object',
     properties: {

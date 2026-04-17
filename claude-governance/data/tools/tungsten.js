@@ -540,6 +540,9 @@ async function handleInterrupt(args) {
 //#region src/tools/tungsten/index.ts
 var tungsten_default = {
 	name: "Tungsten",
+	userFacingName() {
+		return "Tungsten";
+	},
 	inputJSONSchema,
 	renderToolUseMessage(data) {
 		const refs = globalThis.__govReactRefs;

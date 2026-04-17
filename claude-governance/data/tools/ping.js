@@ -2,6 +2,9 @@
 //#region src/tools/ping/index.ts
 var ping_default = {
 	name: "Ping",
+	userFacingName() {
+		return "Ping";
+	},
 	inputJSONSchema: {
 		type: "object",
 		properties: { message: {

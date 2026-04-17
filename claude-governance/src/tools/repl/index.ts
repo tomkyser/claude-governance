@@ -28,6 +28,7 @@ const vmHandlers: Record<string, Function> = {
 
 const tool = {
   name: 'REPL',
+  userFacingName() { return 'REPL'; },
   inputJSONSchema,
 
   renderToolUseMessage(data: { script?: string; description?: string }) {

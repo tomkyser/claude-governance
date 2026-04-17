@@ -939,6 +939,9 @@ const vmHandlers = {
 };
 const tool = {
 	name: "REPL",
+	userFacingName() {
+		return "REPL";
+	},
 	inputJSONSchema,
 	renderToolUseMessage(data) {
 		const refs = globalThis.__govReactRefs;

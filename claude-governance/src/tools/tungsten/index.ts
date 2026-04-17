@@ -18,6 +18,7 @@ interface TungstenArgs {
 
 export default {
   name: 'Tungsten',
+  userFacingName() { return 'Tungsten'; },
   inputJSONSchema,
 
   renderToolUseMessage(data: { action?: string; session?: string; command?: string }) {
