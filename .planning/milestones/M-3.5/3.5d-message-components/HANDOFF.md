@@ -1,39 +1,46 @@
 # Phase 3.5d Handoff — Message Components Control
 
-**Status**: ALL PHASES COMPLETE (P0-P3)
+**Status**: P3 INCOMPLETE — two gap phases required
 **SOVEREIGN**: 30/30
-**Commit**: b9cfc8c
-**Date**: 2026-04-16
+**Commit**: HEAD on master (post-gap-planning)
+**Date**: 2026-04-17
 
-## What Was Delivered
+## What Is Done
+- P0: Tool Visibility (T1-T6) — verified in TUI
+- P1: Thinking Restoration (T7-T11) — verified in TUI
+- P2: Override System (T12-T16) — deployed, registry entries added
+- T17: Component directory loading — scanner deployed
+- T19: Unhide hidden commands — TUI verified (/init, /insights visible)
+- T21: Verification registry entry
 
-### P0: Tool Visibility (T1-T6)
-External tools (Ping, REPL, Tungsten) visible in TUI with proper names and React rendering.
+## What Is NOT Done (was erroneously marked complete)
+- T18: Default component overrides — empty skeleton, no actual override logic
+- T20: Component override API docs — handler signature unverified
+- T23: Full TUI verification — REPL invisible, components untested
 
-### P1: Thinking Restoration (T7-T11)
-Three binary patches restore full thinking block display: SystemTextMessage dispatch,
-streaming auto-hide removal, AssistantThinkingMessage full-show guard.
+## Gap Phase 1: P3-GAP-REPL (REPL TUI Visibility)
+REPL tool calls are invisible in TUI. Three mechanisms:
+1. isAbsorbedSilently=true in collapseReadSearch — REPL absorbed silently
+2. isReplModeEnabled() returns false — handled by env flag CLAUDE_CODE_REPL=1
+3. transformMessagesForExternalTranscript strips REPL pairs from saved transcripts
 
-### P1.5: Pattern Migration (T25-T32)
-All 13 governance patch patterns migrated from Bun-minified to esbuild CJS output.
+Key finding: Setting CLAUDE_CODE_REPL=1 does NOT fix visibility. Binary patch needed.
+T-REPL-2 skipped (env flag covers it). 4 remaining tasks.
 
-### P2: Override System (T12-T16)
-Two binary patches inject override checks at oOY() (message renderer) and sOY()
-(content block renderer). Handlers registered on globalThis.__govMessageOverrides
-and __govContentOverrides. Lazy-loaded via defaults.js.
+## Gap Phase 2: P3-GAP (Component Override Verification)
+Override system built but never tested. No override has ever rendered in TUI.
+6 tasks to verify signature, write real overrides, test e2e, correct docs.
 
-### P3: User Customization (T17-T21)
-- Component directory: ~/.claude-governance/components/ scanned for .js override files
-- Deploy pipeline: deployComponents() follows existing deployTools/deployUi/deployOverrides pattern
-- Unhide commands: isHidden filter predicates patched to always pass at 6 locations
-- API docs: Component Override API section added to docs/README.md
-- Verification: unhide-commands entry in registry
+## Binary References
+- isAbsorbedSilently: in zJ6() (getToolSearchOrReadInfo), look for REPL tool name check
+- isReplModeEnabled: iR() — `function iR(){return false}` near `var sX="REPL"`
+- transformMessagesForExternalTranscript: filters tool_use/tool_result by REPL name
+- Override injection: oOY() (message), sOY() (content block) — switch dispatch points
 
-## Remaining Gaps
-- T23: Interactive TUI verification of ALL restored elements simultaneously
-- Default components are skeleton — no rich overrides ship yet
-- No automated test for unhide-commands pattern matching
-- docs/README.md Quick Start needs rewrite (pre-existing)
-
-## Next Phase
-Phase 3.5e (Coordinate Skill) — model must see its own tool output (now enabled).
+## Build & Verify
+```bash
+cd claude-governance && pnpm build
+/bin/cp ~/.claude-governance/native-binary.backup ~/.local/share/claude/versions/2.1.101
+node claude-governance/dist/index.mjs -a
+node claude-governance/dist/index.mjs check   # Target: 30/30 SOVEREIGN
+```

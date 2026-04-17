@@ -1,6 +1,7 @@
 # Phase 3.5d Tasks — Message Components Control
 
-Status: P2 COMPLETE + bugfixes (29/29 SOVEREIGN). Phase steps 4-6 done. P3 next session.
+Status: P3 INCOMPLETE — two gap phases required before phase can close
+SOVEREIGN: 30/30 (patches work, but component system untested, REPL invisible)
 
 ---
 
@@ -8,50 +9,43 @@ Status: P2 COMPLETE + bugfixes (29/29 SOVEREIGN). Phase steps 4-6 done. P3 next 
 - [x] T1-T6: All tool visibility tasks complete and verified in live TUI
 
 ## P1: Thinking Restoration — COMPLETE
-- [x] T7-T11: All thinking patches + TUI verification
-
-## P1.5: Binary Patch Pattern Migration — COMPLETE
-- [x] T25-T32: 13 patterns migrated + explore fix
+- [x] T7-T11: All thinking restoration tasks complete and verified in live TUI
 
 ## P2: Override System — COMPLETE
-- [x] T12-T16: Override registry + binary injection + deploy pipeline + verification
+- [x] T12-T16: Override system deployed, registry entries added, verified
 
-## Verification — COMPLETE
-- [x] T21-T23: Registry, SOVEREIGN 29/29, interactive TUI verified
-
-## Post-Verification Bugfixes — COMPLETE
-- [x] F33: Tool userFacingName returns proper names (Ping/REPL/Tungsten)
-- [x] F34: React refs use _govR.default||_govR for esbuild CJS createElement resolution
-- [x] Replace mode verified working (primitives filtered, REPL-only)
-- [x] REPL tool call renders visibly in TUI (user confirmed)
-
-## P3: User Customization — INCOMPLETE (gap phase required)
-- [x] T17: Component directory loading (~/.claude-governance/components/)
-- [ ] ~~T18: Default component overrides~~ **MARKED IN ERROR** — skeleton only, zero tested overrides
-- [x] T19: Unhide hidden commands patch (30/30 SOVEREIGN, TUI verified)
-- [ ] ~~T20: Component override API docs~~ **MARKED IN ERROR** — handler signature unverified against binary
-- [x] T21: Unhide Commands added to verification registry
+## P3: User Customization — PARTIALLY COMPLETE
+- [x] T17: Component directory loading (defaults.js scans ~/.claude-governance/components/)
+- [ ] ~~T18~~ **MARKED IN ERROR** — skeleton only, no actual override logic, never tested
+- [x] T19: Unhide hidden commands (30/30 SOVEREIGN, TUI verified: /init, /insights visible)
+- [ ] ~~T20~~ **MARKED IN ERROR** — handler signature never verified against binary injection
+- [x] T21: Verification registry entry for unhide-commands
 
 ## P3-GAP-REPL: REPL Tool TUI Visibility
-> REPL tool calls are invisible by Anthropic design — three suppression mechanisms:
-> 1. isAbsorbedSilently=true in collapseReadSearch (REPL absorbed with zero count)
-> 2. iR() returns false (isReplModeEnabled hardcoded off for external users)
-> 3. transformMessagesForExternalTranscript strips REPL from saved transcripts
+> Gap phase. REPL tool calls are invisible in TUI despite working functionally.
+> Root cause: collapseReadSearch sets isAbsorbedSilently=true for REPL.
+> Env flag CLAUDE_CODE_REPL=1 enables REPL mode but does NOT fix TUI visibility.
+> Source: sessionStorage.ts:4372-4448, collapseReadSearch.ts
 
-- [ ] T-REPL-1: Patch isAbsorbedSilently for REPL (zJ6: true→false)
-- [ ] T-REPL-2: Patch iR() isReplModeEnabled (false→true)
-- [ ] T-REPL-3: Patch transcript transform to preserve REPL calls
-- [ ] T-REPL-4: TUI verification — REPL call visible
-- [ ] T-REPL-5: Resume verification — REPL calls persist in transcript
+- [ ] T-REPL-1: Patch isAbsorbedSilently for REPL from true→false in zJ6()
+- [~] T-REPL-2: SKIPPED — env flag CLAUDE_CODE_REPL=1 handles isReplModeEnabled
+- [ ] T-REPL-3: Patch transformMessagesForExternalTranscript to preserve REPL calls
+- [ ] T-REPL-4: Verify REPL tool call renders visibly in TUI
+- [ ] T-REPL-5: Verify REPL calls persist in transcript on --resume
 
 ## P3-GAP: Component Override Verification
-> Remediation phase. P3 tasks T18/T20 were rubber-stamped without behavioral testing.
-> The override system pipeline exists but has never rendered a single user-defined
-> component in the TUI. This gap phase exists because of sloppy verification.
+> Gap phase. T18/T20 were rubber-stamped without behavioral verification.
+> No component override has ever rendered in the TUI.
+> Reason: Claude's sloppy verification — build-time checks treated as done.
 
-- [ ] T18a: Verify handler signature — read binary injection code, confirm args passed to handlers
-- [ ] T18b: Write a real component override (e.g., custom thinking block render)
-- [ ] T18c: End-to-end test: drop .js in components/, launch TUI, confirm it renders
-- [ ] T18d: Ship verified default overrides in data/components/ (replace skeleton)
-- [ ] T20a: Verify and correct docs/README.md Component Override API against tested behavior
-- [ ] T20b: Document update resilience — what survives CC updates, what needs re-apply
+- [ ] T-GAP-1: Verify handler signature matches binary injection code
+- [ ] T-GAP-2: Write a real component override (e.g., thinking block custom render)
+- [ ] T-GAP-3: Test override end-to-end in TUI
+- [ ] T-GAP-4: Ship verified default overrides in data/components/
+- [ ] T-GAP-5: Correct docs/README.md to match verified handler signature
+- [ ] T-GAP-6: Document update resilience (what survives CC updates, what doesn't)
+
+## T23: Interactive TUI Verification — BLOCKED
+> Cannot complete until both gap phases pass. Partial verification done:
+> tools visible, thinking visible, hidden commands visible.
+> Missing: REPL visibility, component override rendering.

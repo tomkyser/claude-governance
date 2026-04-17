@@ -1,35 +1,44 @@
-# Milestone 3.5 Bootstrap — Phase 3.5d Complete
+# Milestone 3.5 Bootstrap — P3 Gap Phases Active
 
 ---
 
-**Status:** ALL PHASES (P0-P3) COMPLETE — 30/30 SOVEREIGN
-**Commit:** b9cfc8c (P3) on master
-**Next:** Phase 3.5e (Coordinate Skill) or gap-closing
+**Status:** P3 INCOMPLETE — two gap phases blocking closure
+**SOVEREIGN:** 30/30
+**Next:** P3-GAP-REPL (REPL TUI visibility), then P3-GAP (component overrides)
 
 ## Read First
 1. `.planning/milestones/M-3.5/3.5d-message-components/HANDOFF.md`
-2. `.planning/STATE.md`
-3. `.planning/ROADMAP.md`
+2. `.planning/milestones/M-3.5/3.5d-message-components/CONTEXT.md`
+3. `.planning/milestones/M-3.5/3.5d-message-components/TASKS.md`
+4. `.planning/STATE.md`
 
-## Current Binary State
-- Patched 2.1.101, 30/30 SOVEREIGN
-- Backup at ~/.claude-governance/native-binary.backup
-- Shim active at ~/.claude-governance/bin/claude
-- Tools: Ping, REPL, Tungsten (all TUI-visible)
-- Thinking: fully restored (3 patches)
-- Override system: message + content block dispatchers
-- Components: ~/.claude-governance/components/ scanned on startup
-- Commands: all unhidden in typeahead
+## Why Gap Phases Exist
+P3 tasks T18 (default component overrides) and T20 (API docs) were rubber-stamped
+as complete without behavioral verification. The component override system was built
+but never tested end-to-end. Additionally, REPL tool calls are invisible in the TUI
+due to Anthropic's collapseReadSearch absorption mechanism.
+
+## Priority Order
+1. **P3-GAP-REPL** — Fix REPL visibility first (higher impact, user-reported)
+   - Patch isAbsorbedSilently in zJ6() from true→false for REPL
+   - T-REPL-2 SKIPPED: env flag CLAUDE_CODE_REPL=1 handles isReplModeEnabled
+   - Patch transcript transform to preserve REPL calls
+   - TUI verify + resume verify
+2. **P3-GAP** — Component override verification (6 tasks)
+   - Verify handler signature matches binary injection
+   - Write and test a real override end-to-end in TUI
+   - Ship verified defaults, correct docs
+
+## Key Findings
+- CLAUDE_CODE_REPL=1 env flag enables REPL mode but does NOT fix TUI visibility
+- CC source components (389 files) are too coupled for extract-and-edit approach
+- Override system architecture is correct — intercept at renderer dispatch level
+- isAbsorbedSilently is the root cause of REPL invisibility in TUI
 
 ## Build & Verify
 ```bash
 cd claude-governance && pnpm build
 /bin/cp ~/.claude-governance/native-binary.backup ~/.local/share/claude/versions/2.1.101
 node claude-governance/dist/index.mjs -a
-node claude-governance/dist/index.mjs check   # Target: 30/30 SOVEREIGN
+node claude-governance/dist/index.mjs check   # Target: 30+/30+ SOVEREIGN
 ```
-
-## Gaps to Address
-- T23: Full interactive TUI verification of all elements
-- Default components are skeleton (no rich overrides yet)
-- docs/README.md Quick Start section needs rewrite

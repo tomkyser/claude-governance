@@ -603,7 +603,7 @@ Patterns must anticipate future esbuild version changes and variable name variat
 > Sources: sessionStorage.ts:4372-4448, collapseReadSearch.ts:getToolSearchOrReadInfo
 
 - [ ] T-REPL-1: Patch isAbsorbedSilently for REPL from true→false in zJ6()
-- [ ] T-REPL-2: Patch iR() (isReplModeEnabled) from return false→return true
+- [~] T-REPL-2: ~~Patch iR() (isReplModeEnabled)~~ — SKIPPED: user env flag CLAUDE_CODE_REPL=1 handles this. Confirmed env flag alone does NOT fix TUI visibility (isAbsorbedSilently still absorbs render).
 - [ ] T-REPL-3: Patch transformMessagesForExternalTranscript to preserve REPL calls
 - [ ] T-REPL-4: Verify REPL tool call renders visibly in TUI after patches
 - [ ] T-REPL-5: Verify REPL calls persist in transcript on --resume
