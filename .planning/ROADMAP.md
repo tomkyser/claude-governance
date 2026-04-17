@@ -591,6 +591,23 @@ Patterns must anticipate future esbuild version changes and variable name variat
 - [x] ~~T20: Documentation for component override API~~ **MARKED IN ERROR** — docs written but handler signature never verified against binary injection code
 - [x] T21: Unhide Commands added to verification registry
 
+#### P3-GAP-REPL: REPL Tool TUI Visibility (gap phase — REPL renders as invisible)
+> REPL tool calls are invisible in TUI by Anthropic's design, not by bug.
+> Three mechanisms suppress visibility:
+> 1. collapseReadSearch: isAbsorbedSilently=true — REPL wrapper absorbed into
+>    collapsed groups with zero count (zJ6/getToolSearchOrReadInfo)
+> 2. isReplModeEnabled() hardcoded to false (iR() in binary) — may gate features
+> 3. transformMessagesForExternalTranscript strips REPL tool_use/tool_result
+>    pairs from saved transcripts (resume sees no REPL history)
+>
+> Sources: sessionStorage.ts:4372-4448, collapseReadSearch.ts:getToolSearchOrReadInfo
+
+- [ ] T-REPL-1: Patch isAbsorbedSilently for REPL from true→false in zJ6()
+- [ ] T-REPL-2: Patch iR() (isReplModeEnabled) from return false→return true
+- [ ] T-REPL-3: Patch transformMessagesForExternalTranscript to preserve REPL calls
+- [ ] T-REPL-4: Verify REPL tool call renders visibly in TUI after patches
+- [ ] T-REPL-5: Verify REPL calls persist in transcript on --resume
+
 #### P3-GAP: Component Override Verification (gap phase — added due to prior sloppy verification)
 > This gap phase exists because P3 tasks T18 and T20 were rubber-stamped as complete
 > without behavioral verification. The component override system was built (registry,

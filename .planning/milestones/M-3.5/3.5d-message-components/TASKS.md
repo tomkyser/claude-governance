@@ -32,6 +32,18 @@ Status: P2 COMPLETE + bugfixes (29/29 SOVEREIGN). Phase steps 4-6 done. P3 next 
 - [ ] ~~T20: Component override API docs~~ **MARKED IN ERROR** — handler signature unverified against binary
 - [x] T21: Unhide Commands added to verification registry
 
+## P3-GAP-REPL: REPL Tool TUI Visibility
+> REPL tool calls are invisible by Anthropic design — three suppression mechanisms:
+> 1. isAbsorbedSilently=true in collapseReadSearch (REPL absorbed with zero count)
+> 2. iR() returns false (isReplModeEnabled hardcoded off for external users)
+> 3. transformMessagesForExternalTranscript strips REPL from saved transcripts
+
+- [ ] T-REPL-1: Patch isAbsorbedSilently for REPL (zJ6: true→false)
+- [ ] T-REPL-2: Patch iR() isReplModeEnabled (false→true)
+- [ ] T-REPL-3: Patch transcript transform to preserve REPL calls
+- [ ] T-REPL-4: TUI verification — REPL call visible
+- [ ] T-REPL-5: Resume verification — REPL calls persist in transcript
+
 ## P3-GAP: Component Override Verification
 > Remediation phase. P3 tasks T18/T20 were rubber-stamped without behavioral testing.
 > The override system pipeline exists but has never rendered a single user-defined
